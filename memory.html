@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🌸 Mia's Memory-Spiel 🌸</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #FF6B9D;
+    --purple: #C77DFF;
+    --yellow: #FFD166;
+    --mint: #06D6A0;
+    --sky: #74C0FC;
+    --coral: #FF8C69;
+    --bg: #FFF5F9;
+    --card-back: linear-gradient(135deg, #C77DFF, #FF6B9D);
+    --shadow: 0 8px 32px rgba(255,107,157,0.25);
+  }
+
+- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+font-family: ‘Baloo 2’, cursive;
+background: var(–bg);
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 16px;
+overflow-x: hidden;
+background-image:
+radial-gradient(circle at 10% 20%, rgba(255,107,157,0.12) 0%, transparent 50%),
+radial-gradient(circle at 90% 80%, rgba(199,125,255,0.12) 0%, transparent 50%),
+radial-gradient(circle at 50% 50%, rgba(255,209,102,0.08) 0%, transparent 70%);
+}
+
+header {
+text-align: center;
+margin-bottom: 12px;
+animation: bounceIn 0.7s cubic-bezier(.36,.07,.19,.97);
+}
+
+header h1 {
+font-size: clamp(1.8rem, 6vw, 2.8rem);
+font-weight: 800;
+background: linear-gradient(135deg, var(–pink), var(–purple));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+line-height: 1.1;
+}
+
+header p {
+font-size: 1rem;
+color: #b97dd8;
+margin-top: 2px;
+}
+
+.stats {
+display: flex;
+gap: 12px;
+margin-bottom: 16px;
+animation: fadeDown 0.5s ease 0.3s both;
+}
+
+.stat-box {
+background: white;
+border-radius: 16px;
+padding: 8px 18px;
+box-shadow: 0 4px 16px rgba(199,125,255,0.15);
+text-align: center;
+border: 2px solid rgba(199,125,255,0.2);
+}
+
+.stat-box .label {
+font-size: 0.65rem;
+color: #b97dd8;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+font-weight: 600;
+}
+
+.stat-box .value {
+font-size: 1.4rem;
+font-weight: 800;
+color: var(–purple);
+line-height: 1;
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 10px;
+width: 100%;
+max-width: 420px;
+animation: fadeIn 0.5s ease 0.2s both;
+}
+
+.card {
+aspect-ratio: 1;
+position: relative;
+cursor: pointer;
+transform-style: preserve-3d;
+transition: transform 0.45s cubic-bezier(.4,2,.55,.44);
+border-radius: 18px;
+user-select: none;
+}
+
+.card.flipped {
+transform: rotateY(180deg);
+}
+
+.card.matched .card-front {
+animation: matched 0.5s ease forwards;
+}
+
+.card-back, .card-front {
+position: absolute;
+inset: 0;
+border-radius: 18px;
+backface-visibility: hidden;
+-webkit-backface-visibility: hidden;
+display: flex;
+align-items: center;
+justify-content: center;
+box-shadow: var(–shadow);
+}
+
+.card-back {
+background: var(–card-back);
+font-size: 1.8rem;
+}
+
+.card-back::before {
+content: ‘⭐’;
+opacity: 0.6;
+}
+
+.card-front {
+background: white;
+transform: rotateY(180deg);
+font-size: clamp(1.6rem, 7vw, 2.4rem);
+border: 3px solid rgba(199,125,255,0.25);
+}
+
+.card:active {
+transform: scale(0.93);
+}
+
+.card.flipped:active {
+transform: rotateY(180deg) scale(0.93);
+}
+
+.btn {
+margin-top: 18px;
+padding: 14px 36px;
+font-family: ‘Baloo 2’, cursive;
+font-size: 1.1rem;
+font-weight: 800;
+border: none;
+border-radius: 50px;
+background: linear-gradient(135deg, var(–pink), var(–purple));
+color: white;
+cursor: pointer;
+box-shadow: 0 6px 24px rgba(255,107,157,0.4);
+transition: transform 0.15s, box-shadow 0.15s;
+letter-spacing: 0.03em;
+animation: fadeIn 0.5s ease 0.4s both;
+}
+
+.btn:active {
+transform: scale(0.95);
+box-shadow: 0 2px 12px rgba(255,107,157,0.3);
+}
+
+/* Win overlay */
+.win-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(255,245,249,0.92);
+backdrop-filter: blur(8px);
+z-index: 100;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+text-align: center;
+padding: 24px;
+}
+
+.win-overlay.show {
+display: flex;
+animation: fadeIn 0.4s ease;
+}
+
+.win-emoji {
+font-size: 5rem;
+animation: spin 0.8s cubic-bezier(.36,.07,.19,.97);
+margin-bottom: 12px;
+}
+
+.win-title {
+font-size: 2.5rem;
+font-weight: 800;
+background: linear-gradient(135deg, var(–pink), var(–purple));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+margin-bottom: 8px;
+}
+
+.win-sub {
+font-size: 1.1rem;
+color: #b97dd8;
+margin-bottom: 4px;
+}
+
+.stars {
+font-size: 2.2rem;
+letter-spacing: 6px;
+margin: 12px 0 20px;
+}
+
+/* Confetti */
+.confetti-piece {
+position: fixed;
+width: 12px;
+height: 12px;
+border-radius: 2px;
+top: -20px;
+animation: confettiFall linear forwards;
+z-index: 200;
+pointer-events: none;
+}
+
+/* Difficulty selector */
+.difficulty {
+display: flex;
+gap: 8px;
+margin-bottom: 14px;
+animation: fadeDown 0.5s ease 0.2s both;
+}
+
+.diff-btn {
+padding: 6px 14px;
+border-radius: 20px;
+border: 2px solid var(–purple);
+background: white;
+color: var(–purple);
+font-family: ‘Baloo 2’, cursive;
+font-size: 0.85rem;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.diff-btn.active, .diff-btn:active {
+background: var(–purple);
+color: white;
+}
+
+@keyframes bounceIn {
+0% { transform: scale(0.5); opacity: 0; }
+70% { transform: scale(1.1); }
+100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeDown {
+from { opacity: 0; transform: translateY(-10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes matched {
+0% { transform: rotateY(0) scale(1); }
+30% { transform: scale(1.15); background: #FFF0F5; }
+100% { transform: scale(1); }
+}
+
+@keyframes spin {
+0% { transform: rotate(-20deg) scale(0.5); opacity: 0; }
+60% { transform: rotate(10deg) scale(1.2); opacity: 1; }
+100% { transform: rotate(0) scale(1); }
+}
+
+@keyframes confettiFall {
+0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes pulse {
+0%, 100% { transform: scale(1); }
+50% { transform: scale(1.05); }
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <h1>🌸 Memory 🌸</h1>
+  <p>Finde alle Paare!</p>
+</header>
+
+<div class="stats">
+  <div class="stat-box">
+    <div class="label">Versuche</div>
+    <div class="value" id="moves">0</div>
+  </div>
+  <div class="stat-box">
+    <div class="label">Paare</div>
+    <div class="value" id="pairs">0/8</div>
+  </div>
+  <div class="stat-box">
+    <div class="label">Zeit</div>
+    <div class="value" id="timer">0s</div>
+  </div>
+</div>
+
+<div class="difficulty">
+  <button class="diff-btn active" onclick="setDifficulty(4,4,this)">Klein (4×4)</button>
+  <button class="diff-btn" onclick="setDifficulty(4,3,this)">Mittel (4×3)</button>
+  <button class="diff-btn" onclick="setDifficulty(4,2,this)">Leicht (4×2)</button>
+</div>
+
+<div class="grid" id="grid"></div>
+<button class="btn" onclick="initGame()">🔄 Neu mischen</button>
+
+<div class="win-overlay" id="winOverlay">
+  <div class="win-emoji">🎉</div>
+  <div class="win-title">Gewonnen!</div>
+  <div class="win-sub" id="winMsg">Super gemacht!</div>
+  <div class="stars" id="winStars">⭐⭐⭐</div>
+  <button class="btn" onclick="closeWin()">🎮 Nochmal spielen!</button>
+</div>
+
+<script>
+const EMOJIS = ['🦋','🌈','🦄','🍭','🌸','🐱','🦊','🐸','🍉','🌺','🐬','🦁','🍦','🎀','🐧','🦩','🌻','🐼'];
+let cols = 4, rows = 4;
+let cards = [], flipped = [], matched = 0, moves = 0, lockBoard = false;
+let timerInterval, seconds = 0, gameStarted = false;
+
+function setDifficulty(c, r, btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  cols = c; rows = r;
+  initGame();
+}
+
+function initGame() {
+  clearInterval(timerInterval);
+  seconds = 0; moves = 0; matched = 0; gameStarted = false; lockBoard = false;
+  document.getElementById('timer').textContent = '0s';
+  document.getElementById('moves').textContent = '0';
+  const total = cols * rows;
+  document.getElementById('pairs').textContent = `0/${total/2}`;
+
+  const pairs = EMOJIS.slice(0, total / 2);
+  cards = shuffle([...pairs, ...pairs]);
+
+  const grid = document.getElementById('grid');
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+
+  cards.forEach((emoji, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.index = i;
+    card.dataset.emoji = emoji;
+    card.innerHTML = `<div class="card-back"></div><div class="card-front">${emoji}</div>`;
+    card.addEventListener('click', () => flipCard(card));
+    grid.appendChild(card);
+  });
+
+  flipped = [];
+}
+
+function flipCard(card) {
+  if (lockBoard) return;
+  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+  if (!gameStarted) {
+    gameStarted = true;
+    timerInterval = setInterval(() => {
+      seconds++;
+      document.getElementById('timer').textContent = seconds + 's';
+    }, 1000);
+  }
+
+  card.classList.add('flipped');
+  flipped.push(card);
+
+  if (flipped.length === 2) {
+    moves++;
+    document.getElementById('moves').textContent = moves;
+    lockBoard = true;
+
+    const [a, b] = flipped;
+    if (a.dataset.emoji === b.dataset.emoji) {
+      a.classList.add('matched');
+      b.classList.add('matched');
+      matched++;
+      const total = cols * rows;
+      document.getElementById('pairs').textContent = `${matched}/${total/2}`;
+      flipped = [];
+      lockBoard = false;
+      if (matched === total / 2) setTimeout(showWin, 500);
+    } else {
+      setTimeout(() => {
+        a.classList.remove('flipped');
+        b.classList.remove('flipped');
+        flipped = [];
+        lockBoard = false;
+      }, 900);
+    }
+  }
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showWin() {
+  clearInterval(timerInterval);
+  const total = (cols * rows) / 2;
+  const ratio = moves / total;
+  let stars = ratio <= 1.3 ? '⭐⭐⭐' : ratio <= 2 ? '⭐⭐' : '⭐';
+  let msg = ratio <= 1.3 ? 'Wow, du bist ein Memory-Profi! 🏆' : ratio <= 2 ? 'Sehr gut gemacht! 👏' : 'Toll, du hast alle Paare gefunden! 🎊';
+  document.getElementById('winStars').textContent = stars;
+  document.getElementById('winMsg').innerHTML = `${msg}<br><small style="color:#b97dd8;font-size:0.85rem">${moves} Versuche • ${seconds}s</small>`;
+  document.getElementById('winOverlay').classList.add('show');
+  launchConfetti();
+}
+
+function closeWin() {
+  document.getElementById('winOverlay').classList.remove('show');
+  initGame();
+}
+
+function launchConfetti() {
+  const colors = ['#FF6B9D','#C77DFF','#FFD166','#06D6A0','#74C0FC','#FF8C69'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width = (8 + Math.random() * 10) + 'px';
+    el.style.height = (8 + Math.random() * 10) + 'px';
+    el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    el.style.animationDelay = (Math.random() * 0.5) + 's';
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+initGame();
+</script>
+
+</body>
+</html>
