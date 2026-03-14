@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🌸 Mia's Memory-Spiel 🌸</title>
+<title>🌸 Memory-Spiel 🌸</title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -12,11 +12,7 @@
     --purple: #C77DFF;
     --yellow: #FFD166;
     --mint: #06D6A0;
-    --sky: #74C0FC;
-    --coral: #FF8C69;
     --bg: #FFF5F9;
-    --card-back: linear-gradient(135deg, #C77DFF, #FF6B9D);
-    --shadow: 0 8px 32px rgba(255,107,157,0.25);
   }
 
 - { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -28,54 +24,54 @@ min-height: 100vh;
 display: flex;
 flex-direction: column;
 align-items: center;
-padding: 16px;
-overflow-x: hidden;
+padding: 12px 10px 24px;
 background-image:
 radial-gradient(circle at 10% 20%, rgba(255,107,157,0.12) 0%, transparent 50%),
-radial-gradient(circle at 90% 80%, rgba(199,125,255,0.12) 0%, transparent 50%),
-radial-gradient(circle at 50% 50%, rgba(255,209,102,0.08) 0%, transparent 70%);
+radial-gradient(circle at 90% 80%, rgba(199,125,255,0.12) 0%, transparent 50%);
 }
 
 header {
 text-align: center;
-margin-bottom: 12px;
-animation: bounceIn 0.7s cubic-bezier(.36,.07,.19,.97);
+margin-bottom: 10px;
 }
 
 header h1 {
-font-size: clamp(1.8rem, 6vw, 2.8rem);
+font-size: 2rem;
 font-weight: 800;
 background: linear-gradient(135deg, var(–pink), var(–purple));
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 background-clip: text;
-line-height: 1.1;
+line-height: 1.2;
 }
 
 header p {
-font-size: 1rem;
+font-size: 0.9rem;
 color: #b97dd8;
-margin-top: 2px;
 }
 
 .stats {
 display: flex;
-gap: 12px;
-margin-bottom: 16px;
-animation: fadeDown 0.5s ease 0.3s both;
+gap: 8px;
+margin-bottom: 10px;
+width: 100%;
+max-width: 400px;
+justify-content: center;
 }
 
 .stat-box {
 background: white;
-border-radius: 16px;
-padding: 8px 18px;
+border-radius: 14px;
+padding: 6px 14px;
 box-shadow: 0 4px 16px rgba(199,125,255,0.15);
 text-align: center;
 border: 2px solid rgba(199,125,255,0.2);
+flex: 1;
+max-width: 110px;
 }
 
 .stat-box .label {
-font-size: 0.65rem;
+font-size: 0.6rem;
 color: #b97dd8;
 text-transform: uppercase;
 letter-spacing: 0.08em;
@@ -83,81 +79,130 @@ font-weight: 600;
 }
 
 .stat-box .value {
-font-size: 1.4rem;
+font-size: 1.3rem;
 font-weight: 800;
 color: var(–purple);
-line-height: 1;
+line-height: 1.1;
 }
 
+.difficulty {
+display: flex;
+gap: 6px;
+margin-bottom: 10px;
+width: 100%;
+max-width: 400px;
+justify-content: center;
+}
+
+.diff-btn {
+padding: 6px 12px;
+border-radius: 20px;
+border: 2px solid var(–purple);
+background: white;
+color: var(–purple);
+font-family: ‘Baloo 2’, cursive;
+font-size: 0.8rem;
+font-weight: 700;
+cursor: pointer;
+transition: all 0.2s;
+flex: 1;
+max-width: 110px;
+}
+
+.diff-btn.active {
+background: var(–purple);
+color: white;
+}
+
+/* GRID */
 .grid {
 display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 10px;
+gap: 8px;
 width: 100%;
-max-width: 420px;
-animation: fadeIn 0.5s ease 0.2s both;
+max-width: 400px;
 }
 
+/* CARD — iOS-safe flip using opacity swap instead of 3D transform */
 .card {
-aspect-ratio: 1;
 position: relative;
+aspect-ratio: 1;
 cursor: pointer;
-transform-style: preserve-3d;
-transition: transform 0.45s cubic-bezier(.4,2,.55,.44);
-border-radius: 18px;
+border-radius: 16px;
 user-select: none;
+-webkit-user-select: none;
 }
 
-.card.flipped {
-transform: rotateY(180deg);
-}
-
-.card.matched .card-front {
-animation: matched 0.5s ease forwards;
+.card-inner {
+width: 100%;
+height: 100%;
+position: relative;
+border-radius: 16px;
 }
 
 .card-back, .card-front {
 position: absolute;
 inset: 0;
-border-radius: 18px;
-backface-visibility: hidden;
--webkit-backface-visibility: hidden;
+border-radius: 16px;
 display: flex;
 align-items: center;
 justify-content: center;
-box-shadow: var(–shadow);
+font-size: clamp(1.5rem, 6vw, 2.2rem);
+transition: opacity 0.3s ease, transform 0.3s ease;
+box-shadow: 0 6px 20px rgba(199,125,255,0.2);
 }
 
 .card-back {
-background: var(–card-back);
-font-size: 1.8rem;
+background: linear-gradient(135deg, #C77DFF, #FF6B9D);
+opacity: 1;
+transform: scale(1);
 }
 
-.card-back::before {
+.card-back::after {
 content: ‘⭐’;
-opacity: 0.6;
+font-size: 1.5rem;
+opacity: 0.7;
 }
 
 .card-front {
 background: white;
-transform: rotateY(180deg);
-font-size: clamp(1.6rem, 7vw, 2.4rem);
-border: 3px solid rgba(199,125,255,0.25);
+border: 2.5px solid rgba(199,125,255,0.3);
+opacity: 0;
+transform: scale(0.85);
 }
 
-.card:active {
+/* Flipped state */
+.card.flipped .card-back {
+opacity: 0;
+transform: scale(0.85);
+}
+
+.card.flipped .card-front {
+opacity: 1;
+transform: scale(1);
+}
+
+/* Matched state */
+.card.matched .card-front {
+background: linear-gradient(135deg, #fff0fa, #f0e6ff);
+border-color: var(–pink);
+animation: matchPop 0.4s ease;
+}
+
+.card.matched .card-back {
+opacity: 0;
+}
+
+/* Active press */
+.card:active .card-inner {
 transform: scale(0.93);
-}
-
-.card.flipped:active {
-transform: rotateY(180deg) scale(0.93);
+transition: transform 0.1s;
 }
 
 .btn {
-margin-top: 18px;
-padding: 14px 36px;
+margin-top: 14px;
+padding: 13px 32px;
 font-family: ‘Baloo 2’, cursive;
-font-size: 1.1rem;
+font-size: 1rem;
 font-weight: 800;
 border: none;
 border-radius: 50px;
@@ -165,13 +210,13 @@ background: linear-gradient(135deg, var(–pink), var(–purple));
 color: white;
 cursor: pointer;
 box-shadow: 0 6px 24px rgba(255,107,157,0.4);
-transition: transform 0.15s, box-shadow 0.15s;
 letter-spacing: 0.03em;
-animation: fadeIn 0.5s ease 0.4s both;
+width: 100%;
+max-width: 400px;
 }
 
 .btn:active {
-transform: scale(0.95);
+transform: scale(0.96);
 box-shadow: 0 2px 12px rgba(255,107,157,0.3);
 }
 
@@ -180,8 +225,7 @@ box-shadow: 0 2px 12px rgba(255,107,157,0.3);
 display: none;
 position: fixed;
 inset: 0;
-background: rgba(255,245,249,0.92);
-backdrop-filter: blur(8px);
+background: rgba(255,245,249,0.95);
 z-index: 100;
 flex-direction: column;
 align-items: center;
@@ -192,111 +236,61 @@ padding: 24px;
 
 .win-overlay.show {
 display: flex;
-animation: fadeIn 0.4s ease;
 }
 
 .win-emoji {
 font-size: 5rem;
-animation: spin 0.8s cubic-bezier(.36,.07,.19,.97);
-margin-bottom: 12px;
+margin-bottom: 10px;
+animation: spin 0.7s ease;
 }
 
 .win-title {
-font-size: 2.5rem;
+font-size: 2.8rem;
 font-weight: 800;
 background: linear-gradient(135deg, var(–pink), var(–purple));
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 background-clip: text;
-margin-bottom: 8px;
+margin-bottom: 6px;
 }
 
 .win-sub {
-font-size: 1.1rem;
+font-size: 1.05rem;
 color: #b97dd8;
-margin-bottom: 4px;
+margin-bottom: 6px;
 }
 
 .stars {
 font-size: 2.2rem;
-letter-spacing: 6px;
-margin: 12px 0 20px;
+letter-spacing: 4px;
+margin: 8px 0 18px;
 }
 
 /* Confetti */
 .confetti-piece {
 position: fixed;
-width: 12px;
-height: 12px;
-border-radius: 2px;
 top: -20px;
 animation: confettiFall linear forwards;
 z-index: 200;
 pointer-events: none;
+border-radius: 3px;
 }
 
-/* Difficulty selector */
-.difficulty {
-display: flex;
-gap: 8px;
-margin-bottom: 14px;
-animation: fadeDown 0.5s ease 0.2s both;
-}
-
-.diff-btn {
-padding: 6px 14px;
-border-radius: 20px;
-border: 2px solid var(–purple);
-background: white;
-color: var(–purple);
-font-family: ‘Baloo 2’, cursive;
-font-size: 0.85rem;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.2s;
-}
-
-.diff-btn.active, .diff-btn:active {
-background: var(–purple);
-color: white;
-}
-
-@keyframes bounceIn {
-0% { transform: scale(0.5); opacity: 0; }
-70% { transform: scale(1.1); }
-100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes fadeIn {
-from { opacity: 0; transform: translateY(10px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeDown {
-from { opacity: 0; transform: translateY(-10px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes matched {
-0% { transform: rotateY(0) scale(1); }
-30% { transform: scale(1.15); background: #FFF0F5; }
+@keyframes matchPop {
+0% { transform: scale(1); }
+40% { transform: scale(1.18); }
 100% { transform: scale(1); }
 }
 
 @keyframes spin {
-0% { transform: rotate(-20deg) scale(0.5); opacity: 0; }
-60% { transform: rotate(10deg) scale(1.2); opacity: 1; }
+0% { transform: rotate(-15deg) scale(0.5); opacity: 0; }
+60% { transform: rotate(8deg) scale(1.2); opacity: 1; }
 100% { transform: rotate(0) scale(1); }
 }
 
 @keyframes confettiFall {
 0% { transform: translateY(0) rotate(0deg); opacity: 1; }
 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-}
-
-@keyframes pulse {
-0%, 100% { transform: scale(1); }
-50% { transform: scale(1.05); }
 }
 </style>
 
@@ -324,9 +318,9 @@ to { opacity: 1; transform: translateY(0); }
 </div>
 
 <div class="difficulty">
-  <button class="diff-btn active" onclick="setDifficulty(4,4,this)">Klein (4×4)</button>
-  <button class="diff-btn" onclick="setDifficulty(4,3,this)">Mittel (4×3)</button>
-  <button class="diff-btn" onclick="setDifficulty(4,2,this)">Leicht (4×2)</button>
+  <button class="diff-btn" onclick="setDifficulty(4,2,this)">Leicht (8)</button>
+  <button class="diff-btn" onclick="setDifficulty(4,3,this)">Mittel (12)</button>
+  <button class="diff-btn active" onclick="setDifficulty(4,4,this)">Groß (16)</button>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -341,10 +335,11 @@ to { opacity: 1; transform: translateY(0); }
 </div>
 
 <script>
-const EMOJIS = ['🦋','🌈','🦄','🍭','🌸','🐱','🦊','🐸','🍉','🌺','🐬','🦁','🍦','🎀','🐧','🦩','🌻','🐼'];
+const EMOJIS = ['🦋','🌈','🦄','🍭','🌸','🐱','🦊','🐸','🍉','🌺','🐬','🦁','🍦','🎀','🐧','🦩'];
 let cols = 4, rows = 4;
-let cards = [], flipped = [], matched = 0, moves = 0, lockBoard = false;
+let flipped = [], matched = 0, moves = 0, lockBoard = false;
 let timerInterval, seconds = 0, gameStarted = false;
+let totalPairs = 0;
 
 function setDifficulty(c, r, btn) {
   document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
@@ -356,13 +351,13 @@ function setDifficulty(c, r, btn) {
 function initGame() {
   clearInterval(timerInterval);
   seconds = 0; moves = 0; matched = 0; gameStarted = false; lockBoard = false;
+  totalPairs = (cols * rows) / 2;
   document.getElementById('timer').textContent = '0s';
   document.getElementById('moves').textContent = '0';
-  const total = cols * rows;
-  document.getElementById('pairs').textContent = `0/${total/2}`;
+  document.getElementById('pairs').textContent = `0/${totalPairs}`;
 
-  const pairs = EMOJIS.slice(0, total / 2);
-  cards = shuffle([...pairs, ...pairs]);
+  const pairs = EMOJIS.slice(0, totalPairs);
+  const cards = shuffle([...pairs, ...pairs]);
 
   const grid = document.getElementById('grid');
   grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
@@ -371,9 +366,8 @@ function initGame() {
   cards.forEach((emoji, i) => {
     const card = document.createElement('div');
     card.className = 'card';
-    card.dataset.index = i;
     card.dataset.emoji = emoji;
-    card.innerHTML = `<div class="card-back"></div><div class="card-front">${emoji}</div>`;
+    card.innerHTML = `<div class="card-inner"><div class="card-back"></div><div class="card-front">${emoji}</div></div>`;
     card.addEventListener('click', () => flipCard(card));
     grid.appendChild(card);
   });
@@ -406,18 +400,17 @@ function flipCard(card) {
       a.classList.add('matched');
       b.classList.add('matched');
       matched++;
-      const total = cols * rows;
-      document.getElementById('pairs').textContent = `${matched}/${total/2}`;
+      document.getElementById('pairs').textContent = `${matched}/${totalPairs}`;
       flipped = [];
       lockBoard = false;
-      if (matched === total / 2) setTimeout(showWin, 500);
+      if (matched === totalPairs) setTimeout(showWin, 600);
     } else {
       setTimeout(() => {
         a.classList.remove('flipped');
         b.classList.remove('flipped');
         flipped = [];
         lockBoard = false;
-      }, 900);
+      }, 950);
     }
   }
 }
@@ -432,12 +425,11 @@ function shuffle(arr) {
 
 function showWin() {
   clearInterval(timerInterval);
-  const total = (cols * rows) / 2;
-  const ratio = moves / total;
-  let stars = ratio <= 1.3 ? '⭐⭐⭐' : ratio <= 2 ? '⭐⭐' : '⭐';
-  let msg = ratio <= 1.3 ? 'Wow, du bist ein Memory-Profi! 🏆' : ratio <= 2 ? 'Sehr gut gemacht! 👏' : 'Toll, du hast alle Paare gefunden! 🎊';
+  const ratio = moves / totalPairs;
+  const stars = ratio <= 1.4 ? '⭐⭐⭐' : ratio <= 2.2 ? '⭐⭐' : '⭐';
+  const msg = ratio <= 1.4 ? 'Wow, du bist ein Memory-Profi! 🏆' : ratio <= 2.2 ? 'Sehr gut gemacht! 👏' : 'Toll, alle Paare gefunden! 🎊';
   document.getElementById('winStars').textContent = stars;
-  document.getElementById('winMsg').innerHTML = `${msg}<br><small style="color:#b97dd8;font-size:0.85rem">${moves} Versuche • ${seconds}s</small>`;
+  document.getElementById('winMsg').innerHTML = `${msg}<br><small style="color:#b97dd8;font-size:0.85rem">${moves} Versuche · ${seconds}s</small>`;
   document.getElementById('winOverlay').classList.add('show');
   launchConfetti();
 }
@@ -449,16 +441,19 @@ function closeWin() {
 
 function launchConfetti() {
   const colors = ['#FF6B9D','#C77DFF','#FFD166','#06D6A0','#74C0FC','#FF8C69'];
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 70; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
-    el.style.left = Math.random() * 100 + 'vw';
-    el.style.background = colors[Math.floor(Math.random() * colors.length)];
-    el.style.width = (8 + Math.random() * 10) + 'px';
-    el.style.height = (8 + Math.random() * 10) + 'px';
-    el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-    el.style.animationDelay = (Math.random() * 0.5) + 's';
-    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    const size = 8 + Math.random() * 10;
+    el.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      width: ${size}px;
+      height: ${size}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      animation-duration: ${1.4 + Math.random() * 2}s;
+      animation-delay: ${Math.random() * 0.6}s;
+      border-radius: ${Math.random() > 0.5 ? '50%' : '3px'};
+    `;
     document.body.appendChild(el);
     el.addEventListener('animationend', () => el.remove());
   }
