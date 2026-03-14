@@ -4,50 +4,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🌸 Memory-Spiel 🌸</title>
+<title>🌸 Tinas Memory 🌸</title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --pink: #FF6B9D;
-    --purple: #C77DFF;
-    --yellow: #FFD166;
-    --mint: #06D6A0;
-    --bg: #FFF5F9;
-  }
-
-- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 body {
 font-family: ‘Baloo 2’, cursive;
-background: var(–bg);
 min-height: 100vh;
 display: flex;
 flex-direction: column;
 align-items: center;
-padding: 12px 10px 24px;
+padding: 14px 10px 28px;
+background: #fff8fe;
 background-image:
-radial-gradient(circle at 10% 20%, rgba(255,107,157,0.12) 0%, transparent 50%),
-radial-gradient(circle at 90% 80%, rgba(199,125,255,0.12) 0%, transparent 50%);
+radial-gradient(circle at 15% 15%, rgba(255,182,213,0.35) 0%, transparent 45%),
+radial-gradient(circle at 85% 85%, rgba(196,160,255,0.3) 0%, transparent 45%),
+radial-gradient(circle at 50% 50%, rgba(255,230,100,0.12) 0%, transparent 60%);
 }
 
 header {
 text-align: center;
-margin-bottom: 10px;
+margin-bottom: 12px;
 }
 
 header h1 {
-font-size: 2rem;
+font-size: 2.1rem;
 font-weight: 800;
-background: linear-gradient(135deg, var(–pink), var(–purple));
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-background-clip: text;
-line-height: 1.2;
+color: #d946a8;
+line-height: 1.15;
+text-shadow: 0 2px 8px rgba(217,70,168,0.2);
 }
 
 header p {
-font-size: 0.9rem;
-color: #b97dd8;
+font-size: 0.95rem;
+color: #a855f7;
+font-weight: 600;
 }
 
 .stats {
@@ -56,32 +48,30 @@ gap: 8px;
 margin-bottom: 10px;
 width: 100%;
 max-width: 400px;
-justify-content: center;
 }
 
 .stat-box {
 background: white;
 border-radius: 14px;
-padding: 6px 14px;
-box-shadow: 0 4px 16px rgba(199,125,255,0.15);
+padding: 7px 10px;
+box-shadow: 0 3px 12px rgba(168,85,247,0.15);
 text-align: center;
-border: 2px solid rgba(199,125,255,0.2);
+border: 2px solid rgba(168,85,247,0.18);
 flex: 1;
-max-width: 110px;
 }
 
 .stat-box .label {
-font-size: 0.6rem;
-color: #b97dd8;
+font-size: 0.58rem;
+color: #a855f7;
 text-transform: uppercase;
-letter-spacing: 0.08em;
-font-weight: 600;
+letter-spacing: 0.07em;
+font-weight: 700;
 }
 
 .stat-box .value {
-font-size: 1.3rem;
+font-size: 1.35rem;
 font-weight: 800;
-color: var(–purple);
+color: #d946a8;
 line-height: 1.1;
 }
 
@@ -91,30 +81,28 @@ gap: 6px;
 margin-bottom: 10px;
 width: 100%;
 max-width: 400px;
-justify-content: center;
 }
 
 .diff-btn {
-padding: 6px 12px;
+flex: 1;
+padding: 7px 4px;
 border-radius: 20px;
-border: 2px solid var(–purple);
-background: white;
-color: var(–purple);
+border: 2.5px solid #a855f7;
+background: #f3e8ff;
+color: #7c3aed;
 font-family: ‘Baloo 2’, cursive;
-font-size: 0.8rem;
+font-size: 0.78rem;
 font-weight: 700;
 cursor: pointer;
-transition: all 0.2s;
-flex: 1;
-max-width: 110px;
+white-space: nowrap;
 }
 
 .diff-btn.active {
-background: var(–purple);
+background: #a855f7;
 color: white;
+border-color: #a855f7;
 }
 
-/* GRID */
 .grid {
 display: grid;
 gap: 8px;
@@ -122,14 +110,13 @@ width: 100%;
 max-width: 400px;
 }
 
-/* CARD — iOS-safe flip using opacity swap instead of 3D transform */
 .card {
 position: relative;
 aspect-ratio: 1;
 cursor: pointer;
 border-radius: 16px;
-user-select: none;
 -webkit-user-select: none;
+user-select: none;
 }
 
 .card-inner {
@@ -146,150 +133,110 @@ border-radius: 16px;
 display: flex;
 align-items: center;
 justify-content: center;
-font-size: clamp(1.5rem, 6vw, 2.2rem);
-transition: opacity 0.3s ease, transform 0.3s ease;
-box-shadow: 0 6px 20px rgba(199,125,255,0.2);
+transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
 .card-back {
-background: linear-gradient(135deg, #C77DFF, #FF6B9D);
+background: linear-gradient(145deg, #f472b6, #818cf8);
+box-shadow: 0 4px 14px rgba(129,140,248,0.35);
 opacity: 1;
 transform: scale(1);
+font-size: 1.6rem;
 }
 
 .card-back::after {
-content: ‘⭐’;
-font-size: 1.5rem;
-opacity: 0.7;
+content: ‘🌟’;
 }
 
 .card-front {
-background: white;
-border: 2.5px solid rgba(199,125,255,0.3);
+background: #fffbea;
+border: 3px solid #fcd34d;
+box-shadow: 0 4px 14px rgba(252,211,77,0.3);
 opacity: 0;
-transform: scale(0.85);
+transform: scale(0.82);
+font-size: clamp(1.9rem, 7.5vw, 2.6rem);
+line-height: 1;
 }
 
-/* Flipped state */
 .card.flipped .card-back {
 opacity: 0;
-transform: scale(0.85);
+transform: scale(0.82);
 }
-
 .card.flipped .card-front {
 opacity: 1;
 transform: scale(1);
 }
 
-/* Matched state */
+.card.matched .card-back { opacity: 0; transform: scale(0.82); }
 .card.matched .card-front {
-background: linear-gradient(135deg, #fff0fa, #f0e6ff);
-border-color: var(–pink);
-animation: matchPop 0.4s ease;
+background: #f0fdf4;
+border-color: #4ade80;
+box-shadow: 0 4px 14px rgba(74,222,128,0.35);
+animation: matchPop 0.45s ease;
 }
 
-.card.matched .card-back {
-opacity: 0;
-}
-
-/* Active press */
 .card:active .card-inner {
-transform: scale(0.93);
-transition: transform 0.1s;
+transform: scale(0.91);
+transition: transform 0.08s;
 }
 
 .btn {
 margin-top: 14px;
-padding: 13px 32px;
+padding: 14px 0;
 font-family: ‘Baloo 2’, cursive;
-font-size: 1rem;
+font-size: 1.05rem;
 font-weight: 800;
 border: none;
 border-radius: 50px;
-background: linear-gradient(135deg, var(–pink), var(–purple));
+background: linear-gradient(135deg, #f472b6, #a855f7);
 color: white;
 cursor: pointer;
-box-shadow: 0 6px 24px rgba(255,107,157,0.4);
-letter-spacing: 0.03em;
+box-shadow: 0 6px 20px rgba(168,85,247,0.4);
 width: 100%;
 max-width: 400px;
+letter-spacing: 0.02em;
 }
+.btn:active { transform: scale(0.96); }
 
-.btn:active {
-transform: scale(0.96);
-box-shadow: 0 2px 12px rgba(255,107,157,0.3);
-}
-
-/* Win overlay */
 .win-overlay {
 display: none;
 position: fixed;
 inset: 0;
-background: rgba(255,245,249,0.95);
+background: rgba(255,248,254,0.96);
 z-index: 100;
 flex-direction: column;
 align-items: center;
 justify-content: center;
 text-align: center;
-padding: 24px;
+padding: 28px;
 }
+.win-overlay.show { display: flex; }
 
-.win-overlay.show {
-display: flex;
-}
+.win-emoji { font-size: 5rem; margin-bottom: 10px; animation: spinIn 0.6s ease; }
+.win-title { font-size: 2.6rem; font-weight: 800; color: #d946a8; margin-bottom: 6px; }
+.win-sub { font-size: 1rem; color: #a855f7; margin-bottom: 4px; }
+.stars { font-size: 2.4rem; letter-spacing: 5px; margin: 10px 0 20px; }
 
-.win-emoji {
-font-size: 5rem;
-margin-bottom: 10px;
-animation: spin 0.7s ease;
-}
-
-.win-title {
-font-size: 2.8rem;
-font-weight: 800;
-background: linear-gradient(135deg, var(–pink), var(–purple));
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-background-clip: text;
-margin-bottom: 6px;
-}
-
-.win-sub {
-font-size: 1.05rem;
-color: #b97dd8;
-margin-bottom: 6px;
-}
-
-.stars {
-font-size: 2.2rem;
-letter-spacing: 4px;
-margin: 8px 0 18px;
-}
-
-/* Confetti */
 .confetti-piece {
 position: fixed;
 top: -20px;
 animation: confettiFall linear forwards;
 z-index: 200;
 pointer-events: none;
-border-radius: 3px;
 }
 
 @keyframes matchPop {
-0% { transform: scale(1); }
-40% { transform: scale(1.18); }
+0%   { transform: scale(1); }
+40%  { transform: scale(1.2); }
 100% { transform: scale(1); }
 }
-
-@keyframes spin {
-0% { transform: rotate(-15deg) scale(0.5); opacity: 0; }
-60% { transform: rotate(8deg) scale(1.2); opacity: 1; }
+@keyframes spinIn {
+0%   { transform: rotate(-15deg) scale(0.4); opacity: 0; }
+65%  { transform: rotate(8deg) scale(1.15); opacity: 1; }
 100% { transform: rotate(0) scale(1); }
 }
-
 @keyframes confettiFall {
-0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
 }
 </style>
@@ -298,7 +245,7 @@ border-radius: 3px;
 <body>
 
 <header>
-  <h1>🌸 Memory 🌸</h1>
+  <h1>🌸 Tinas Memory 🌸</h1>
   <p>Finde alle Paare!</p>
 </header>
 
@@ -328,8 +275,8 @@ border-radius: 3px;
 
 <div class="win-overlay" id="winOverlay">
   <div class="win-emoji">🎉</div>
-  <div class="win-title">Gewonnen!</div>
-  <div class="win-sub" id="winMsg">Super gemacht!</div>
+  <div class="win-title">Super Tina!</div>
+  <div class="win-sub" id="winMsg"></div>
   <div class="stars" id="winStars">⭐⭐⭐</div>
   <button class="btn" onclick="closeWin()">🎮 Nochmal spielen!</button>
 </div>
@@ -338,8 +285,7 @@ border-radius: 3px;
 const EMOJIS = ['🦋','🌈','🦄','🍭','🌸','🐱','🦊','🐸','🍉','🌺','🐬','🦁','🍦','🎀','🐧','🦩'];
 let cols = 4, rows = 4;
 let flipped = [], matched = 0, moves = 0, lockBoard = false;
-let timerInterval, seconds = 0, gameStarted = false;
-let totalPairs = 0;
+let timerInterval, seconds = 0, gameStarted = false, totalPairs = 0;
 
 function setDifficulty(c, r, btn) {
   document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
@@ -354,21 +300,21 @@ function initGame() {
   totalPairs = (cols * rows) / 2;
   document.getElementById('timer').textContent = '0s';
   document.getElementById('moves').textContent = '0';
-  document.getElementById('pairs').textContent = `0/${totalPairs}`;
+  document.getElementById('pairs').textContent = '0/' + totalPairs;
 
-  const pairs = EMOJIS.slice(0, totalPairs);
-  const cards = shuffle([...pairs, ...pairs]);
+  const emojis = shuffle([...EMOJIS]).slice(0, totalPairs);
+  const cards = shuffle([...emojis, ...emojis]);
 
   const grid = document.getElementById('grid');
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
   grid.innerHTML = '';
 
-  cards.forEach((emoji, i) => {
+  cards.forEach(function(emoji) {
     const card = document.createElement('div');
     card.className = 'card';
     card.dataset.emoji = emoji;
-    card.innerHTML = `<div class="card-inner"><div class="card-back"></div><div class="card-front">${emoji}</div></div>`;
-    card.addEventListener('click', () => flipCard(card));
+    card.innerHTML = '<div class="card-inner"><div class="card-back"></div><div class="card-front">' + emoji + '</div></div>';
+    card.addEventListener('click', function() { flipCard(card); });
     grid.appendChild(card);
   });
 
@@ -376,12 +322,11 @@ function initGame() {
 }
 
 function flipCard(card) {
-  if (lockBoard) return;
-  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  if (lockBoard || card.classList.contains('flipped') || card.classList.contains('matched')) return;
 
   if (!gameStarted) {
     gameStarted = true;
-    timerInterval = setInterval(() => {
+    timerInterval = setInterval(function() {
       seconds++;
       document.getElementById('timer').textContent = seconds + 's';
     }, 1000);
@@ -394,22 +339,19 @@ function flipCard(card) {
     moves++;
     document.getElementById('moves').textContent = moves;
     lockBoard = true;
-
-    const [a, b] = flipped;
+    const a = flipped[0], b = flipped[1];
     if (a.dataset.emoji === b.dataset.emoji) {
       a.classList.add('matched');
       b.classList.add('matched');
       matched++;
-      document.getElementById('pairs').textContent = `${matched}/${totalPairs}`;
-      flipped = [];
-      lockBoard = false;
+      document.getElementById('pairs').textContent = matched + '/' + totalPairs;
+      flipped = []; lockBoard = false;
       if (matched === totalPairs) setTimeout(showWin, 600);
     } else {
-      setTimeout(() => {
+      setTimeout(function() {
         a.classList.remove('flipped');
         b.classList.remove('flipped');
-        flipped = [];
-        lockBoard = false;
+        flipped = []; lockBoard = false;
       }, 950);
     }
   }
@@ -418,7 +360,7 @@ function flipCard(card) {
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
   }
   return arr;
 }
@@ -427,9 +369,9 @@ function showWin() {
   clearInterval(timerInterval);
   const ratio = moves / totalPairs;
   const stars = ratio <= 1.4 ? '⭐⭐⭐' : ratio <= 2.2 ? '⭐⭐' : '⭐';
-  const msg = ratio <= 1.4 ? 'Wow, du bist ein Memory-Profi! 🏆' : ratio <= 2.2 ? 'Sehr gut gemacht! 👏' : 'Toll, alle Paare gefunden! 🎊';
+  const msg = ratio <= 1.4 ? 'Wow, du bist ein Memory-Profi! 🏆' : ratio <= 2.2 ? 'Sehr gut gemacht! 👏' : 'Alle Paare gefunden! 🎊';
   document.getElementById('winStars').textContent = stars;
-  document.getElementById('winMsg').innerHTML = `${msg}<br><small style="color:#b97dd8;font-size:0.85rem">${moves} Versuche · ${seconds}s</small>`;
+  document.getElementById('winMsg').innerHTML = msg + '<br><small style="color:#a855f7;font-size:0.85rem">' + moves + ' Versuche · ' + seconds + 's</small>';
   document.getElementById('winOverlay').classList.add('show');
   launchConfetti();
 }
@@ -440,22 +382,14 @@ function closeWin() {
 }
 
 function launchConfetti() {
-  const colors = ['#FF6B9D','#C77DFF','#FFD166','#06D6A0','#74C0FC','#FF8C69'];
+  const colors = ['#f472b6','#a855f7','#fcd34d','#4ade80','#60a5fa','#fb923c'];
   for (let i = 0; i < 70; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
-    const size = 8 + Math.random() * 10;
-    el.style.cssText = `
-      left: ${Math.random() * 100}vw;
-      width: ${size}px;
-      height: ${size}px;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      animation-duration: ${1.4 + Math.random() * 2}s;
-      animation-delay: ${Math.random() * 0.6}s;
-      border-radius: ${Math.random() > 0.5 ? '50%' : '3px'};
-    `;
+    const size = 7 + Math.random() * 11;
+    el.style.cssText = 'left:' + (Math.random()*100) + 'vw;width:' + size + 'px;height:' + size + 'px;background:' + colors[Math.floor(Math.random()*colors.length)] + ';animation-duration:' + (1.4+Math.random()*2) + 's;animation-delay:' + (Math.random()*0.6) + 's;border-radius:' + (Math.random()>0.5?'50%':'3px') + ';';
     document.body.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
+    el.addEventListener('animationend', function() { el.remove(); });
   }
 }
 
