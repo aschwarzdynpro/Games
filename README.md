@@ -26,12 +26,18 @@ Konkurrenz es tut.
 - 50 Werbekunden mit Mindestquote, Zielgruppe, Frist und Konventionalstrafe
 - Quotenberechnung über sechs Zielgruppen mit eigener Tagesganglinie, Genre-Vorlieben,
   Trailer-Effekt, Zuschauerfluss und dem Programm der Konkurrenz
-- Sammy Awards, Auktionen, Bombendrohungen, Gerichtsvollzieher, Eigenproduktionen,
-  Sendemasten und Satellit
-- Drei Schwierigkeitsgrade, Speicherstand im Browser
+- Täglich schwankende Genre-Konjunktur; Serien binden ihr Publikum an einen festen Sendeplatz
+- Zielgruppen-Auswertung nach jedem gesendeten Block
+- Sammy Awards, Auktionen mit mitbietender Konkurrenz, Bombendrohungen, Gerichtsvollzieher,
+  Eigenproduktionen, Sendemasten, Satellit, Starmoderatoren und Exklusivpakete
+- Drei Schwierigkeitsgrade, drei Speicherslots plus Autospeichern beim Tagesabschluss
 
 **Steuerung:** Tasten 1–8 springen in die wichtigsten Räume, Leertaste pausiert,
-Escape verlässt einen Raum.
+Escape verlässt einen Raum. Alle Listen und Sendeplätze sind auch mit Tabulator und
+Enter bedienbar.
+
+**Echtzeitdruck** lässt sich im Menü abschalten: dann halten Auswahldialoge die Uhr an
+und der Fahrstuhl kostet kaum Sendetag.
 
 Alle Filmtitel, Marken und Personen sind frei erfunden — es handelt sich um eine
 eigenständige Nachbildung der Spielmechanik, nicht um eine Portierung.
