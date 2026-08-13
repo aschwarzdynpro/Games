@@ -1,0 +1,2766 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mad TV — Der Sendermanager</title>
+<style>
+:root{
+  --bg:#0e1116;
+  --bg2:#151a22;
+  --panel:#1b212b;
+  --panel2:#222a36;
+  --line:#2e3846;
+  --line2:#3b4757;
+  --txt:#e6ebf2;
+  --dim:#93a1b3;
+  --dim2:#6b7a8d;
+  --acc:#5aa9ff;
+  --acc2:#7c5cff;
+  --ok:#3ddc97;
+  --warn:#ffc857;
+  --bad:#ff6b6b;
+  --gold:#f5c451;
+  --love:#ff5d8f;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  font-size:14px;
+  line-height:1.45;
+  overflow:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
+input,select{font:inherit;color:inherit;}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px;}
+
+/* ─────────── Layout ─────────── */
+#app{display:flex;flex-direction:column;height:100dvh;}
+
+/* ─────────── Topbar ─────────── */
+#topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;background:var(--bg2);
+  border-bottom:1px solid var(--line);
+  flex-wrap:wrap;flex-shrink:0;
+}
+.brand{font-weight:800;letter-spacing:.02em;font-size:15px;white-space:nowrap;}
+.brand span{color:var(--acc);}
+.stat{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
+.stat .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);}
+.stat .v{font-size:13px;font-weight:700;white-space:nowrap;}
+.stat.money .v{color:var(--ok);} .stat.money.neg .v{color:var(--bad);}
+.stat.img .v{color:var(--acc);}
+.stat.love .v{color:var(--love);}
+.spacer{flex:1 1 auto;}
+.speedbtns{display:flex;gap:3px;background:var(--panel);border-radius:8px;padding:3px;}
+.speedbtns button{
+  padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--dim);
+}
+.speedbtns button.on{background:var(--acc);color:#04121f;}
+.iconbtn{
+  padding:5px 9px;border-radius:8px;background:var(--panel);
+  border:1px solid var(--line);font-size:12px;color:var(--dim);
+}
+.iconbtn:hover{border-color:var(--line2);color:var(--txt);}
+
+/* clock */
+.clock{
+  font-variant-numeric:tabular-nums;font-weight:800;font-size:17px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:2px 10px;letter-spacing:.03em;
+}
+.clock.late{color:var(--warn);border-color:#4a3d1c;}
+.clock.onair{color:var(--bad);}
+
+/* ─────────── Main ─────────── */
+#main{flex:1 1 auto;overflow:auto;position:relative;}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 12px 90px;}
+
+/* ─────────── Tower ─────────── */
+.tower{display:flex;gap:10px;align-items:stretch;}
+.shaft{
+  width:54px;flex-shrink:0;position:relative;
+  background:linear-gradient(180deg,#11151c,#0d1116);
+  border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;
+}
+.shaft .rail{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--line);transform:translateX(-50%);}
+.cab{
+  position:absolute;left:5px;right:5px;height:38px;
+  background:linear-gradient(180deg,#33405280,#1f2732);
+  border:1px solid var(--acc);border-radius:6px;
+  transition:top .18s linear;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 14px rgba(90,169,255,.25);
+}
+.cab .dot{width:8px;height:8px;border-radius:50%;background:var(--acc);}
+.cab.moving .dot{animation:blink .5s infinite;}
+@keyframes blink{50%{opacity:.2;}}
+.floors{flex:1 1 auto;display:flex;flex-direction:column;gap:4px;}
+.floor{
+  height:42px;display:flex;align-items:center;gap:10px;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r);padding:0 12px;cursor:pointer;
+  transition:background .12s,border-color .12s,transform .12s;
+}
+.floor:hover{background:var(--panel2);border-color:var(--line2);}
+.floor.here{border-color:var(--acc);background:#1b2634;}
+.floor .num{
+  font-size:10px;color:var(--dim2);width:20px;font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.floor .ico{font-size:17px;width:24px;text-align:center;}
+.floor .nm{font-weight:600;font-size:13px;}
+.floor .sub{font-size:10.5px;color:var(--dim2);margin-left:auto;text-align:right;}
+.floor .badge{
+  background:var(--bad);color:#fff;font-size:9px;font-weight:800;
+  border-radius:20px;padding:1px 6px;margin-left:6px;
+}
+
+/* ─────────── Room screens ─────────── */
+.room{animation:fade .16s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}}
+.roomhead{
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid var(--line);
+}
+.roomhead .ico{font-size:26px;}
+.roomhead h2{font-size:18px;font-weight:800;letter-spacing:-.01em;}
+.roomhead p{font-size:11.5px;color:var(--dim2);}
+.backbtn{
+  margin-left:auto;padding:6px 12px;border-radius:8px;
+  background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:600;
+}
+.backbtn:hover{border-color:var(--acc);color:var(--acc);}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r);padding:12px;margin-bottom:10px;
+}
+.card h3{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin-bottom:8px;font-weight:700;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+.btn{
+  padding:7px 13px;border-radius:8px;font-size:12.5px;font-weight:700;
+  background:var(--acc);color:#04121f;transition:filter .12s;
+}
+.btn:hover{filter:brightness(1.12);}
+.btn:disabled{opacity:.35;cursor:not-allowed;filter:none;}
+.btn.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line2);}
+.btn.sm{padding:4px 9px;font-size:11px;border-radius:6px;}
+.btn.danger{background:var(--bad);color:#2a0808;}
+.btn.gold{background:var(--gold);color:#2a1e04;}
+.btn.love{background:var(--love);color:#2d0713;}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+/* lists */
+.list{display:flex;flex-direction:column;gap:6px;max-height:none;}
+.item{
+  display:flex;align-items:center;gap:9px;
+  background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;
+  transition:border-color .12s,background .12s;
+}
+.item:hover{border-color:var(--line2);}
+.item.sel{border-color:var(--acc);background:#1d2836;}
+.item .t{font-weight:600;font-size:12.5px;}
+.item .m{font-size:10.5px;color:var(--dim2);}
+.item .r{margin-left:auto;text-align:right;flex-shrink:0;}
+.tag{
+  display:inline-block;font-size:9.5px;font-weight:700;padding:1px 6px;
+  border-radius:4px;background:var(--line);color:var(--dim);
+  text-transform:uppercase;letter-spacing:.04em;
+}
+.tag.g{background:#173a2b;color:var(--ok);}
+.tag.w{background:#3d3117;color:var(--warn);}
+.tag.b{background:#3d1b1b;color:var(--bad);}
+.tag.a{background:#16304d;color:var(--acc);}
+.tag.p{background:#2a1f4d;color:#b9a5ff;}
+
+.bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;min-width:44px;}
+.bar>i{display:block;height:100%;border-radius:3px;background:var(--acc);}
+.statline{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim2);}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+table.tbl th{
+  text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--dim2);padding:4px 6px;border-bottom:1px solid var(--line);font-weight:700;
+}
+table.tbl td{padding:5px 6px;border-bottom:1px solid #232b36;}
+table.tbl tr:last-child td{border-bottom:none;}
+.num{font-variant-numeric:tabular-nums;}
+.right{text-align:right;}
+.ok{color:var(--ok);} .bad{color:var(--bad);} .warn{color:var(--warn);}
+.dim{color:var(--dim2);} .acc{color:var(--acc);}
+
+/* ─────────── Schedule ─────────── */
+.sched{display:flex;flex-direction:column;gap:5px;}
+.slotrow{display:flex;gap:5px;align-items:stretch;}
+.slotrow .hr{
+  width:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:var(--dim2);background:var(--bg2);
+  border:1px solid var(--line);border-radius:7px;font-variant-numeric:tabular-nums;
+}
+.slotrow .hr.prime{color:var(--gold);border-color:#4a3d1c;}
+.slot{
+  flex:1 1 auto;min-width:0;min-height:44px;
+  background:var(--bg2);border:1px dashed var(--line2);border-radius:7px;
+  padding:5px 8px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;
+  transition:border-color .12s,background .12s;
+}
+.slot:hover{border-color:var(--acc);}
+.slot.filled{border-style:solid;background:var(--panel2);}
+.slot.aired{opacity:.62;cursor:default;border-style:solid;}
+.slot.adslot{flex:0 0 140px;}
+@media(max-width:660px){.slot.adslot{flex:0 0 96px;}}
+.slot .st{font-size:11.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.slot .ss{font-size:9.5px;color:var(--dim2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.slot .empty{font-size:10.5px;color:var(--dim2);text-align:center;}
+.slot.ok{border-color:#2b5c48;}
+.slot.warn{border-color:#5c4c22;}
+.slot.bad{border-color:#5c2b2b;}
+.picking .slot{border-color:var(--acc);background:#16202c;}
+
+.newsband{
+  display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--dim2);
+  background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:5px 9px;
+}
+
+/* ─────────── Bottom nav ─────────── */
+#bottom{
+  flex-shrink:0;display:flex;gap:6px;padding:8px 12px;
+  background:var(--bg2);border-top:1px solid var(--line);
+  overflow-x:auto;
+}
+#bottom button{
+  flex:0 0 auto;padding:6px 11px;border-radius:8px;font-size:11.5px;font-weight:600;
+  background:var(--panel);border:1px solid var(--line);color:var(--dim);white-space:nowrap;
+}
+#bottom button:hover{border-color:var(--line2);color:var(--txt);}
+#bottom button.on{border-color:var(--acc);color:var(--acc);}
+
+/* ─────────── Modal ─────────── */
+#modal{
+  position:fixed;inset:0;z-index:100;background:rgba(6,9,13,.78);
+  display:none;align-items:center;justify-content:center;padding:16px;
+  backdrop-filter:blur(3px);
+}
+#modal.on{display:flex;}
+.mbox{
+  background:var(--panel);border:1px solid var(--line2);border-radius:14px;
+  max-width:520px;width:100%;max-height:86vh;overflow:auto;
+  padding:18px;animation:pop .18s ease;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+@keyframes pop{from{transform:scale(.95);opacity:0;}}
+.mbox .mh{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.mbox .mh .ico{font-size:28px;}
+.mbox h3{font-size:16px;font-weight:800;}
+.mbox .who{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.06em;}
+.mbox p{font-size:13px;color:var(--dim);margin-bottom:10px;}
+.mbox .mf{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;}
+
+/* ─────────── Toasts ─────────── */
+#toasts{position:fixed;right:12px;top:60px;z-index:90;display:flex;flex-direction:column;gap:6px;max-width:min(330px,84vw);}
+.toast{
+  background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--acc);
+  border-radius:8px;padding:8px 11px;font-size:12px;
+  animation:slidein .2s ease;box-shadow:0 6px 20px rgba(0,0,0,.4);
+}
+.toast.good{border-left-color:var(--ok);}
+.toast.bad{border-left-color:var(--bad);}
+.toast.warn{border-left-color:var(--warn);}
+.toast .tt{font-weight:700;font-size:11.5px;margin-bottom:1px;}
+.toast .td{color:var(--dim);font-size:11px;}
+@keyframes slidein{from{transform:translateX(22px);opacity:0;}}
+
+/* ─────────── Start screen ─────────── */
+#start{
+  position:fixed;inset:0;z-index:200;background:radial-gradient(ellipse at 50% 0%,#1b2436,#0b0e13 70%);
+  display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;
+}
+#start .sbox{max-width:560px;width:100%;text-align:center;padding:20px 0;}
+#start h1{font-size:40px;font-weight:900;letter-spacing:-.03em;line-height:1;}
+#start h1 span{color:var(--acc);}
+#start .sub{color:var(--dim2);font-size:13px;margin:6px 0 22px;}
+.optrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;}
+.opt{
+  padding:9px 14px;border-radius:10px;background:var(--panel);
+  border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--dim);
+}
+.opt.on{border-color:var(--acc);color:var(--acc);background:#182231;}
+.opt small{display:block;font-size:10px;color:var(--dim2);font-weight:400;margin-top:1px;}
+#start .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim2);margin-bottom:6px;}
+#start input[type=text]{
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:9px 12px;width:230px;text-align:center;font-size:13px;font-weight:600;
+}
+#start .go{
+  margin-top:20px;padding:12px 34px;border-radius:11px;font-size:15px;font-weight:800;
+  background:var(--acc);color:#04121f;
+}
+#start .foot{margin-top:18px;font-size:10.5px;color:var(--dim2);line-height:1.6;}
+
+/* ─────────── Misc ─────────── */
+.empty-note{color:var(--dim2);font-size:12px;text-align:center;padding:14px;}
+.hint{font-size:11px;color:var(--dim2);margin-top:6px;line-height:1.5;}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;}
+.kpi .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim2);}
+.kpi .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2;}
+.kpi .d{font-size:10.5px;color:var(--dim2);}
+.chart{display:flex;align-items:flex-end;gap:3px;height:78px;padding-top:4px;}
+.chart .col{flex:1 1 0;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;min-width:0;}
+.chart .col i{display:block;border-radius:2px 2px 0 0;}
+.chart .lab{font-size:8.5px;color:var(--dim2);text-align:center;margin-top:3px;}
+.legend{display:flex;gap:12px;font-size:10.5px;color:var(--dim2);margin-top:6px;flex-wrap:wrap;}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+.pers{display:flex;gap:12px;align-items:center;}
+.avatar{
+  width:64px;height:64px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:34px;
+  background:var(--panel2);border:1px solid var(--line2);
+}
+.avatar.betty{background:linear-gradient(160deg,#3a1830,#241426);border-color:#5c2e4a;}
+.avatar.boss{background:linear-gradient(160deg,#2c2418,#1d1a12);border-color:#4d4128;}
+.heart{color:var(--love);}
+</style>
+</head>
+<body>
+
+<div id="start"></div>
+
+<div id="app">
+  <div id="topbar"></div>
+  <div id="main"><div class="wrap" id="view"></div></div>
+  <div id="bottom"></div>
+</div>
+
+<div id="toasts"></div>
+<div id="modal"><div class="mbox" id="mbox"></div></div>
+
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════
+   MAD TV — Der Sendermanager
+   Eine Hommage an "Mad TV" (Rainbow Arts, 1991).
+   Eigenständige Nachbildung der Spielmechanik, eigene Inhalte.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─────────────── Hilfsfunktionen ─────────────── */
+function rnd(){ return Math.random(); }
+function ri(a,b){ return a + Math.floor(rnd()*(b-a+1)); }
+function pick(a){ return a[Math.floor(rnd()*a.length)]; }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function hash(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0)/4294967295; }
+function money(n){
+  const s = Math.abs(Math.round(n)).toLocaleString('de-DE');
+  return (n<0?'−':'') + s + ' €';
+}
+function moneyShort(n){
+  const a = Math.abs(n);
+  if(a >= 1e6) return (n<0?'−':'') + (a/1e6).toFixed(a>=1e7?0:1).replace('.',',') + ' Mio €';
+  if(a >= 1000) return (n<0?'−':'') + Math.round(a/1000) + 'k €';
+  return money(n);
+}
+function viewers(n){
+  if(n >= 1e6) return (n/1e6).toFixed(2).replace('.',',') + ' Mio';
+  if(n >= 1000) return Math.round(n/1000) + '.000';
+  return String(Math.round(n));
+}
+function pct(n,d){ return (n*100).toFixed(d===undefined?1:d).replace('.',',') + '%'; }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function hhmm(min){
+  const h = Math.floor(min/60)%24, m = min%60;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+function el(id){ return document.getElementById(id); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 1 — STAMMDATEN
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Zuschauer-Zielgruppen ───
+   share  = Anteil an der Gesamtbevölkerung
+   act    = Fernsehneigung je Sendeblock (18,19,20,21,22,23,0 Uhr)       */
+const GROUPS = [
+  { id:'kind', name:'Kinder',       ico:'🧒', share:0.11, act:[0.58,0.46,0.24,0.07,0.02,0.01,0.00] },
+  { id:'teen', name:'Jugendliche',  ico:'🧑', share:0.14, act:[0.30,0.40,0.50,0.56,0.52,0.42,0.26] },
+  { id:'haus', name:'Hausfrauen',   ico:'🧺', share:0.16, act:[0.46,0.56,0.60,0.54,0.38,0.24,0.09] },
+  { id:'ang',  name:'Angestellte',  ico:'💼', share:0.30, act:[0.24,0.40,0.60,0.63,0.50,0.34,0.17] },
+  { id:'rent', name:'Rentner',      ico:'👴', share:0.19, act:[0.52,0.61,0.62,0.49,0.29,0.14,0.05] },
+  { id:'arbl', name:'Arbeitslose',  ico:'🛋️', share:0.10, act:[0.40,0.46,0.51,0.53,0.51,0.46,0.36] }
+];
+const GIDX = {}; GROUPS.forEach((g,i)=>GIDX[g.id]=i);
+
+/* ─── Genres ───
+   aff   = Attraktivität je Zielgruppe (Reihenfolge wie GROUPS)
+   krit  = Neigung zu guter Kritikerwertung
+   fsk   = Basis-Altersfreigabe
+   kult  = zählt als Kultursendung (für Betty & Sammy)                    */
+const GENRES = {
+  action:  { name:'Action',      ico:'💥', aff:[0.5,1.35,0.5,1.15,0.5,1.20], krit:-0.15, fsk:16, kult:0 },
+  komoed:  { name:'Komödie',     ico:'😄', aff:[1.0,1.15,1.20,1.15,0.95,1.15], krit:0.00, fsk:6,  kult:0 },
+  drama:   { name:'Drama',       ico:'🎭', aff:[0.2,0.55,1.25,1.10,1.15,0.75], krit:0.30, fsk:12, kult:0 },
+  horror:  { name:'Horror',      ico:'🧟', aff:[0.1,1.40,0.35,0.85,0.20,1.05], krit:-0.20, fsk:18, kult:0 },
+  scifi:   { name:'Science Fiction', ico:'🚀', aff:[0.8,1.35,0.45,1.05,0.35,1.10], krit:0.05, fsk:12, kult:0 },
+  krimi:   { name:'Krimi',       ico:'🔍', aff:[0.2,0.85,1.10,1.25,1.25,0.95], krit:0.15, fsk:12, kult:0 },
+  liebe:   { name:'Liebesfilm',  ico:'💞', aff:[0.3,0.70,1.45,0.80,1.15,0.85], krit:0.00, fsk:6,  kult:0 },
+  western: { name:'Western',     ico:'🤠', aff:[0.5,0.60,0.55,0.95,1.40,0.90], krit:0.05, fsk:12, kult:0 },
+  doku:    { name:'Dokumentation', ico:'🌍', aff:[0.5,0.45,0.80,1.05,1.20,0.60], krit:0.45, fsk:0,  kult:1 },
+  trick:   { name:'Trickfilm',   ico:'🐭', aff:[1.60,0.75,0.85,0.55,0.45,0.65], krit:0.10, fsk:0,  kult:0 },
+  erotik:  { name:'Erotik',      ico:'🌶️', aff:[0.0,1.10,0.35,1.00,0.45,1.15], krit:-0.35, fsk:18, kult:0 },
+  sport:   { name:'Sport',       ico:'⚽', aff:[0.6,1.15,0.45,1.20,0.95,1.05], krit:0.00, fsk:0,  kult:0 },
+  musik:   { name:'Musik',       ico:'🎵', aff:[0.6,1.25,0.90,0.90,0.70,0.85], krit:0.20, fsk:6,  kult:0 },
+  show:    { name:'Show',        ico:'✨', aff:[0.9,1.00,1.30,1.05,1.10,1.10], krit:-0.10, fsk:6,  kult:0 },
+  quiz:    { name:'Quizshow',    ico:'❓', aff:[0.7,0.75,1.25,1.10,1.30,1.00], krit:0.00, fsk:0,  kult:0 },
+  talk:    { name:'Talkshow',    ico:'🎙️', aff:[0.1,0.60,1.20,1.05,1.05,1.05], krit:0.15, fsk:12, kult:0 },
+  kultur:  { name:'Kultur',      ico:'🏛️', aff:[0.1,0.30,0.70,0.85,1.15,0.45], krit:0.60, fsk:0,  kult:1 },
+  serie:   { name:'Serie',       ico:'📺', aff:[0.8,1.00,1.25,1.10,1.00,1.10], krit:0.00, fsk:12, kult:0 }
+};
+
+/* ─── Filmkatalog ───  "Titel|Genre|Jahr|Güteklasse(1-5)" */
+const FILM_DATA = `
+Stirb schneller|action|1988|4
+Der Terminierer|action|1984|5
+Rambeau III – Rückkehr in die Hölle|action|1985|3
+Kommando Kobra|action|1986|3
+Explosiv – Die letzte Sekunde|action|1990|4
+Faustrecht der Vorstadt|action|1979|2
+Nitro City|action|1987|3
+Der Söldner von Kandahar|action|1983|2
+Hard Impact|action|1989|3
+Feuersturm über Miami|action|1986|4
+Blaulicht und Blei|action|1991|3
+Die Brücke von Karachi|action|1981|2
+Vier Hochzeiten und ein Umzug|komoed|1990|4
+Die nackte Kanonenkugel|komoed|1988|5
+Papa ist ein Außerirdischer|komoed|1986|3
+Chaos im Kaufhaus|komoed|1982|2
+Der Schwiegersohn von nebenan|komoed|1984|3
+Zwei Kumpel und ein Kühlschrank|komoed|1979|2
+Urlaub mit Hindernissen|komoed|1987|3
+Die Katze im Sack|komoed|1975|2
+Herr Meier räumt auf|komoed|1991|4
+Onkel Ottos Erbschaft|komoed|1980|2
+Der Regen von gestern|drama|1978|4
+Herbstlicht|drama|1984|5
+Briefe an Anna|drama|1989|4
+Die letzte Fabrik|drama|1986|4
+Schatten über Neustadt|drama|1982|3
+Weit weg von hier|drama|1990|3
+Der stille Zeuge|drama|1977|3
+Zimmer ohne Aussicht|drama|1988|2
+Das Erbe der Winters|drama|1991|4
+Nacht der leeren Häuser|horror|1983|3
+Blutmond über Prag|horror|1987|3
+Der Keller|horror|1981|2
+Zombie-Picknick|horror|1985|2
+Das Ding aus dem Fahrstuhl|horror|1989|3
+Freitag der Vierzehnte|horror|1986|2
+Schrei im Nebel|horror|1978|3
+Die Puppe lebt|horror|1990|4
+Sternenkreuzer Orion 9|scifi|1980|4
+Galaxis in Flammen|scifi|1985|3
+Der Zeitkurier|scifi|1988|5
+Planet der Bürokraten|scifi|1982|3
+Cyberdyne Blues|scifi|1990|4
+Marsmission 2087|scifi|1986|3
+Die Invasion der Kaffeemaschinen|scifi|1979|2
+Neon Nights 2049|scifi|1991|4
+Tatmotiv Geld|krimi|1984|3
+Kommissar Kluge ermittelt|krimi|1979|3
+Der Fall Hoffmann|krimi|1987|4
+Spurlos im Hafen|krimi|1982|3
+Nachtschicht Mord|krimi|1990|4
+Das Alibi|krimi|1976|3
+Der Zeuge aus Zelle 7|krimi|1988|4
+Die Spur führt nach Genua|krimi|1991|3
+Sommer in Sorrent|liebe|1981|3
+Zwei Herzen, ein Zug|liebe|1986|3
+Die Braut trägt Blau|liebe|1989|4
+Rendezvous um Mitternacht|liebe|1977|2
+Verliebt in Lissabon|liebe|1990|4
+Der Kuss im Regen|liebe|1984|3
+Wiedersehen in Wien|liebe|1991|3
+Der Reiter ohne Namen|western|1972|4
+Staub und Blei|western|1968|3
+Goldrausch am Red River|western|1975|3
+Die letzte Postkutsche|western|1980|2
+Duell in Silver Creek|western|1971|3
+Wale des Nordmeers|doku|1989|4
+Die Pyramiden von Gizeh|doku|1987|4
+Straßen der Antike|doku|1990|3
+Das Geheimnis der Bienen|doku|1991|3
+Vulkane – Feuer der Erde|doku|1988|4
+Serengeti bei Nacht|doku|1985|3
+Die Seidenstraße|doku|1986|4
+Käpt'n Knuffel|trick|1983|3
+Die Abenteuer der Zwergmaus|trick|1979|3
+Robo-Hasen|trick|1988|2
+Sternenprinzessin Lila|trick|1990|4
+Der kleine Drache Fips|trick|1986|3
+Heiße Nächte in Nizza|erotik|1984|2
+Das Model und der Fotograf|erotik|1987|2
+Sündige Sommerferien|erotik|1981|1
+Bikini Beach Club|erotik|1989|2
+Endspiel – Der Weg zum Titel|sport|1990|4
+Der Boxer vom Kiez|sport|1983|3
+Formel Eins – Die Legende|sport|1988|4
+Eiskalt aufs Tor|sport|1986|2
+Rock im Regen – Live|musik|1985|3
+Die Ballade von Jenny|musik|1982|3
+Sinfonie der Nacht|musik|1989|4
+Woodstack Revival|musik|1991|3
+Die große Samstagsgala|show|1990|3
+Wetten, das war's?|show|1989|4
+Stars in der Manege|show|1987|3
+Die Hitparade der Herzen|show|1986|2
+Der Preis ist heiß gelaufen|quiz|1988|3
+Wer weiß denn sowas noch|quiz|1991|4
+Millionenfrage|quiz|1990|4
+Mitternachtstalk|talk|1989|3
+Der heiße Stuhl 2|talk|1991|3
+Klartext um elf|talk|1990|2
+Museen der Welt|kultur|1988|4
+Die Oper von Mailand|kultur|1986|4
+Meister der Renaissance|kultur|1990|5
+Literatur am Kamin|kultur|1991|3
+Ballett aus Sankt Petersburg|kultur|1989|4
+Architektur der Moderne|kultur|1987|3
+`.trim().split('\n');
+
+/* ─── Serien ─── "Titel|Genre|Jahr|Güte|Folgen" */
+const SERIE_DATA = `
+Praxis Dr. Sommer|serie|1988|3|12
+Die Rosenheimer|serie|1985|3|16
+Raumpatrouille Nova|scifi|1979|4|8
+Der Kommissar und ich|krimi|1986|4|13
+Nachbarn & Nachbarn|komoed|1990|3|20
+Hotel Seeblick|drama|1989|3|14
+Die Schulhof-Gang|serie|1991|2|10
+Klinik am Kurpark|drama|1987|3|18
+Der Bulle von Bochum|krimi|1990|4|11
+Familie Feuerstein GmbH|trick|1984|3|24
+Sunset Riders|western|1978|3|9
+Agenten in Aspik|action|1983|3|12
+Die Küstenwache von Kiel|action|1991|3|13
+Herzflimmern|liebe|1989|3|15
+Galaxy Rangers|trick|1987|3|22
+`.trim().split('\n');
+
+/* ─── Eigenproduktionen (im Studio drehbar) ─── */
+const PRODUCTIONS = [
+  { id:'kultur_heute', name:'Kultur heute',       genre:'kultur', cost:32000,  days:1, quality:62, betty:9, ico:'🏛️',
+    desc:'Bettys eigenes Kulturmagazin. Wenig Quote, viel Herz.' },
+  { id:'talk_spaet',   name:'Spätschicht-Talk',   genre:'talk',   cost:45000,  days:1, quality:58, betty:2, ico:'🎙️',
+    desc:'Billige Gäste, große Klappe. Läuft spät gut.' },
+  { id:'quiz_gross',   name:'Die Millionenfalle', genre:'quiz',   cost:120000, days:2, quality:74, betty:1, ico:'❓',
+    desc:'Teure Studioshow mit hohem Quotenpotenzial.' },
+  { id:'show_samstag', name:'Mad Samstagsshow',   genre:'show',   cost:180000, days:2, quality:80, betty:2, ico:'✨',
+    desc:'Die große Gala. Frisst Geld, bringt Zuschauer.' },
+  { id:'doku_eigen',   name:'Report Spezial',     genre:'doku',   cost:70000,  days:2, quality:66, betty:6, ico:'🌍',
+    desc:'Seriöse Eigenrecherche. Kritiker mögen das.' },
+  { id:'serie_soap',   name:'Bergblick – Soap',   genre:'serie',  cost:95000,  days:2, quality:64, betty:0, ico:'📺',
+    desc:'Endlos-Soap, 6 Folgen am Stück produziert.', episodes:6 }
+];
+
+/* ─── Werbekunden ───  "Marke|Produkt|Zielgruppe" */
+const BRANDS = `
+Blubb Cola|Erfrischungsgetränk|teen
+Knusperix|Frühstücksflocken|kind
+Vroom Motors|Mittelklassewagen|ang
+Silberlöffel|Fertigsuppen|haus
+Turbo Waschmittel|Vollwaschmittel|haus
+Dr. Pillmann|Kopfschmerztabletten|rent
+Gigabyte 386|Heimcomputer|ang
+Fluffy|Katzenfutter|rent
+Nordsee-Bank|Sparbrief|ang
+Bellissimo|Tiefkühlpizza|teen
+Gummiflitzer|Turnschuhe|teen
+Opa Lehmanns|Kräuterlikör|rent
+Kuschelweich Plus|Weichspüler|haus
+Titan Rasierer|Nassrasierer|ang
+Sonnenklar Reisen|Pauschalurlaub|rent
+Blitzblank|Scheuermilch|haus
+Mondrakete|Spielzeugbausatz|kind
+Ferdis Fritten|Imbisskette|arbl
+Hydra Duschgel|Duschgel|teen
+Amigo Kaugummi|Kaugummi|kind
+Panther Energy|Energydrink|teen
+Kaiser Pils|Bier|arbl
+Goldrand Kaffee|Röstkaffee|rent
+Zwergnase|Babynahrung|haus
+Astra Versicherung|Lebensversicherung|ang
+Rapido Reifen|Winterreifen|ang
+Schoko Bär|Schokoriegel|kind
+Pinguin Eiscreme|Speiseeis|kind
+Windrose Zigaretten|Zigaretten|arbl
+Tempo Nudeln|Instantnudeln|arbl
+Vitalis|Multivitaminsaft|haus
+Nova Kosmetik|Anti-Falten-Creme|haus
+Bohrmax|Heimwerkerbedarf|ang
+Dackel Hundefutter|Hundefutter|rent
+Sirius Uhren|Armbanduhr|ang
+Wolke 7|Matratzen|rent
+Bytec Software|Textverarbeitung|ang
+Frostfrei|Kühlschränke|haus
+Rocket Sport|Fitnessstudio|teen
+Perle Mineralwasser|Mineralwasser|haus
+Tornado Staubsauger|Staubsauger|haus
+Piccolo Sekt|Sekt|arbl
+Sunny Sonnenmilch|Sonnenmilch|teen
+Hammerpreis Markt|Discounter|arbl
+Lorbeer Zahnpasta|Zahncreme|kind
+Kondor Fluglinie|Billigflüge|ang
+Bärenstark Klebstoff|Alleskleber|kind
+Diva Parfum|Damenparfum|haus
+Granit Baumarkt|Baumarkt|ang
+Wunschlos Möbel|Möbelhaus|haus
+`.trim().split('\n');
+
+/* ─── Nachrichten-Ressorts ─── */
+const RESSORTS = [
+  { id:'pol',  name:'Politik & Wirtschaft', ico:'🏛️', aff:[0.1,0.35,0.75,1.30,1.35,0.85] },
+  { id:'spo',  name:'Sport',                ico:'⚽', aff:[0.6,1.30,0.45,1.20,1.00,1.10] },
+  { id:'sho',  name:'Show & Klatsch',       ico:'💅', aff:[0.5,1.15,1.45,0.80,0.95,1.15] },
+  { id:'sen',  name:'Sensationen',          ico:'🚨', aff:[0.7,1.25,1.05,0.95,1.05,1.30] },
+  { id:'tec',  name:'Technik & Kultur',     ico:'🔬', aff:[0.5,0.70,0.55,1.20,0.95,0.60] }
+];
+const HEADLINES = {
+  pol:['Steuerreform sorgt für Streit im Parlament','Kanzler kündigt Sparpaket an','Börsenkurse brechen um 4 Prozent ein',
+       'Bürgermeister tritt überraschend zurück','Neue Zölle belasten den Export','Streik im öffentlichen Dienst beginnt',
+       'Rentenkasse meldet Milliardenloch','Handelsabkommen nach Marathonsitzung unterzeichnet','Arbeitslosenquote sinkt leicht',
+       'Koalition streitet über Haushalt'],
+  spo:['Sensationssieg im Pokalfinale','Rekordtransfer erschüttert die Liga','Marathonläuferin bricht Weltrekord',
+       'Dopingskandal erschüttert den Radsport','Trainerwechsel beim Tabellenletzten','Boxweltmeister verteidigt Titel',
+       'Formelrennen endet im Chaos','Nationalelf verliert Testspiel','Olympiabewerbung offiziell eingereicht',
+       'Schiedsrichter nach Fehlpfiff suspendiert'],
+  sho:['Popstar heiratet heimlich auf Ibiza','Diva verlässt Filmset im Streit','Schauspielerpaar trennt sich nach 12 Jahren',
+       'Neuer Trend: Schulterpolster sind zurück','Millionengage für Werbespot enthüllt','Talkmaster wechselt den Sender',
+       'Modenschau in Mailand sorgt für Aufsehen','Sänger sagt Tournee kurzfristig ab','Adelsspross in Nachtclub gesichtet',
+       'Ex-Model eröffnet Restaurantkette'],
+  sen:['Ufo über dem Stadtpark gesichtet','Bankräuber flieht mit Tretroller','Riesenwels in Badesee gefangen',
+       'Mann lebt drei Wochen im Kaufhaus','Meteorit schlägt in Gartenlaube ein','Papagei verrät Einbrecher',
+       'Zoo-Elefant spaziert durch Innenstadt','Schatzfund bei Bauarbeiten','Lottogewinner meldet sich nicht',
+       'Geisterhaus entpuppt sich als Marderbau'],
+  tec:['Neuer Heimcomputer mit 4 Megabyte vorgestellt','Forscher entschlüsseln Erbgut der Fruchtfliege',
+       'Sonde sendet erste Bilder vom Mars','Museum zeigt verschollenes Gemälde','Roboterarm operiert erstmals allein',
+       'Ozonloch wächst schneller als erwartet','Bibliothek digitalisiert Handschriften','Neues Teleskop nimmt Betrieb auf',
+       'Elektroauto schafft 300 Kilometer','Archäologen finden römisches Bad']
+};
+
+/* ─── Räume / Etagen ─── (Index 0 = unten) */
+const FLOORS = [
+  { id:'foyer',  name:'Foyer & Kiosk',      ico:'🛒', sub:'Geschenke für Betty' },
+  { id:'technik',name:'Technik',            ico:'📡', sub:'Sendemasten & Satellit' },
+  { id:'rival2', name:'Büro Kanal 2',       ico:'🚪', sub:'Konkurrenz' },
+  { id:'rival1', name:'Büro Kanal 1',       ico:'🚪', sub:'Konkurrenz' },
+  { id:'film',   name:'Filmagentur',        ico:'🎬', sub:'Filme & Serien kaufen' },
+  { id:'werbe',  name:'Werbeagentur',       ico:'📣', sub:'Werbeverträge' },
+  { id:'office', name:'Dein Büro',          ico:'🖥️', sub:'Sendeplan & Bilanz' },
+  { id:'news',   name:'Nachrichtenstudio',  ico:'📰', sub:'Abos & Sendung' },
+  { id:'archiv', name:'Archiv',             ico:'🗄️', sub:'Programmordner' },
+  { id:'studio', name:'Produktionsstudio',  ico:'🎥', sub:'Eigenproduktionen' },
+  { id:'bank',   name:'Bank',               ico:'🏦', sub:'Kredit & Zinsen' },
+  { id:'chef',   name:'Chefbüro',           ico:'🧔', sub:'Herr Raffer' },
+  { id:'betty',  name:'Bettys Büro',        ico:'💗', sub:'Betty Botterbloom' }
+];
+
+/* ─── Schwierigkeitsgrade ─── */
+const DIFFS = {
+  leicht:  { name:'Leicht',  money:1200000, aiSkill:0.62, winImage:55, fireImage:8,  ico:'🌱',
+             desc:'Viel Startkapital, gutmütige Konkurrenz.' },
+  normal:  { name:'Normal',  money:800000,  aiSkill:0.80, winImage:65, fireImage:12, ico:'⚖️',
+             desc:'So war es 1991 gedacht.' },
+  schwer:  { name:'Schwer',  money:450000,  aiSkill:0.95, winImage:75, fireImage:16, ico:'🔥',
+             desc:'Zwei Haie im selben Hochhaus.' }
+};
+
+/* ─── Konstanten ─── */
+const POP        = 42000000;   // Gesamtbevölkerung im Sendegebiet
+const BLOCKS     = 7;          // Sendeblöcke 18:00 – 01:00
+const BLOCK_H    = [18,19,20,21,22,23,0];
+const DAY_START  = 17*60;      // Arbeitsbeginn 17:00
+const DAY_END    = 25*60;      // Feierabend 01:00
+const WEEKDAYS   = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+const AD_SLOTS   = 5;          // Minuten Werbung je Block
+const NEWS_MIN   = 4;          // Minuten Nachrichten je Block
+const SPEEDS     = { 1:620, 2:330, 3:130 };
+const RIVAL_NAMES= ['Brain TV','Kanal Kaputt'];
+const NEWS_COST  = [0, 4000, 11000, 26000];   // Tageskosten je Abo-Stufe
+const NEWS_QUAL  = [0, 0.45, 0.72, 1.00];     // Aktualitätsgüte je Abo-Stufe
+
+/* ─── Geschenke für Betty ─── */
+const GIFTS = [
+  { id:'blume', name:'Rosenstrauß',      cost:2500,    love:2,  ico:'🌹', min:0 },
+  { id:'pralin',name:'Pralinenschachtel',cost:6000,    love:3,  ico:'🍫', min:0 },
+  { id:'parfum',name:'Flakon "Diva"',    cost:22000,   love:6,  ico:'🧴', min:15 },
+  { id:'kette', name:'Goldkette',        cost:75000,   love:11, ico:'📿', min:30 },
+  { id:'pelz',  name:'Pelzmantel',       cost:210000,  love:18, ico:'🧥', min:45 },
+  { id:'sport', name:'Sportwagen',       cost:600000,  love:26, ico:'🏎️', min:60 },
+  { id:'ring',  name:'Diamantring',      cost:1400000, love:40, ico:'💍', min:78 }
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 2 — WELTERZEUGUNG & SPIELZUSTAND
+   ═══════════════════════════════════════════════════════════════════ */
+
+let G = null;          // globaler Spielzustand
+let UID = 1;
+function uid(){ return UID++; }
+
+/* ─── Lizenz aus Katalogzeile bauen ─── */
+function makeLicence(line, isSerie){
+  const p = line.split('|');
+  const title = p[0], genre = p[1], year = +p[2], tier = +p[3];
+  const eps = isSerie ? +p[4] : 0;
+  const gd = GENRES[genre];
+  const h1 = hash(title), h2 = hash(title+'k'), h3 = hash(title+'b');
+  const qual   = clamp(Math.round(tier*15 - 6 + h1*24), 8, 97);
+  const critic = clamp(Math.round(qual + gd.krit*38 + h2*24 - 12), 3, 99);
+  const box    = clamp(Math.round(qual*0.62 + tier*7 + h3*20), 4, 99);
+  let fsk = gd.fsk;
+  if(h2 > 0.75 && fsk < 18) fsk = fsk===0?6:(fsk===6?12:(fsk===12?16:18));
+  if(h3 > 0.9 && (genre==='horror'||genre==='action')) fsk = 18;
+  let price = Math.round((qual*300 + box*160 + Math.max(0,year-1968)*1050) * (1 + tier*0.14) * 2.1);
+  price = Math.round(price/1000)*1000;
+  if(isSerie) price = Math.round(price * (0.45 + eps*0.055) /1000)*1000;
+  return {
+    uid: uid(), title, genre, year, tier, fsk, price,
+    qual, critic, box,
+    fresh: 1, aired: 0, lastDay: -99,
+    isSerie: !!isSerie, eps, ep: 1, produced:false
+  };
+}
+
+/* ─── Vollständiger Katalog (wird beim Start einmal gebaut) ─── */
+function buildCatalog(){
+  const all = [];
+  FILM_DATA.forEach(l => all.push(makeLicence(l,false)));
+  SERIE_DATA.forEach(l => all.push(makeLicence(l,true)));
+  return all;
+}
+
+/* ─── Werbevertrag erzeugen ─── */
+function makeContract(day, tierHint){
+  const b = pick(BRANDS).split('|');
+  const brand = b[0], product = b[1], gid = b[2];
+  const useGroup = rnd() < 0.34;
+  const tier = tierHint !== undefined ? tierHint : ri(1,6);
+  const baseAud = [700000, 1400000, 2400000, 3600000, 5200000, 7400000][tier-1];
+  const gi = GIDX[gid];
+  let minAud, group = null;
+  if(useGroup){
+    group = gid;
+    minAud = Math.round(baseAud * GROUPS[gi].share * 1.55 / 10000) * 10000;
+  } else {
+    minAud = Math.round(baseAud * (0.85 + rnd()*0.3) / 10000) * 10000;
+  }
+  const spots = ri(2,6);
+  const days  = spots + ri(1,4);
+  let perSpot = minAud * (useGroup ? 0.115 : 0.030) * (0.85 + rnd()*0.55);
+  perSpot = Math.round(perSpot/500)*500;
+  const penalty = Math.round(perSpot*spots*(0.55+rnd()*0.75)/1000)*1000;
+  return {
+    id: uid(), brand, product, group, gi,
+    minAud, spots, done:0, days, deadline: day + days,
+    perSpot, penalty, tier, added:day, owner:null
+  };
+}
+
+/* ─── Nachrichtenmeldung erzeugen ─── */
+function makeNews(res, day){
+  const pool = HEADLINES[res];
+  const txt = pool[Math.floor(rnd()*pool.length)];
+  return {
+    id: uid(), res, text: txt, day,
+    weight: 0.55 + rnd()*0.65      // Nachrichtenwert
+  };
+}
+
+/* ─── Sender ─── */
+function makeChannel(name, isAI, startMoney, aiSkill){
+  return {
+    name, isAI, money:startMoney, credit:0,
+    licences: [], contracts: [],
+    sched: {},                       // sched[day] = [{prog, ad, aired, res}, …]
+    newsSub: { pol:0, spo:0, sho:0, sen:0, tec:0 },
+    newsShow: [],                    // gewählte Meldungen (max 3)
+    transmitters: 0, satellite:false,
+    studio:false,
+    image: 33.34, imgHist: [],
+    love: 0,
+    aiSkill: aiSkill||0,
+    lastAud: new Array(BLOCKS).fill(0),
+    todayAud: new Array(BLOCKS).fill(0),
+    audHist: [],
+    awards: 0,
+    culturePoints: 0, newsPoints: 0, primePoints: 0,
+    lowImageDays: 0
+  };
+}
+
+function emptyDay(){
+  const a = [];
+  for(let i=0;i<BLOCKS;i++) a.push({ prog:null, ad:null, aired:false, res:null });
+  return a;
+}
+function getDay(ch, day){
+  if(!ch.sched[day]) ch.sched[day] = emptyDay();
+  return ch.sched[day];
+}
+
+/* ─── Neues Spiel ─── */
+function newGame(playerName, diffKey){
+  const d = DIFFS[diffKey];
+  UID = 1;
+  G = {
+    diff: diffKey, D: d,
+    day: 1, weekday: 0, week: 1,
+    time: DAY_START,
+    speed: 2, paused: false,
+    over: false, overMsg: null,
+    floor: 6,                 // Startetage: eigenes Büro
+    elevBusy: 0,              // verbleibende Spielminuten Fahrzeit
+    elevTarget: null,
+    room: null,               // aktuell betretener Raum (null = Hochhausansicht)
+    catalog: buildCatalog(),
+    market: [],               // Filmagentur-Angebot
+    auction: null,
+    adMarket: [],
+    newsPool: { pol:[], spo:[], sho:[], sen:[], tec:[] },
+    log: [],
+    player: makeChannel(playerName || 'Mad TV', false, d.money, 0),
+    ch: [],
+    events: { terrorSign:'self', terrorDay:0, pendingTerror:false },
+    production: null,         // laufende Eigenproduktion
+    stats: { revenue:0, costs:0, filmsBought:0, contractsDone:0, contractsFailed:0 },
+    gifts: []
+  };
+  G.ch = [ G.player,
+           makeChannel(RIVAL_NAMES[0], true, d.money*0.95, d.aiSkill),
+           makeChannel(RIVAL_NAMES[1], true, d.money*0.95, d.aiSkill*0.92) ];
+  G.player.image = 33.34; G.ch[1].image = 33.33; G.ch[2].image = 33.33;
+
+  refreshMarket(true);
+  refreshAdMarket(true);
+  rollNews();
+  // Startausstattung: drei günstige Lizenzen, damit der erste Abend nicht leer ist
+  G.market.slice(0,3).forEach(m => { buyLicence(G.player, m, true); });
+  // Konkurrenz ebenfalls ausstatten und ihren ersten Sendetag planen
+  for(let i=1;i<3;i++){
+    for(let k=0;k<4;k++){
+      const c = G.market.filter(m=>m.price < 140000);
+      if(c.length) buyLicence(G.ch[i], pick(c), true);
+    }
+  }
+  G.day = 0;
+  for(let i=1;i<3;i++) aiTurn(G.ch[i]);   // plant für Tag 1
+  G.day = 1;
+  refreshMarket(false);
+  return G;
+}
+
+/* ─── Filmmarkt auffrischen ─── */
+function refreshMarket(initial){
+  const owned = new Set();
+  G.ch.forEach(c => c.licences.forEach(l => owned.add(l.title)));
+  if(initial){ G.market = []; }
+  // alte Angebote teilweise entfernen
+  if(!initial){
+    G.market = G.market.filter(()=> rnd() > 0.22);
+  }
+  const want = 30;
+  let guard = 0;
+  while(G.market.length < want && guard++ < 400){
+    const c = pick(G.catalog);
+    if(owned.has(c.title)) continue;
+    if(G.market.some(m => m.title === c.title)) continue;
+    const copy = Object.assign({}, c, { uid: uid() });
+    G.market.push(copy);
+  }
+  G.market.sort((a,b)=> a.price - b.price);
+}
+
+/* ─── Werbemarkt auffrischen ─── */
+function refreshAdMarket(initial){
+  if(initial) G.adMarket = [];
+  G.adMarket = G.adMarket.filter(c => c.deadline > G.day && rnd() > 0.18);
+  const want = 14;
+  while(G.adMarket.length < want){
+    G.adMarket.push(makeContract(G.day));
+  }
+  G.adMarket.sort((a,b)=> a.minAud - b.minAud);
+}
+
+/* ─── Nachrichten des Tages ─── */
+function rollNews(){
+  RESSORTS.forEach(r => {
+    const arr = G.newsPool[r.id];
+    // alte Meldungen altern lassen / entfernen
+    const kept = arr.filter(n => G.day - n.day < 3);
+    const add = 3;
+    for(let i=0;i<add;i++) kept.push(makeNews(r.id, G.day));
+    G.newsPool[r.id] = kept;
+  });
+  // Auswahl des Spielers auf Gültigkeit prüfen
+  G.ch.forEach(ch => {
+    ch.newsShow = ch.newsShow.filter(n => G.day - n.day < 3);
+  });
+}
+
+/* ─── Lizenz kaufen ─── */
+function buyLicence(ch, mkt, free){
+  if(!free && ch.money < mkt.price) return false;
+  const idx = G.market.indexOf(mkt);
+  if(idx >= 0) G.market.splice(idx,1);
+  if(!free){ ch.money -= mkt.price; if(ch===G.player) G.stats.costs += mkt.price; }
+  const lic = Object.assign({}, mkt, { uid: uid(), fresh:1, aired:0, lastDay:-99, ep:1 });
+  ch.licences.push(lic);
+  if(ch === G.player) G.stats.filmsBought++;
+  return lic;
+}
+
+/* ─── Reichweite eines Senders (0…1) ─── */
+function reachOf(ch){
+  return clamp(0.40 + ch.transmitters*0.11 + (ch.satellite?0.22:0), 0, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 3 — QUOTEN-ENGINE
+   ═══════════════════════════════════════════════════════════════════ */
+
+const ATTR_OFF = 1.15;   // "Fernseher aus" konkurriert mit allen Sendern
+
+/* Nachrichten-Attraktivität eines Senders je Zielgruppe */
+function newsAttraction(ch){
+  const out = new Array(GROUPS.length).fill(0);
+  if(!ch.newsShow.length) return out;
+  ch.newsShow.forEach(n => {
+    const r = RESSORTS.find(x=>x.id===n.res);
+    const age = clamp(1 - (G.day - n.day)*0.35, 0, 1);
+    const lvl = ch.newsSub[n.res] || 0;
+    const q   = NEWS_QUAL[lvl];
+    for(let i=0;i<GROUPS.length;i++){
+      out[i] += n.weight * age * q * r.aff[i];
+    }
+  });
+  for(let i=0;i<GROUPS.length;i++) out[i] = out[i] / 3;
+  return out;
+}
+
+/* Attraktivität eines Sendeblocks je Zielgruppe */
+function blockAttraction(ch, day, block, newsAttr){
+  const slots = getDay(ch, day);
+  const s = slots[block];
+  const out = new Array(GROUPS.length).fill(0.05);
+  const hour = BLOCK_H[block];
+  if(!s.prog){
+    // Testbild: nur Nachrichten halten ein paar Zuschauer
+    for(let i=0;i<GROUPS.length;i++) out[i] = 0.05 + newsAttr[i]*0.10;
+    return out;
+  }
+  const p = s.prog;
+  const gd = GENRES[p.genre];
+  const qEff = p.qual * (0.34 + 0.66*p.fresh);
+  // Trailer: lief das Programm heute schon in einem Werbeblock?
+  let trailer = 0;
+  for(let b=0;b<block;b++){
+    if(slots[b].trailer && slots[b].trailer.uid === p.uid) trailer += 0.13;
+  }
+  // Zuschauerfluss: gleiches Genre im Block davor hält Zuschauer
+  let flow = 0;
+  if(block>0 && slots[block-1].prog){
+    if(slots[block-1].prog.genre === p.genre) flow = 0.11;
+    else if(GENRES[slots[block-1].prog.genre].kult === gd.kult) flow = 0.04;
+  }
+  for(let i=0;i<GROUPS.length;i++){
+    let a = (qEff/52) * gd.aff[i];
+    a *= (1 + newsAttr[i]*0.30);
+    a *= (1 + trailer + flow);
+    // Altersfreigabe
+    if(p.fsk >= 18){
+      if(hour >= 6 && hour < 22) a *= 0.42;
+      if(GROUPS[i].id === 'kind') a *= 0.05;
+    } else if(p.fsk >= 16){
+      if(hour >= 6 && hour < 20) a *= 0.72;
+      if(GROUPS[i].id === 'kind') a *= 0.18;
+    } else if(p.fsk >= 12 && GROUPS[i].id === 'kind'){
+      a *= 0.55;
+    }
+    out[i] = Math.max(0.02, a);
+  }
+  return out;
+}
+
+/* Einen Sendeblock aller Sender auswerten */
+function airBlock(day, block){
+  const news = G.ch.map(newsAttraction);
+  const attrs = G.ch.map((c,i) => blockAttraction(c, day, block, news[i]));
+  const reach = G.ch.map(reachOf);
+  const result = G.ch.map(()=>({ total:0, groups:new Array(GROUPS.length).fill(0) }));
+
+  for(let gi=0; gi<GROUPS.length; gi++){
+    const grp = GROUPS[gi];
+    const potential = POP * grp.share * grp.act[block];
+    let denom = ATTR_OFF;
+    for(let c=0;c<3;c++) denom += attrs[c][gi] * reach[c];
+    for(let c=0;c<3;c++){
+      const v = potential * (attrs[c][gi]*reach[c]) / denom;
+      result[c].groups[gi] = v;
+      result[c].total += v;
+    }
+  }
+
+  // Ergebnisse eintragen, Abnutzung, Werbung abrechnen
+  G.ch.forEach((ch, ci) => {
+    const slots = getDay(ch, day);
+    const s = slots[block];
+    s.aired = true;
+    s.res = result[ci];
+    ch.todayAud[block] = result[ci].total;
+    if(s.prog){
+      const p = s.prog;
+      p.aired++; p.lastDay = day;
+      if(p.isSerie){
+        p.fresh = Math.max(0.15, p.fresh*0.86);
+        p.ep++;
+        if(p.ep > p.eps){ p.ep = 1; p.fresh = Math.max(0.1, p.fresh*0.55); }
+      } else {
+        p.fresh = Math.max(0.08, p.fresh*0.48);
+      }
+      // Kultur-/Nachrichtenpunkte für Sammy & Betty
+      if(GENRES[p.genre].kult){
+        ch.culturePoints += p.critic/100 * (result[ci].total/1000000);
+        if(!ch.isAI) G.player._cultureToday = (G.player._cultureToday||0) +
+          (p.critic/100)*(1+result[ci].total/6000000) + (p.bettyBonus||0)*0.16;
+      }
+      if(block===2 || block===3) ch.primePoints += result[ci].total/1000000;
+      // Gerichtsvollzieher-Risiko
+      if(p.fsk >= 18 && BLOCK_H[block] < 22 && BLOCK_H[block] >= 6 && !ch.isAI){
+        if(rnd() < 0.25) G._bailiff = true;
+      }
+    }
+    ch.newsPoints += ch.newsShow.reduce((a,n)=>{
+      const age = clamp(1-(G.day-n.day)*0.35,0,1);
+      return a + n.weight*age*NEWS_QUAL[ch.newsSub[n.res]||0];
+    },0) * (result[ci].total/4000000);
+
+    // Werbespot abrechnen
+    if(s.ad){
+      const ct = ch.contracts.find(c=>c.id === s.ad.id);
+      if(ct && ct.done < ct.spots){
+        const reached = ct.group ? result[ci].groups[ct.gi] : result[ci].total;
+        if(reached >= ct.minAud){
+          ct.done++;
+          ch.money += ct.perSpot;
+          if(!ch.isAI){
+            G.stats.revenue += ct.perSpot;
+            toast('good','Werbespot gelaufen', ct.brand + ' zahlt ' + money(ct.perSpot));
+          }
+        } else if(!ch.isAI){
+          toast('warn','Quote verfehlt', ct.brand + ': ' + viewers(reached) + ' statt ' + viewers(ct.minAud));
+        }
+      }
+    }
+  });
+
+  // Ereignisprotokoll für den Spieler
+  const pr = result[0];
+  const shareBase = result.reduce((a,r)=>a+r.total,0) || 1;
+  G.log.unshift({
+    day, block, aud: pr.total, share: pr.total/shareBase,
+    title: getDay(G.player,day)[block].prog ? getDay(G.player,day)[block].prog.title : 'Testbild'
+  });
+  if(G.log.length > 90) G.log.length = 90;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 4 — TAGESABSCHLUSS
+   ═══════════════════════════════════════════════════════════════════ */
+
+function endOfDay(){
+  const day = G.day;
+  const totals = G.ch.map(c => c.todayAud.reduce((a,b)=>a+b,0));
+  const sum = totals.reduce((a,b)=>a+b,0) || 1;
+
+  // ── Image (Marktanteil, gleitend) ──
+  G.ch.forEach((c,i) => {
+    const share = totals[i]/sum*100;
+    c.image = c.image*0.72 + share*0.28;
+    c.audHist.push(totals[i]);
+    if(c.audHist.length>21) c.audHist.shift();
+    c.lastAud = c.todayAud.slice();
+    c.todayAud = new Array(BLOCKS).fill(0);
+  });
+  const isum = G.ch.reduce((a,c)=>a+c.image,0);
+  G.ch.forEach(c => c.image = c.image/isum*100);
+
+  // ── Laufende Kosten ──
+  G.ch.forEach(c => {
+    let cost = 0;
+    RESSORTS.forEach(r => cost += NEWS_COST[c.newsSub[r.id]||0]);
+    cost += c.transmitters * 18000;
+    if(c.satellite) cost += 55000;
+    if(c.studio) cost += 40000;
+    cost += Math.round(c.credit * 0.006);          // Tageszins
+    c.money -= cost;
+    if(!c.isAI){ G.stats.costs += cost; G._dailyCost = cost; }
+  });
+
+  // ── Werbeverträge: Fristen ──
+  G.ch.forEach(c => {
+    c.contracts = c.contracts.filter(ct => {
+      if(ct.done >= ct.spots){
+        if(!c.isAI){ G.stats.contractsDone++; toast('good','Vertrag erfüllt', ct.brand + ' — alle ' + ct.spots + ' Spots gelaufen.'); }
+        return false;
+      }
+      if(day >= ct.deadline){
+        c.money -= ct.penalty;
+        if(!c.isAI){
+          G.stats.contractsFailed++; G.stats.costs += ct.penalty;
+          toast('bad','Konventionalstrafe', ct.brand + ' verlangt ' + money(ct.penalty));
+        }
+        return false;
+      }
+      return true;
+    });
+  });
+
+  // ── Abnutzung erholt sich ──
+  G.ch.forEach(c => c.licences.forEach(l => {
+    if(l.lastDay < day) l.fresh = Math.min(1, l.fresh + 0.10);
+  }));
+
+  // ── Betty ──
+  updateBetty();
+
+  // ── Eigenproduktion ──
+  if(G.production){
+    G.production.left--;
+    if(G.production.left <= 0){
+      const pr = G.production.def;
+      const lic = {
+        uid: uid(), title: pr.name + ' #' + G.production.no, genre: pr.genre,
+        year: 1991, tier: 3, fsk: 6, price: pr.cost,
+        qual: clamp(Math.round(pr.quality + ri(-6,8)),10,98),
+        critic: clamp(Math.round(pr.quality + (GENRES[pr.genre].krit*30) + ri(-5,10)),5,99),
+        box: 40, fresh:1, aired:0, lastDay:-99,
+        isSerie: !!pr.episodes, eps: pr.episodes||0, ep:1, produced:true,
+        bettyBonus: pr.betty
+      };
+      G.player.licences.push(lic);
+      toast('good','Produktion fertig', lic.title + ' liegt im Archiv bereit.');
+      G.production = null;
+    }
+  }
+
+  // ── Gerichtsvollzieher ──
+  if(G._bailiff){
+    G._bailiff = false;
+    const cand = G.player.licences.filter(l=>!l.produced);
+    if(cand.length){
+      const l = pick(cand);
+      G.player.licences.splice(G.player.licences.indexOf(l),1);
+      removeFromSchedules(G.player, l);
+      modal('⚖️','Der Gerichtsvollzieher','Gerichtsvollzieher',
+        'Sie haben einen Film ab 18 Jahren vor 22 Uhr gesendet. Die Lizenz «'+esc(l.title)+'» wird hiermit beschlagnahmt. Einen schönen Tag noch.',
+        [{t:'Verdammt.',cls:'btn'}]);
+    }
+  }
+
+  // ── Sammy Awards (wöchentlich) ──
+  if(day % 7 === 0) sammyAwards();
+
+  // ── KI-Runde ──
+  for(let i=1;i<3;i++) aiTurn(G.ch[i]);
+
+  // ── Chef ──
+  bossCheck();
+
+  // ── Zufallsereignis ──
+  randomEvent();
+
+  // ── Sieg / Niederlage ──
+  checkEnd();
+  if(G.over) return;
+
+  // ── Alte Sendepläne aufräumen ──
+  G.ch.forEach(c => Object.keys(c.sched).forEach(d => { if(+d < G.day-1) delete c.sched[d]; }));
+
+  // ── Neuer Tag ──
+  G.day++;
+  G.weekday = (G.weekday+1)%7;
+  if(G.weekday===0) G.week++;
+  G.time = DAY_START;
+  G.player._cultureToday = 0;
+  refreshMarket(false);
+  refreshAdMarket(false);
+  rollNews();
+  maybeAuction();
+}
+
+function removeFromSchedules(ch, lic){
+  Object.keys(ch.sched).forEach(d => {
+    ch.sched[d].forEach(s => {
+      if(s.prog && s.prog.uid === lic.uid && !s.aired) s.prog = null;
+      if(s.trailer && s.trailer.uid === lic.uid && !s.aired) s.trailer = null;
+    });
+  });
+}
+
+/* ─── Betty ─── */
+function updateBetty(){
+  G.ch.forEach(c => {
+    let gain = 0;
+    if(!c.isAI){
+      gain += (G.player._cultureToday||0) * 1.35;
+    } else {
+      // KI umwirbt Betty über Kultur & Geschenke
+      gain += c.culturePoints*0.012 + c.aiSkill*0.45 + (c.money > 900000 ? c.aiSkill*0.5 : 0);
+      if(c.money > 400000 && rnd() < c.aiSkill*0.35){
+        const g = GIFTS.filter(x=>x.cost < c.money*0.35 && c.love >= x.min);
+        if(g.length){ const x = g[g.length-1]; c.money -= x.cost; gain += x.love*0.55; }
+      }
+    }
+    c.love = clamp(c.love + gain, 0, 100);
+    // Zuneigung kann das eigene Image niemals überflügeln (Originalregel)
+    if(c.love > c.image) c.love = c.image;
+    c.love = Math.max(0, c.love - 0.35);   // täglicher Schwund
+  });
+  G.player._cultureToday = 0;
+}
+
+/* ─── Sammy Awards ─── */
+function sammyAwards(){
+  const cats = [
+    { k:'newsPoints',    n:'Beste Nachrichtensendung', prize:120000, img:1.2 },
+    { k:'culturePoints', n:'Beste Kultursendung',      prize:90000,  img:1.6 },
+    { k:'primePoints',   n:'Beste Primetime-Quote',    prize:200000, img:1.0 }
+  ];
+  const lines = [];
+  cats.forEach(cat => {
+    let best = 0, bi = 0;
+    G.ch.forEach((c,i)=>{ if(c[cat.k] > best){ best = c[cat.k]; bi = i; } });
+    const w = G.ch[bi];
+    w.money += cat.prize; w.awards++; w.image += cat.img;
+    lines.push('<b>'+cat.n+'</b> → '+esc(w.name)+(bi===0?' 🏆':''));
+  });
+  const isum = G.ch.reduce((a,c)=>a+c.image,0);
+  G.ch.forEach(c => { c.image = c.image/isum*100; c.newsPoints=0; c.culturePoints=0; c.primePoints=0; });
+  modal('🏆','Die Sammy-Verleihung','Sammy Awards',
+    'Woche '+G.week+' — die Jury hat entschieden:<br><br>'+lines.join('<br>'),
+    [{t:'Weiter',cls:'btn'}]);
+}
+
+/* ─── Chef ─── */
+function bossCheck(){
+  const p = G.player;
+  if(p.image < G.D.fireImage){
+    p.lowImageDays++;
+    if(p.lowImageDays === 1 || p.lowImageDays === 2){
+      modal('🧔','Herr Raffer','Chefbüro',
+        'Ihre Quoten sind eine Zumutung! '+pct(p.image/100,1)+' Marktanteil — meine Großmutter macht besseres Fernsehen. '+
+        'Sie haben noch '+(3-p.lowImageDays)+' Tag(e), das zu ändern.',
+        [{t:'Jawohl, Herr Raffer.',cls:'btn'}]);
+    }
+  } else {
+    p.lowImageDays = 0;
+  }
+  if(p.money < -600000){
+    toast('bad','Die Bank mahnt','Ihr Konto ist tief im Minus. Bei −1 Mio ist Schluss.');
+  }
+}
+
+/* ─── Zufallsereignisse ─── */
+function randomEvent(){
+  const p = G.player;
+  const r = rnd();
+  if(r < 0.10 && G.day > 3){
+    // Terrorwarnung
+    G.events.pendingTerror = true;
+    G.events.terrorDay = G.day + 1;
+    modal('💣','Bombendrohung','Nachrichtenagentur',
+      'Eine anonyme Drohung ist eingegangen: Morgen soll im Sendehochhaus ein Sprengsatz hochgehen. '+
+      'Im Foyer hängt das Türschild-Verzeichnis — wer es umhängt, schickt die Herrschaften in eine andere Etage.',
+      [{t:'Verstanden',cls:'btn'}]);
+  } else if(r < 0.16 && G.day > 2){
+    // Film gestohlen / überboten
+    const rival = pick([G.ch[1],G.ch[2]]);
+    if(G.market.length){
+      const m = G.market[G.market.length-1];
+      if(rival.money > m.price){
+        G.market.splice(G.market.indexOf(m),1);
+        rival.money -= m.price;
+        rival.licences.push(Object.assign({},m,{uid:uid()}));
+        toast('warn','Weggeschnappt', esc(rival.name)+' hat «'+m.title+'» gekauft.');
+      }
+    }
+  } else if(r < 0.21 && G.day > 4){
+    const bonus = ri(40000,140000);
+    p.money += bonus;
+    toast('good','Sponsorenscheck','Ein Getränkekonzern überweist '+money(bonus)+' fürs Product Placement.');
+  } else if(r < 0.26 && G.day > 5){
+    const loss = ri(30000,110000);
+    p.money -= loss;
+    toast('bad','Technischer Defekt','Die Sendeleitung ist durchgeschmort: '+money(loss)+' Reparatur.');
+  }
+
+  // Anschlag ausführen
+  if(G.events.pendingTerror && G.day >= G.events.terrorDay){
+    G.events.pendingTerror = false;
+    if(G.events.terrorSign === 'self'){
+      const cand = p.licences.filter(l=>!l.produced);
+      let txt = 'Das halbe Stockwerk liegt in Trümmern.';
+      if(cand.length){
+        const lost = [];
+        for(let i=0;i<Math.min(2,cand.length);i++){
+          const l = pick(cand.filter(x=>!lost.includes(x)));
+          if(l){ lost.push(l); p.licences.splice(p.licences.indexOf(l),1); removeFromSchedules(p,l); }
+        }
+        txt += ' Verbrannt sind: ' + lost.map(l=>'«'+esc(l.title)+'»').join(', ') + '.';
+      }
+      p.money -= 80000;
+      modal('💥','Es hat gekracht','Schadensmeldung', txt + ' Aufräumkosten: '+money(80000)+'.',
+        [{t:'Na großartig.',cls:'btn'}]);
+    } else {
+      const victim = G.events.terrorSign === 'rival1' ? G.ch[1] : G.ch[2];
+      const cand = victim.licences;
+      if(cand.length){
+        for(let i=0;i<2 && cand.length;i++){
+          const l = pick(cand);
+          victim.licences.splice(victim.licences.indexOf(l),1);
+          removeFromSchedules(victim,l);
+        }
+      }
+      victim.money -= 80000;
+      modal('💥','Es hat gekracht','Schadensmeldung',
+        'Der Sprengsatz ging in der Etage von '+esc(victim.name)+' hoch. Deren Archiv ist ein Aschehaufen. '+
+        'Wie bedauerlich.', [{t:'Wie bedauerlich.',cls:'btn'}]);
+      G.events.terrorSign = 'self';
+    }
+  }
+}
+
+/* ─── Auktion ─── */
+function maybeAuction(){
+  G.auction = null;
+  if(G.day > 2 && rnd() < 0.38){
+    const c = pick(G.catalog.filter(x=>x.tier>=4));
+    G.auction = Object.assign({}, c, {
+      uid: uid(), fresh:1, aired:0, lastDay:-99, ep:1,
+      bid: Math.round(c.price*0.45/1000)*1000,
+      leader: null, rounds: 0, closed:false
+    });
+  }
+}
+
+/* ─── Spielende ─── */
+function checkEnd(){
+  const p = G.player, W = G.D.winImage;
+  if(p.image >= W && p.love >= W){
+    G.over = true;
+    G.overMsg = { win:true, title:'Hochzeit!', ico:'💒',
+      text:'Bei '+pct(p.image/100,1)+' Marktanteil und einer Zuneigung von '+Math.round(p.love)+
+           ' Punkten sagt Betty Botterbloom Ja. Herr Raffer weint in sein Taschentuch, die Konkurrenz sendet Testbild. '+
+           'Sie haben es geschafft — nach '+G.day+' Tagen.' };
+    return;
+  }
+  for(let i=1;i<3;i++){
+    const c = G.ch[i];
+    if(c.image >= W && c.love >= W){
+      G.over = true;
+      G.overMsg = { win:false, title:'Zu spät', ico:'💔',
+        text: esc(c.name)+' hat Betty vor Ihrer Nase weggeheiratet. Sie stehen mit '+pct(p.image/100,1)+
+              ' Marktanteil und einem Blumenstrauß im Flur.' };
+      return;
+    }
+  }
+  if(p.lowImageDays >= 3){
+    G.over = true;
+    G.overMsg = { win:false, title:'Gefeuert', ico:'📦',
+      text:'Herr Raffer hat Ihren Schreibtisch bereits ausgeräumt. Drei Tage unter '+G.D.fireImage+
+           '% Marktanteil sind zwei Tage zu viel.' };
+    return;
+  }
+  if(p.money < -1000000){
+    G.over = true;
+    G.overMsg = { win:false, title:'Insolvenz', ico:'🏦',
+      text:'Die Nordsee-Bank hat den Kredit fällig gestellt. Der Sender gehört jetzt den Gläubigern.' };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 5 — KÜNSTLICHE INTELLIGENZ DER KONKURRENZ
+   ═══════════════════════════════════════════════════════════════════ */
+
+function estimateAudience(ch, block){
+  // grobe Selbsteinschätzung eines Senders für einen Sendeblock
+  let pot = 0;
+  for(let i=0;i<GROUPS.length;i++) pot += POP*GROUPS[i].share*GROUPS[i].act[block];
+  return pot * (ch.image/100) * (reachOf(ch)/0.55) * 0.62;
+}
+
+function progScore(ch, lic, block){
+  const gd = GENRES[lic.genre];
+  let s = 0;
+  for(let i=0;i<GROUPS.length;i++){
+    s += GROUPS[i].share * GROUPS[i].act[block] * gd.aff[i];
+  }
+  s *= lic.qual * (0.34+0.66*lic.fresh);
+  const hour = BLOCK_H[block];
+  if(lic.fsk>=18 && hour>=6 && hour<22) s *= 0.35;
+  if(lic.fsk>=16 && hour>=6 && hour<20) s *= 0.7;
+  return s;
+}
+
+function aiTurn(ch){
+  const sk = ch.aiSkill;
+  const nextDay = G.day+1;
+
+  // Nachrichtenabos
+  RESSORTS.forEach(r => {
+    const want = ch.money > 700000 ? (sk>0.85?3:2) : (ch.money>300000?1:0);
+    ch.newsSub[r.id] = (rnd() < sk*0.75) ? want : Math.max(0, want-1);
+  });
+  // Nachrichtensendung
+  const cand = [];
+  RESSORTS.forEach(r => {
+    if((ch.newsSub[r.id]||0) > 0) G.newsPool[r.id].forEach(n => cand.push(n));
+  });
+  cand.sort((a,b)=> (b.weight - (G.day-b.day)*0.3) - (a.weight - (G.day-a.day)*0.3));
+  ch.newsShow = cand.slice(0,3);
+
+  // Lizenzen kaufen
+  let budget = ch.money * (0.30 + sk*0.28);
+  let tries = 0;
+  while(budget > 30000 && ch.licences.length < 16 && tries++ < 30){
+    const affordable = G.market.filter(m => m.price <= budget && m.price <= ch.money*0.5);
+    if(!affordable.length) break;
+    affordable.sort((a,b)=> (b.qual/Math.max(1,b.price))*(rnd()*0.4+0.8) - (a.qual/Math.max(1,a.price)));
+    const buy = affordable[Math.floor(rnd()*Math.min(4,affordable.length))];
+    if(!buy) break;
+    budget -= buy.price;
+    buyLicence(ch, buy, false);
+  }
+
+  // Sendemasten
+  if(ch.money > 900000 && ch.transmitters < 4 && rnd() < sk*0.4){
+    ch.money -= 380000; ch.transmitters++;
+  } else if(ch.money > 1600000 && !ch.satellite && rnd() < sk*0.35){
+    ch.money -= 900000; ch.satellite = true;
+  }
+
+  // Sendeplan für morgen
+  const slots = getDay(ch, nextDay);
+  const used = new Set();
+  for(let b=0;b<BLOCKS;b++){
+    const avail = ch.licences.filter(l => !used.has(l.uid));
+    if(!avail.length) break;
+    avail.sort((a,bb)=> progScore(ch,bb,b) - progScore(ch,a,b));
+    const idx = rnd() < sk ? 0 : Math.min(avail.length-1, ri(0,2));
+    const chosen = avail[idx];
+    slots[b].prog = chosen;
+    used.add(chosen.uid);
+  }
+
+  // Werbeverträge annehmen
+  const estMax = estimateAudience(ch, 3);
+  while(ch.contracts.length < 4){
+    const fit = G.adMarket.filter(c => c.minAud <= estMax*(0.55+sk*0.6) && !c.owner);
+    if(!fit.length) break;
+    fit.sort((a,b)=> b.perSpot*b.spots - a.perSpot*a.spots);
+    const take = fit[0];
+    take.owner = ch.name;
+    G.adMarket.splice(G.adMarket.indexOf(take),1);
+    ch.contracts.push(Object.assign({}, take, { deadline: G.day + take.days, done:0 }));
+  }
+  // Spots verteilen
+  ch.contracts.forEach(ct => {
+    let need = ct.spots - ct.done;
+    for(let b=BLOCKS-1;b>=0 && need>0;b--){
+      if(!slots[b].ad && estimateAudience(ch,b) >= ct.minAud*(ct.group?0.25:1)){
+        slots[b].ad = { id: ct.id, brand: ct.brand };
+        need--;
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 6 — ZEITSCHLEIFE & NAVIGATION
+   ═══════════════════════════════════════════════════════════════════ */
+
+let tickTimer = null;
+let dirty = true;
+let tickCount = 0;
+
+function startLoop(){
+  if(tickTimer) clearInterval(tickTimer);
+  scheduleTick();
+}
+function scheduleTick(){
+  if(tickTimer) clearInterval(tickTimer);
+  tickTimer = setInterval(tick, SPEEDS[G.speed]);
+}
+function setSpeed(s){
+  G.speed = s; G.paused = false; scheduleTick(); dirty = true; renderAll();
+}
+function togglePause(){
+  G.paused = !G.paused; dirty = true; renderAll();
+}
+
+function tick(){
+  if(!G || G.over || G.paused || modalOpen) { renderTop(); return; }
+  G.time++;
+  tickCount++;
+
+  // Aufzug
+  if(G.elevBusy > 0){
+    G.elevBusy--;
+    if(G.elevBusy === 0 && G.elevTarget !== null){
+      G.floor = G.elevTarget;
+      G.room = FLOORS[G.floor].id;
+      G.elevTarget = null;
+      dirty = true;
+    }
+  }
+
+  // Sendeblöcke
+  for(let b=0;b<BLOCKS;b++){
+    const t = (BLOCK_H[b] < 6 ? BLOCK_H[b]+24 : BLOCK_H[b]) * 60;
+    if(G.time === t){ airBlock(G.day, b); dirty = true; }
+  }
+
+  if(G.time >= DAY_END){
+    endOfDay();
+    dirty = true;
+    if(G.over){ renderAll(); showEnd(); return; }
+  }
+
+  renderTop();
+  if(dirty || tickCount % 12 === 0){ renderView(); dirty = false; }
+}
+
+/* ─── Fahrstuhl ─── */
+function goFloor(f){
+  if(G.over) return;
+  if(G.elevBusy > 0) return;
+  if(f === G.floor){ G.room = FLOORS[f].id; dirty = true; renderView(); return; }
+  const dist = Math.abs(f - G.floor);
+  G.elevBusy = dist + 2;                  // Fahrzeit in Spielminuten
+  G.elevTarget = f;
+  G.room = null;
+  dirty = true; renderView();
+}
+function leaveRoom(){ G.room = null; dirty = true; renderView(); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 7 — UI-BAUSTEINE
+   ═══════════════════════════════════════════════════════════════════ */
+
+let modalOpen = false;
+let modalStack = [];
+
+function modal(ico, title, who, html, buttons){
+  modalStack.push({ico,title,who,html,buttons});
+  if(!modalOpen) showNextModal();
+}
+function showNextModal(){
+  if(!modalStack.length){ modalOpen = false; el('modal').classList.remove('on'); dirty=true; renderView(); return; }
+  const m = modalStack.shift();
+  modalOpen = true;
+  const btns = (m.buttons && m.buttons.length ? m.buttons : [{t:'OK',cls:'btn'}]);
+  el('mbox').innerHTML =
+    '<div class="mh"><div class="ico">'+m.ico+'</div><div><div class="who">'+esc(m.who||'')+'</div>'+
+    '<h3>'+esc(m.title)+'</h3></div></div><p>'+m.html+'</p>'+
+    '<div class="mf">'+btns.map((b,i)=>'<button class="'+(b.cls||'btn')+'" data-i="'+i+'">'+esc(b.t)+'</button>').join('')+'</div>';
+  el('mbox').querySelectorAll('button').forEach(b=>{
+    b.onclick = ()=>{
+      const f = btns[+b.dataset.i].fn;
+      el('modal').classList.remove('on'); modalOpen = false;
+      if(f) f();
+      setTimeout(showNextModal, 30);
+    };
+  });
+  el('modal').classList.add('on');
+  if(m.onShow) m.onShow(el('mbox'));
+}
+function closeModal(){ el('modal').classList.remove('on'); modalOpen=false; setTimeout(showNextModal,20); }
+
+function toast(type, title, desc){
+  const d = document.createElement('div');
+  d.className = 'toast ' + (type||'');
+  d.innerHTML = '<div class="tt">'+esc(title)+'</div><div class="td">'+esc(desc||'')+'</div>';
+  el('toasts').appendChild(d);
+  setTimeout(()=>{ d.style.transition='opacity .3s'; d.style.opacity='0'; setTimeout(()=>d.remove(),320); }, 4200);
+  while(el('toasts').children.length > 5) el('toasts').firstChild.remove();
+}
+
+/* generischer Auswahldialog */
+function chooser(title, who, ico, items, onPick, emptyTxt){
+  if(!items.length){
+    modal(ico, title, who, '<span class="dim">'+esc(emptyTxt||'Hier ist nichts verfügbar.')+'</span>', [{t:'Schließen',cls:'btn ghost'}]);
+    return;
+  }
+  const html = '<div class="list">' + items.map((it,i)=>
+    '<div class="item pickitem" data-i="'+i+'" style="cursor:pointer">'+
+      '<div style="min-width:0;flex:1"><div class="t">'+it.label+'</div><div class="m">'+it.sub+'</div></div>'+
+      (it.right?'<div class="r">'+it.right+'</div>':'')+
+    '</div>').join('') + '</div>';
+  modalStack.push({ico,title,who,html,buttons:[{t:'Abbrechen',cls:'btn ghost'}],
+    onShow:(box)=>{
+      box.querySelectorAll('.pickitem').forEach(n=>{
+        n.onclick = ()=>{
+          const val = items[+n.dataset.i].value;
+          el('modal').classList.remove('on'); modalOpen = false;
+          onPick(val); dirty=true; renderView();
+          setTimeout(showNextModal, 30);
+        };
+      });
+    }});
+  if(!modalOpen) showNextModal();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 8 — KOPFZEILE, FUSSZEILE, HOCHHAUS
+   ═══════════════════════════════════════════════════════════════════ */
+
+function renderAll(){ renderTop(); renderBottom(); renderView(); }
+
+function renderTop(){
+  if(!G) return;
+  const p = G.player;
+  const onair = G.time >= 18*60;
+  const cls = G.time >= 24*60 ? 'late' : (onair ? 'onair' : '');
+  el('topbar').innerHTML =
+    '<div class="brand">MAD<span>TV</span></div>'+
+    '<div class="clock '+cls+'">'+hhmm(G.time)+'</div>'+
+    '<div class="stat"><div class="k">Tag</div><div class="v">'+G.day+' · '+WEEKDAYS[G.weekday].slice(0,2)+'</div></div>'+
+    '<div class="stat money'+(p.money<0?' neg':'')+'"><div class="k">Konto</div><div class="v">'+moneyShort(p.money)+'</div></div>'+
+    '<div class="stat img"><div class="k">Image</div><div class="v">'+p.image.toFixed(1).replace('.',',')+'%</div></div>'+
+    '<div class="stat love"><div class="k">Betty</div><div class="v">'+Math.round(p.love)+' ♥</div></div>'+
+    '<div class="spacer"></div>'+
+    '<div class="speedbtns">'+
+      '<button data-sp="0" class="'+(G.paused?'on':'')+'">❚❚</button>'+
+      '<button data-sp="1" class="'+(!G.paused&&G.speed===1?'on':'')+'">▶</button>'+
+      '<button data-sp="2" class="'+(!G.paused&&G.speed===2?'on':'')+'">▶▶</button>'+
+      '<button data-sp="3" class="'+(!G.paused&&G.speed===3?'on':'')+'">▶▶▶</button>'+
+    '</div>'+
+    '<button class="iconbtn" id="menubtn">☰</button>';
+  el('topbar').querySelectorAll('[data-sp]').forEach(b=>{
+    b.onclick = ()=>{ const s=+b.dataset.sp; if(s===0){ G.paused=true; } else { setSpeed(s); } renderTop(); };
+  });
+  el('menubtn').onclick = openMenu;
+}
+
+function renderBottom(){
+  if(!G) return;
+  const quick = ['office','film','werbe','news','archiv','studio','betty','chef'];
+  el('bottom').innerHTML = quick.map(id=>{
+    const i = FLOORS.findIndex(f=>f.id===id);
+    return '<button data-f="'+i+'" class="'+(G.floor===i&&G.room?'on':'')+'">'+FLOORS[i].ico+' '+esc(FLOORS[i].name)+'</button>';
+  }).join('') + '<button data-f="-1">🏢 Hochhaus</button>';
+  el('bottom').querySelectorAll('[data-f]').forEach(b=>{
+    b.onclick = ()=>{ const f=+b.dataset.f; if(f<0){ leaveRoom(); } else { goFloor(f); } };
+  });
+}
+
+function renderView(){
+  if(!G) return;
+  const v = el('view');
+  if(G.elevBusy > 0){ v.innerHTML = viewElevator(); bindView(); return; }
+  if(!G.room){ v.innerHTML = viewTower(); bindView(); return; }
+  const fn = ROOMS[G.room];
+  v.innerHTML = fn ? fn() : viewTower();
+  bindView();
+}
+
+function viewElevator(){
+  const t = G.elevTarget !== null ? FLOORS[G.elevTarget] : null;
+  return '<div class="room" style="text-align:center;padding:60px 0">'+
+    '<div style="font-size:48px">🛗</div>'+
+    '<h2 style="margin:10px 0 4px">Der Fahrstuhl fährt…</h2>'+
+    '<p class="dim" style="font-size:12.5px">Ziel: '+(t?esc(t.name):'—')+' · noch '+G.elevBusy+' Minuten</p>'+
+    '<div class="bar" style="max-width:240px;margin:16px auto;height:7px"><i style="width:'+
+      clamp(100-(G.elevBusy/8*100),4,100)+'%"></i></div>'+
+    '<p class="hint" style="max-width:380px;margin:0 auto">Zeit ist im Sendehochhaus die knappste Ressource. '+
+    'Wer unnötig Etagen wechselt, verpasst den Werbeblock.</p></div>';
+}
+
+function viewTower(){
+  const cabTop = (FLOORS.length-1-G.floor) * 46;
+  let h = '<div class="room">';
+  h += '<div class="roomhead"><div class="ico">🏢</div><div><h2>Sendehochhaus</h2>'+
+       '<p>Etage wählen — der Fahrstuhl braucht seine Zeit</p></div>'+
+       '<div class="backbtn" style="pointer-events:none">Etage '+(G.floor+1)+'</div></div>';
+  h += '<div class="tower"><div class="shaft"><div class="rail"></div>'+
+       '<div class="cab'+(G.elevBusy>0?' moving':'')+'" style="top:'+(cabTop+4)+'px"><div class="dot"></div></div></div>';
+  h += '<div class="floors">';
+  for(let i=FLOORS.length-1;i>=0;i--){
+    const f = FLOORS[i];
+    let sub = f.sub, badge = '';
+    if(f.id==='office'){
+      const empty = getDay(G.player,G.day).filter(s=>!s.prog && !s.aired).length;
+      if(empty) badge = '<span class="badge">'+empty+' leer</span>';
+      sub = 'Sendeplan · '+G.player.licences.length+' Lizenzen';
+    }
+    if(f.id==='werbe') sub = G.player.contracts.length+'/4 Verträge im Koffer';
+    if(f.id==='film')  sub = G.market.length+' Angebote'+(G.auction&&!G.auction.closed?' · Auktion!':'');
+    if(f.id==='news')  sub = G.player.newsShow.length+' Meldungen gewählt';
+    if(f.id==='betty') sub = 'Zuneigung '+Math.round(G.player.love)+' ♥';
+    if(f.id==='studio')sub = G.production ? 'Dreht: '+G.production.def.name : 'frei';
+    if(f.id==='technik')sub = 'Reichweite '+Math.round(reachOf(G.player)*100)+'%';
+    if(f.id==='archiv') sub = G.player.licences.length+' Titel';
+    h += '<div class="floor'+(i===G.floor?' here':'')+'" data-go="'+i+'">'+
+         '<div class="num">'+(i+1)+'</div><div class="ico">'+f.ico+'</div>'+
+         '<div class="nm">'+esc(f.name)+badge+'</div>'+
+         '<div class="sub">'+esc(sub)+'</div></div>';
+  }
+  h += '</div></div>';
+  h += '<div class="hint">Tipp: Über die Leiste unten springst du direkt in einen Raum — der Fahrstuhl fährt trotzdem mit.</div>';
+  h += '</div>';
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 9 — RÄUME
+   ═══════════════════════════════════════════════════════════════════ */
+
+function head(ico,title,sub){
+  return '<div class="roomhead"><div class="ico">'+ico+'</div><div><h2>'+esc(title)+'</h2>'+
+         '<p>'+esc(sub)+'</p></div><button class="backbtn" data-act="back">← Flur</button></div>';
+}
+function bar(v,max,color){
+  const w = clamp(v/(max||100)*100,0,100);
+  return '<div class="bar"><i style="width:'+w+'%;background:'+(color||'var(--acc)')+'"></i></div>';
+}
+function fskTag(f){
+  if(f>=18) return '<span class="tag b">FSK 18</span>';
+  if(f>=16) return '<span class="tag w">FSK 16</span>';
+  if(f>=12) return '<span class="tag">FSK 12</span>';
+  if(f>=6)  return '<span class="tag">FSK 6</span>';
+  return '<span class="tag g">o. A.</span>';
+}
+function licMeta(l){
+  const g = GENRES[l.genre];
+  return g.ico+' '+g.name+' · '+l.year+(l.isSerie?' · Serie ('+l.eps+' Folgen, aktuell '+l.ep+')':'');
+}
+function addTime(m){ G.time += m; }
+
+/* Prognose: geschätzte Zuschauer für einen Block mit Kandidat */
+function estimateBlock(day, block, cand){
+  const slots = getDay(G.player, day);
+  const old = slots[block].prog;
+  slots[block].prog = cand || old;
+  const news = G.ch.map(newsAttraction);
+  const attrs = G.ch.map((c,i)=> blockAttraction(c, day, block, news[i]));
+  const reach = G.ch.map(reachOf);
+  slots[block].prog = old;
+  let tot = 0, grp = new Array(GROUPS.length).fill(0);
+  for(let gi=0;gi<GROUPS.length;gi++){
+    const potential = POP*GROUPS[gi].share*GROUPS[gi].act[block];
+    let den = ATTR_OFF;
+    for(let c=0;c<3;c++) den += attrs[c][gi]*reach[c];
+    const v = potential*(attrs[0][gi]*reach[0])/den;
+    grp[gi] = v; tot += v;
+  }
+  return { total: tot, groups: grp };
+}
+
+const ROOMS = {};
+
+/* ─────────── DEIN BÜRO ─────────── */
+let viewDay = 0;   // 0 = heute, 1 = morgen, …
+ROOMS.office = function(){
+  const p = G.player;
+  const day = G.day + viewDay;
+  const slots = getDay(p, day);
+  let h = '<div class="room">' + head('🖥️','Dein Büro','Sendeplan, Werbekoffer und die nackte Bilanz');
+
+  // KPIs
+  const todaySum = p.todayAud.reduce((a,b)=>a+b,0);
+  const yesterSum = p.lastAud.reduce((a,b)=>a+b,0);
+  h += '<div class="grid3" style="margin-bottom:10px">'+
+    '<div class="kpi"><div class="k">Zuschauer heute</div><div class="v">'+viewers(todaySum)+'</div>'+
+      '<div class="d">gestern '+viewers(yesterSum)+'</div></div>'+
+    '<div class="kpi"><div class="k">Marktanteil</div><div class="v acc">'+p.image.toFixed(1).replace('.',',')+'%</div>'+
+      '<div class="d">'+esc(G.ch[1].name)+' '+G.ch[1].image.toFixed(0)+'% · '+esc(G.ch[2].name)+' '+G.ch[2].image.toFixed(0)+'%</div></div>'+
+    '<div class="kpi"><div class="k">Konto</div><div class="v '+(p.money<0?'bad':'ok')+'">'+moneyShort(p.money)+'</div>'+
+      '<div class="d">Fixkosten '+moneyShort(dailyCosts())+'/Tag</div></div>'+
+  '</div>';
+
+  // Tagesauswahl
+  h += '<div class="card"><div class="btnrow" style="margin-bottom:9px">';
+  for(let i=0;i<4;i++){
+    const wd = WEEKDAYS[(G.weekday+i)%7];
+    h += '<button class="btn sm '+(viewDay===i?'':'ghost')+'" data-act="setday" data-d="'+i+'">'+
+         (i===0?'Heute':(i===1?'Morgen':wd))+'</button>';
+  }
+  h += '<span class="dim" style="font-size:11px;margin-left:auto">Sendeschema: 4 Min Nachrichten · Film · 5 Min Werbung</span></div>';
+
+  // Nachrichtenband
+  const na = newsAttraction(p);
+  const naSum = na.reduce((a,b)=>a+b,0)/GROUPS.length;
+  h += '<div class="newsband" style="margin-bottom:7px">📰 <b>Nachrichten</b> '+
+       (p.newsShow.length? p.newsShow.map(n=>esc(n.text.slice(0,34))+'…').join(' · ') : '<span class="bad">keine Sendung zusammengestellt</span>')+
+       '<span style="margin-left:auto">Wirkung '+(naSum*100).toFixed(0)+'</span></div>';
+
+  // Sendeplan
+  h += '<div class="sched">';
+  for(let b=0;b<BLOCKS;b++){
+    const s = slots[b];
+    const prime = (b===2||b===3);
+    const airedNow = s.aired;
+    let pc = 'slot', txt, sub;
+    if(s.prog){
+      pc += ' filled';
+      const est = airedNow && s.res ? s.res.total : estimateBlock(day,b,null).total;
+      txt = esc(s.prog.title);
+      sub = licMeta(s.prog) + ' · Frische '+Math.round(s.prog.fresh*100)+'%';
+      sub += ' · <b>'+viewers(est)+'</b>'+(airedNow?' gesendet':' erwartet');
+      if(s.prog.fsk>=18 && BLOCK_H[b]<22 && BLOCK_H[b]>=6) pc += ' bad';
+      else if(s.prog.fresh < 0.4) pc += ' warn';
+      else pc += ' ok';
+    } else {
+      txt = '<span class="empty">＋ Sendung wählen</span>'; sub = '';
+    }
+    if(airedNow) pc += ' aired';
+
+    let ac = 'slot adslot', atxt, asub='';
+    if(s.ad){
+      const ct = p.contracts.find(c=>c.id===s.ad.id);
+      ac += ' filled';
+      atxt = '📣 '+esc(s.ad.brand);
+      if(ct) asub = viewers(ct.minAud)+' nötig';
+      else asub = 'Vertrag beendet';
+    } else if(s.trailer){
+      ac += ' filled';
+      atxt = '🎞️ Trailer'; asub = esc(s.trailer.title.slice(0,18));
+    } else {
+      atxt = '<span class="empty">＋ Werbung</span>';
+    }
+    if(airedNow) ac += ' aired';
+
+    h += '<div class="slotrow">'+
+      '<div class="hr'+(prime?' prime':'')+'">'+String(BLOCK_H[b]).padStart(2,'0')+'</div>'+
+      '<div class="'+pc+'" '+(airedNow?'':'data-act="pickprog" data-b="'+b+'" data-day="'+day+'"')+'>'+
+        '<div class="st">'+txt+'</div>'+(sub?'<div class="ss">'+sub+'</div>':'')+'</div>'+
+      '<div class="'+ac+'" '+(airedNow?'':'data-act="pickad" data-b="'+b+'" data-day="'+day+'"')+'>'+
+        '<div class="st">'+atxt+'</div>'+(asub?'<div class="ss">'+asub+'</div>':'')+'</div>'+
+    '</div>';
+  }
+  h += '</div>';
+  h += '<div class="hint">Ein Programm auf einem Werbeplatz wird zum <b>Trailer</b> und zieht später Zuschauer. '+
+       'Filme ab 18 vor 22 Uhr kosten Quote — und rufen den Gerichtsvollzieher.</div>';
+  h += '</div>';
+
+  // Werbekoffer
+  h += '<div class="card"><h3>Werbekoffer ('+p.contracts.length+'/4)</h3>';
+  if(!p.contracts.length){
+    h += '<div class="empty-note">Kein Vertrag. Ohne Werbung kein Geld — ab in die Werbeagentur.</div>';
+  } else {
+    h += '<table class="tbl"><tr><th>Kunde</th><th>Ziel</th><th class="right">Spots</th><th class="right">Frist</th><th class="right">pro Spot</th><th class="right">Strafe</th></tr>';
+    p.contracts.forEach(c=>{
+      const left = c.deadline - G.day;
+      h += '<tr><td><b>'+esc(c.brand)+'</b><br><span class="dim" style="font-size:10.5px">'+esc(c.product)+'</span></td>'+
+        '<td>'+viewers(c.minAud)+(c.group?' <span class="tag p">'+GROUPS[c.gi].name+'</span>':'')+'</td>'+
+        '<td class="right num">'+c.done+'/'+c.spots+'</td>'+
+        '<td class="right num '+(left<=1?'bad':(left<=2?'warn':''))+'">'+left+' T</td>'+
+        '<td class="right num ok">'+moneyShort(c.perSpot)+'</td>'+
+        '<td class="right num bad">'+moneyShort(c.penalty)+'</td></tr>';
+    });
+    h += '</table>';
+  }
+  h += '</div>';
+
+  // Quotenverlauf
+  h += '<div class="card"><h3>Quotenverlauf gestern</h3><div class="chart">';
+  const maxA = Math.max(1, ...G.ch.map(c=>Math.max(...c.lastAud)));
+  for(let b=0;b<BLOCKS;b++){
+    h += '<div class="col">';
+    [0,1,2].forEach(ci=>{
+      const col = ['var(--acc)','var(--warn)','var(--bad)'][ci];
+      const v = G.ch[ci].lastAud[b]/maxA*68;
+      h += '<i style="height:'+Math.max(1,v)+'px;background:'+col+'"></i>';
+    });
+    h += '<div class="lab">'+String(BLOCK_H[b]).padStart(2,'0')+'</div></div>';
+  }
+  h += '</div><div class="legend">'+G.ch.map((c,i)=>'<span><i style="background:'+
+       ['var(--acc)','var(--warn)','var(--bad)'][i]+'"></i>'+esc(c.name)+'</span>').join('')+'</div></div>';
+
+  // Sendeprotokoll
+  if(G.log.length){
+    h += '<div class="card"><h3>Sendeprotokoll</h3><table class="tbl">'+
+      '<tr><th>Tag</th><th>Zeit</th><th>Sendung</th><th class="right">Zuschauer</th><th class="right">Anteil</th></tr>'+
+      G.log.slice(0,14).map(e=>'<tr><td class="num dim">'+e.day+'</td>'+
+        '<td class="num">'+String(BLOCK_H[e.block]).padStart(2,'0')+':00</td>'+
+        '<td>'+esc(e.title)+'</td><td class="right num">'+viewers(e.aud)+'</td>'+
+        '<td class="right num '+(e.share>0.4?'ok':(e.share<0.2?'bad':''))+'">'+pct(e.share,0)+'</td></tr>').join('')+
+      '</table></div>';
+  }
+
+  h += '</div>';
+  return h;
+};
+
+function dailyCosts(){
+  const c = G.player;
+  let cost = 0;
+  RESSORTS.forEach(r => cost += NEWS_COST[c.newsSub[r.id]||0]);
+  cost += c.transmitters*18000 + (c.satellite?55000:0) + (c.studio?40000:0);
+  cost += Math.round(c.credit*0.006);
+  return cost;
+}
+
+/* ─────────── FILMAGENTUR ─────────── */
+let filmFilter = 'alle';
+ROOMS.film = function(){
+  const p = G.player;
+  let h = '<div class="room">' + head('🎬','Filmagentur','Lizenzen kaufen — wer zu spät kommt, sieht Testbild');
+
+  // Auktion
+  if(G.auction && !G.auction.closed){
+    const a = G.auction;
+    h += '<div class="card" style="border-color:var(--gold)"><h3>🔨 Auktion läuft</h3>'+
+      '<div class="item" style="background:transparent;border:none;padding:0">'+
+      '<div style="flex:1"><div class="t" style="font-size:14px">'+esc(a.title)+'</div>'+
+      '<div class="m">'+licMeta(a)+' · '+fskTag(a.fsk)+'</div>'+
+      '<div class="statline" style="margin-top:5px">Zuschauerwert '+bar(a.qual)+' '+a.qual+
+      ' &nbsp; Kritik '+bar(a.critic,100,'var(--acc2)')+' '+a.critic+'</div></div>'+
+      '<div class="r"><div class="v" style="font-size:18px;font-weight:800">'+money(a.bid)+'</div>'+
+      '<div class="m">'+(a.leader?'Höchstbietend: '+esc(a.leader):'noch kein Gebot')+'</div></div></div>'+
+      '<div class="btnrow" style="margin-top:9px">'+
+      '<button class="btn gold" data-act="bid">Bieten: '+money(Math.round(a.bid*1.12/1000)*1000)+'</button>'+
+      '<button class="btn ghost" data-act="passauction">Verzichten</button>'+
+      '<span class="dim" style="font-size:11px">Richtpreis '+money(a.price)+'</span></div></div>';
+  }
+
+  const genresPresent = ['alle'].concat([...new Set(G.market.map(m=>m.genre))]);
+  h += '<div class="card"><div class="btnrow" style="margin-bottom:9px">'+
+    genresPresent.map(g=>'<button class="btn sm '+(filmFilter===g?'':'ghost')+'" data-act="filmfilter" data-g="'+g+'">'+
+      (g==='alle'?'Alle':GENRES[g].ico+' '+GENRES[g].name)+'</button>').join('')+'</div>';
+
+  const list = G.market.filter(m=> filmFilter==='alle' || m.genre===filmFilter);
+  h += '<div class="list">';
+  list.forEach(m=>{
+    const afford = p.money >= m.price;
+    h += '<div class="item">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="t">'+esc(m.title)+' '+fskTag(m.fsk)+(m.isSerie?' <span class="tag a">Serie</span>':'')+'</div>'+
+        '<div class="m">'+licMeta(m)+'</div>'+
+        '<div class="statline" style="margin-top:4px">Zusch. '+bar(m.qual)+m.qual+
+        ' · Krit. '+bar(m.critic,100,'var(--acc2)')+m.critic+
+        ' · Kasse '+bar(m.box,100,'var(--gold)')+m.box+'</div>'+
+      '</div>'+
+      '<div class="r"><div style="font-weight:800;font-size:13px" class="'+(afford?'':'bad')+'">'+money(m.price)+'</div>'+
+      '<button class="btn sm" style="margin-top:4px" data-act="buy" data-u="'+m.uid+'" '+(afford?'':'disabled')+'>Kaufen</button></div>'+
+    '</div>';
+  });
+  if(!list.length) h += '<div class="empty-note">Nichts im Angebot.</div>';
+  h += '</div></div>';
+  h += '<div class="hint">Der Preis richtet sich nach Zuschauerwert, Kritikerurteil und Kinokasse. '+
+       'Gekaufte Titel nutzen sich beim Senden ab und erholen sich über mehrere Tage.</div></div>';
+  return h;
+};
+
+/* ─────────── WERBEAGENTUR ─────────── */
+ROOMS.werbe = function(){
+  const p = G.player;
+  const full = p.contracts.length >= 4;
+  let h = '<div class="room">' + head('📣','Werbeagentur','Verträge mit Mindestquote, Frist und Konventionalstrafe');
+  h += '<div class="card"><h3>Dein Koffer ('+p.contracts.length+'/4)</h3>';
+  if(!p.contracts.length) h += '<div class="empty-note">Leer.</div>';
+  else h += '<div class="list">'+p.contracts.map(c=>
+    '<div class="item"><div style="flex:1"><div class="t">'+esc(c.brand)+'</div>'+
+    '<div class="m">'+esc(c.product)+' · '+c.done+'/'+c.spots+' Spots · noch '+(c.deadline-G.day)+' Tage</div></div>'+
+    '<div class="r"><div class="ok" style="font-weight:700">'+moneyShort(c.perSpot)+'</div>'+
+    '<div class="m bad">Strafe '+moneyShort(c.penalty)+'</div></div></div>').join('')+'</div>';
+  h += '</div>';
+
+  const est = estimateBlock(G.day, 3, null).total;
+  h += '<div class="card"><h3>Angebote <span class="dim" style="text-transform:none;letter-spacing:0">'+
+       '· deine Primetime bringt derzeit rund '+viewers(est)+'</span></h3><div class="list">';
+  G.adMarket.forEach(c=>{
+    const reachable = c.group ? est*GROUPS[c.gi].share*1.1 : est;
+    const risky = reachable < c.minAud;
+    h += '<div class="item">'+
+      '<div style="flex:1;min-width:0"><div class="t">'+esc(c.brand)+' <span class="tag">'+esc(c.product)+'</span>'+
+      (c.group?' <span class="tag p">'+GROUPS[c.gi].ico+' '+GROUPS[c.gi].name+'</span>':'')+'</div>'+
+      '<div class="m">Mindestens <b class="'+(risky?'warn':'ok')+'">'+viewers(c.minAud)+'</b> '+
+      (c.group?GROUPS[c.gi].name:'Zuschauer')+' · '+c.spots+' Spots in '+c.days+' Tagen</div></div>'+
+      '<div class="r"><div class="ok" style="font-weight:800">'+moneyShort(c.perSpot)+'<span class="dim">/Spot</span></div>'+
+      '<div class="m bad">Strafe '+moneyShort(c.penalty)+'</div>'+
+      '<button class="btn sm" style="margin-top:4px" data-act="takead" data-i="'+c.id+'" '+(full?'disabled':'')+'>Annehmen</button></div>'+
+    '</div>';
+  });
+  h += '</div></div>';
+  h += '<div class="hint">Ein Spot zählt nur, wenn der Sendeblock die Mindestquote wirklich erreicht. '+
+       'Verfällt der Vertrag, wird die volle Strafe fällig.</div></div>';
+  return h;
+};
+
+/* ─────────── NACHRICHTENSTUDIO ─────────── */
+ROOMS.news = function(){
+  const p = G.player;
+  let h = '<div class="room">' + head('📰','Nachrichtenstudio','Abos wählen, Meldungen zur Sendung zusammenstellen');
+
+  h += '<div class="card"><h3>Ressort-Abonnements</h3><table class="tbl">'+
+       '<tr><th>Ressort</th><th>Stufe</th><th class="right">Kosten/Tag</th><th class="right">Aktualität</th></tr>';
+  RESSORTS.forEach(r=>{
+    const lvl = p.newsSub[r.id]||0;
+    h += '<tr><td>'+r.ico+' '+esc(r.name)+'</td><td>'+
+      [0,1,2,3].map(l=>'<button class="btn sm '+(lvl===l?'':'ghost')+'" style="margin-right:3px" '+
+        'data-act="sub" data-r="'+r.id+'" data-l="'+l+'">'+l+'</button>').join('')+
+      '</td><td class="right num">'+money(NEWS_COST[lvl])+'</td>'+
+      '<td class="right num">'+Math.round(NEWS_QUAL[lvl]*100)+'%</td></tr>';
+  });
+  h += '</table><div class="hint">Stufe 0 = kein Abo. Stufe 3 liefert tagesaktuelle Meldungen — '+
+       'und nur die ziehen Zuschauer von der Konkurrenz ab.</div></div>';
+
+  h += '<div class="card"><h3>Sendung ('+p.newsShow.length+'/3 Meldungen)</h3>';
+  if(!p.newsShow.length) h += '<div class="empty-note">Noch keine Meldung gewählt — die Nachrichten laufen leer.</div>';
+  else h += '<div class="list">'+p.newsShow.map(n=>{
+    const r = RESSORTS.find(x=>x.id===n.res);
+    const age = G.day-n.day;
+    return '<div class="item"><div style="flex:1"><div class="t">'+r.ico+' '+esc(n.text)+'</div>'+
+      '<div class="m">'+esc(r.name)+' · '+(age===0?'<span class="ok">heute</span>':age+' Tage alt')+
+      ' · Nachrichtenwert '+Math.round(n.weight*100)+'</div></div>'+
+      '<button class="btn sm ghost" data-act="unnews" data-i="'+n.id+'">✕</button></div>';
+  }).join('')+'</div>';
+  h += '</div>';
+
+  h += '<div class="card"><h3>Eingegangene Meldungen</h3><div class="list">';
+  let any = false;
+  RESSORTS.forEach(r=>{
+    const lvl = p.newsSub[r.id]||0;
+    if(lvl===0) return;
+    G.newsPool[r.id].forEach(n=>{
+      if(p.newsShow.some(x=>x.id===n.id)) return;
+      const age = G.day-n.day;
+      if(age >= (lvl>=3?1:(lvl>=2?2:3))) return;   // niedriges Abo liefert nur ältere Meldungen
+      any = true;
+      h += '<div class="item"><div style="flex:1"><div class="t">'+r.ico+' '+esc(n.text)+'</div>'+
+        '<div class="m">'+esc(r.name)+' · '+(age===0?'<span class="ok">heute</span>':age+' Tage alt')+
+        ' · Wert '+Math.round(n.weight*100)+'</div></div>'+
+        '<button class="btn sm" data-act="addnews" data-i="'+n.id+'" data-r="'+r.id+'" '+
+        (p.newsShow.length>=3?'disabled':'')+'>Aufnehmen</button></div>';
+    });
+  });
+  if(!any) h += '<div class="empty-note">Keine Meldungen. Ohne Abo kommt nichts über den Ticker.</div>';
+  h += '</div></div></div>';
+  return h;
+};
+
+/* ─────────── ARCHIV ─────────── */
+ROOMS.archiv = function(){
+  const p = G.player;
+  let h = '<div class="room">' + head('🗄️','Archiv','Dein Programmordner — hier steht alles, was du senden darfst');
+  h += '<div class="card"><h3>'+p.licences.length+' Lizenzen</h3><div class="list">';
+  if(!p.licences.length) h += '<div class="empty-note">Leer. Ohne Filme kein Programm.</div>';
+  p.licences.slice().sort((a,b)=>b.qual-a.qual).forEach(l=>{
+    const sell = Math.round(l.price*0.42*(0.4+0.6*l.fresh)/1000)*1000;
+    h += '<div class="item">'+
+      '<div style="flex:1;min-width:0"><div class="t">'+esc(l.title)+' '+fskTag(l.fsk)+
+      (l.produced?' <span class="tag g">Eigenproduktion</span>':'')+'</div>'+
+      '<div class="m">'+licMeta(l)+' · '+l.aired+'× gesendet</div>'+
+      '<div class="statline" style="margin-top:4px">Frische '+bar(l.fresh*100,100,l.fresh<0.4?'var(--bad)':'var(--ok)')+
+      Math.round(l.fresh*100)+'% · Zuschauerwert '+bar(l.qual)+l.qual+'</div></div>'+
+      '<div class="r"><button class="btn sm ghost" data-act="sell" data-u="'+l.uid+'">Verkaufen<br>'+moneyShort(sell)+'</button></div>'+
+    '</div>';
+  });
+  h += '</div></div>';
+  h += '<div class="hint">Frisch gekaufte Titel bringen die volle Quote. Nach jeder Ausstrahlung sinkt die Frische — '+
+       'lass einem Film ein paar Tage Pause, dann erholt er sich.</div></div>';
+  return h;
+};
+
+/* ─────────── PRODUKTIONSSTUDIO ─────────── */
+ROOMS.studio = function(){
+  const p = G.player;
+  let h = '<div class="room">' + head('🎥','Produktionsstudio','Eigenproduktionen — teuer, aber ganz allein deins');
+  if(!p.studio){
+    h += '<div class="card"><h3>Studio nicht angemietet</h3>'+
+      '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Für 250.000 € Anzahlung und 40.000 € Tagesmiete gehört '+
+      'das Studio dir. Nur damit lassen sich eigene Sendungen drehen — inklusive «Kultur heute», Bettys Lieblingssendung.</p>'+
+      '<button class="btn" data-act="rentstudio" '+(p.money<250000?'disabled':'')+'>Studio anmieten (250.000 €)</button></div>';
+  } else if(G.production){
+    const pr = G.production;
+    h += '<div class="card"><h3>Dreharbeiten laufen</h3>'+
+      '<div class="item"><div style="flex:1"><div class="t">'+pr.def.ico+' '+esc(pr.def.name)+'</div>'+
+      '<div class="m">Noch '+pr.left+' Tag(e) bis zur Fertigstellung</div>'+
+      '<div class="statline" style="margin-top:5px">'+bar((pr.def.days-pr.left)/pr.def.days*100)+'</div></div></div></div>';
+  } else {
+    h += '<div class="card"><h3>Was soll gedreht werden?</h3><div class="list">';
+    PRODUCTIONS.forEach(pr=>{
+      h += '<div class="item"><div style="flex:1;min-width:0">'+
+        '<div class="t">'+pr.ico+' '+esc(pr.name)+' <span class="tag">'+GENRES[pr.genre].name+'</span>'+
+        (pr.betty>=6?' <span class="tag p">♥ Betty</span>':'')+'</div>'+
+        '<div class="m">'+esc(pr.desc)+'</div>'+
+        '<div class="statline" style="margin-top:4px">Qualität ~'+pr.quality+' · '+pr.days+' Drehtag(e)'+
+        (pr.episodes?' · '+pr.episodes+' Folgen':'')+'</div></div>'+
+        '<div class="r"><div style="font-weight:700">'+moneyShort(pr.cost)+'</div>'+
+        '<button class="btn sm" style="margin-top:4px" data-act="produce" data-p="'+pr.id+'" '+
+        (p.money<pr.cost?'disabled':'')+'>Drehen</button></div></div>';
+    });
+    h += '</div></div>';
+  }
+  h += '<div class="hint">Kultursendungen bringen wenig Quote, aber Kritikerlob, Sammy-Chancen — und Bettys Herz.</div></div>';
+  return h;
+};
+
+/* ─────────── TECHNIK ─────────── */
+ROOMS.technik = function(){
+  const p = G.player;
+  const r = reachOf(p);
+  let h = '<div class="room">' + head('📡','Technik','Sendemasten und Satellit — mehr Reichweite, mehr Zuschauer');
+  h += '<div class="grid3" style="margin-bottom:10px">'+
+    '<div class="kpi"><div class="k">Reichweite</div><div class="v acc">'+Math.round(r*100)+'%</div>'+
+    '<div class="d">von '+viewers(POP)+' Haushalten</div></div>'+
+    '<div class="kpi"><div class="k">Sendemasten</div><div class="v">'+p.transmitters+' / 4</div>'+
+    '<div class="d">je 18.000 €/Tag</div></div>'+
+    '<div class="kpi"><div class="k">Satellit</div><div class="v">'+(p.satellite?'aktiv':'—')+'</div>'+
+    '<div class="d">55.000 €/Tag</div></div></div>';
+  h += '<div class="card"><div class="list">'+
+    '<div class="item"><div style="flex:1"><div class="t">📶 Zusätzlicher Sendemast</div>'+
+    '<div class="m">+11 Prozentpunkte Reichweite · 18.000 € Betriebskosten pro Tag</div></div>'+
+    '<div class="r"><div style="font-weight:700">'+money(380000)+'</div>'+
+    '<button class="btn sm" style="margin-top:4px" data-act="mast" '+
+    (p.transmitters>=4||p.money<380000?'disabled':'')+'>Bauen</button></div></div>'+
+    '<div class="item"><div style="flex:1"><div class="t">🛰️ Satellitenaufschaltung</div>'+
+    '<div class="m">+22 Prozentpunkte Reichweite · 55.000 € pro Tag</div></div>'+
+    '<div class="r"><div style="font-weight:700">'+money(900000)+'</div>'+
+    '<button class="btn sm" style="margin-top:4px" data-act="sat" '+
+    (p.satellite||p.money<900000?'disabled':'')+'>Aufschalten</button></div></div>'+
+  '</div></div>';
+  h += '<div class="hint">Große Werbeverträge verlangen Millionenquoten. Ohne Reichweite bleiben sie unerreichbar — '+
+       'die laufenden Kosten fressen dich aber auf, wenn das Programm nicht mithält.</div></div>';
+  return h;
+};
+
+/* ─────────── BANK ─────────── */
+ROOMS.bank = function(){
+  const p = G.player;
+  const maxCredit = 2000000;
+  let h = '<div class="room">' + head('🏦','Nordsee-Bank','Kredit, Zinsen und ernste Blicke');
+  h += '<div class="grid3" style="margin-bottom:10px">'+
+    '<div class="kpi"><div class="k">Konto</div><div class="v '+(p.money<0?'bad':'ok')+'">'+moneyShort(p.money)+'</div></div>'+
+    '<div class="kpi"><div class="k">Kredit</div><div class="v">'+moneyShort(p.credit)+'</div><div class="d">0,6% Tageszins</div></div>'+
+    '<div class="kpi"><div class="k">Tageszins</div><div class="v">'+moneyShort(Math.round(p.credit*0.006))+'</div></div></div>';
+  h += '<div class="card"><h3>Kredit</h3><div class="btnrow">'+
+    [100000,250000,500000].map(v=>'<button class="btn" data-act="loan" data-v="'+v+'" '+
+      (p.credit+v>maxCredit?'disabled':'')+'>+'+moneyShort(v)+' aufnehmen</button>').join('')+
+    '</div><div class="btnrow" style="margin-top:8px">'+
+    [100000,250000,500000].map(v=>'<button class="btn ghost" data-act="repay" data-v="'+v+'" '+
+      (p.credit<v||p.money<v?'disabled':'')+'>−'+moneyShort(v)+' tilgen</button>').join('')+
+    '</div><div class="hint">Kreditrahmen '+moneyShort(maxCredit)+'. Unter −1 Mio € auf dem Konto ist der Sender weg.</div></div>';
+
+  h += '<div class="card"><h3>Bilanz seit Sendestart</h3><table class="tbl">'+
+    '<tr><td>Werbeeinnahmen</td><td class="right num ok">'+money(G.stats.revenue)+'</td></tr>'+
+    '<tr><td>Ausgaben</td><td class="right num bad">'+money(G.stats.costs)+'</td></tr>'+
+    '<tr><td>Verträge erfüllt</td><td class="right num">'+G.stats.contractsDone+'</td></tr>'+
+    '<tr><td>Verträge geplatzt</td><td class="right num bad">'+G.stats.contractsFailed+'</td></tr>'+
+    '<tr><td>Lizenzen gekauft</td><td class="right num">'+G.stats.filmsBought+'</td></tr>'+
+    '<tr><td>Sammy Awards</td><td class="right num">'+G.player.awards+'</td></tr></table></div></div>';
+  return h;
+};
+
+/* ─────────── CHEFBÜRO ─────────── */
+ROOMS.chef = function(){
+  const p = G.player;
+  const rank = [...G.ch].sort((a,b)=>b.image-a.image);
+  const pos = rank.indexOf(p)+1;
+  let mood;
+  if(p.image >= 50) mood = 'Nicht schlecht. Für Ihre Verhältnisse. Machen Sie weiter so, dann rede ich beim Aufsichtsrat ein gutes Wort.';
+  else if(p.image >= 34) mood = 'Mittelmaß. Damit gewinnt man keine Sammy und schon gar nicht Frau Botterbloom.';
+  else if(p.image >= G.D.fireImage) mood = 'Das ist kein Fernsehen, das ist eine Bildstörung mit Ton. Ich beobachte Sie.';
+  else mood = 'Sie stehen mit einem Bein auf der Straße. Ich sage das nur einmal.';
+  let h = '<div class="room">' + head('🧔','Chefbüro','Herr Raffer, Generalintendant');
+  h += '<div class="card"><div class="pers"><div class="avatar boss">🧔</div>'+
+    '<div><div style="font-weight:800;font-size:15px">Herr Raffer</div>'+
+    '<div class="dim" style="font-size:12.5px;margin-top:4px">«'+esc(mood)+'»</div></div></div></div>';
+  h += '<div class="card"><h3>Senderanking</h3><table class="tbl">'+
+    '<tr><th>#</th><th>Sender</th><th class="right">Marktanteil</th><th class="right">Betty ♥</th><th class="right">Sammys</th></tr>'+
+    rank.map((c,i)=>'<tr><td>'+(i+1)+'</td><td>'+(c===p?'<b class="acc">':'')+esc(c.name)+(c===p?'</b>':'')+'</td>'+
+      '<td class="right num">'+c.image.toFixed(1).replace('.',',')+'%</td>'+
+      '<td class="right num">'+Math.round(c.love)+'</td>'+
+      '<td class="right num">'+c.awards+'</td></tr>').join('')+'</table>'+
+    '<div class="hint">Sieg: mindestens <b>'+G.D.winImage+'%</b> Marktanteil <b>und</b> '+G.D.winImage+
+    ' Zuneigungspunkte bei Betty. Unter '+G.D.fireImage+'% wirst du nach drei Tagen entlassen.</div></div>';
+  h += '<div class="card"><h3>Nächste Sammy-Verleihung</h3><p class="dim" style="font-size:12.5px">'+
+    'In '+(7-(G.day%7||7)+ (G.day%7===0?7:0))+' Tag(en). Kategorien: beste Nachrichtensendung, beste Kultursendung, beste Primetime-Quote.</p></div>';
+  h += '</div>';
+  return h;
+};
+
+/* ─────────── BETTYS BÜRO ─────────── */
+ROOMS.betty = function(){
+  const p = G.player;
+  const cap = p.image;
+  let mood;
+  if(p.love >= 78) mood = 'Sie sehen mich an, als hätte sie den Ring schon anprobiert.';
+  else if(p.love >= 50) mood = '«Ihr Kulturprogramm gestern… das war wirklich schön.»';
+  else if(p.love >= 25) mood = '«Ach, Sie sind das. Der mit den Filmen.»';
+  else if(p.love >= 8)  mood = '«Ja bitte? Ich habe gleich Redaktionsschluss.»';
+  else mood = 'Sie blickt kaum auf.';
+  let h = '<div class="room">' + head('💗','Bettys Büro','Betty Botterbloom, Kulturredaktion');
+  h += '<div class="card"><div class="pers"><div class="avatar betty">💃</div>'+
+    '<div style="flex:1"><div style="font-weight:800;font-size:15px">Betty Botterbloom</div>'+
+    '<div class="dim" style="font-size:12.5px;margin:3px 0 7px">'+esc(mood)+'</div>'+
+    '<div class="statline">Zuneigung '+bar(p.love,100,'var(--love)')+' <b class="heart">'+Math.round(p.love)+' / 100</b></div>'+
+    '<div class="hint">Ihre Zuneigung kann dein Image nie überflügeln — aktuell gedeckelt bei '+
+      Math.round(cap)+'. Kultursendungen und Geschenke helfen.</div></div></div>'+
+    '<div class="btnrow" style="margin-top:10px">'+
+    '<button class="btn love" data-act="visit">Auf einen Kaffee bleiben (15 Min)</button></div></div>';
+
+  h += '<div class="card"><h3>Mitgebrachte Geschenke</h3>';
+  if(!G.gifts.length) h += '<div class="empty-note">Nichts dabei. Der Kiosk im Foyer hat geöffnet.</div>';
+  else h += '<div class="list">'+G.gifts.map((g,i)=>
+    '<div class="item"><div style="flex:1"><div class="t">'+g.ico+' '+esc(g.name)+'</div>'+
+    '<div class="m">+'+g.love+' Zuneigung'+(p.love<g.min?' · sie ist noch nicht so weit':'')+'</div></div>'+
+    '<button class="btn sm love" data-act="gift" data-i="'+i+'" '+(p.love<g.min?'disabled':'')+'>Überreichen</button></div>').join('')+'</div>';
+  h += '</div>';
+
+  const rivalLove = G.ch.slice(1).map(c=>esc(c.name)+': '+Math.round(c.love)).join(' · ');
+  h += '<div class="hint">Die Konkurrenz schläft nicht — '+rivalLove+'</div></div>';
+  return h;
+};
+
+/* ─────────── FOYER & KIOSK ─────────── */
+ROOMS.foyer = function(){
+  const p = G.player;
+  let h = '<div class="room">' + head('🛒','Foyer & Kiosk','Geschenke, Klatsch und das Türschild-Verzeichnis');
+  if(G.events.pendingTerror){
+    const cur = G.events.terrorSign;
+    h += '<div class="card" style="border-color:var(--bad)"><h3>💣 Türschild-Verzeichnis</h3>'+
+      '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Für morgen ist ein Anschlag angekündigt. '+
+      'Wer im Verzeichnis die Etagenbeschriftung vertauscht, schickt die Herrschaften woandershin. '+
+      'Unsportlich? Aber sicher.</p><div class="btnrow">'+
+      ['self','rival1','rival2'].map(t=>'<button class="btn sm '+(cur===t?'':'ghost')+'" data-act="sign" data-t="'+t+'">'+
+        (t==='self'?'Nichts tun':'→ '+esc(t==='rival1'?G.ch[1].name:G.ch[2].name))+'</button>').join('')+
+      '</div></div>';
+  }
+  h += '<div class="card"><h3>Kiosk — Geschenke für Betty</h3><div class="list">';
+  GIFTS.forEach(g=>{
+    h += '<div class="item"><div style="flex:1"><div class="t">'+g.ico+' '+esc(g.name)+'</div>'+
+      '<div class="m">+'+g.love+' Zuneigung'+(g.min?' · erst ab '+g.min+' ♥ sinnvoll':'')+'</div></div>'+
+      '<div class="r"><div style="font-weight:700">'+moneyShort(g.cost)+'</div>'+
+      '<button class="btn sm" style="margin-top:4px" data-act="buygift" data-g="'+g.id+'" '+
+      (p.money<g.cost?'disabled':'')+'>Kaufen</button></div></div>';
+  });
+  h += '</div><div class="hint">Gekaufte Geschenke landen in deiner Tasche — überreichen musst du sie oben bei Betty.</div></div></div>';
+  return h;
+};
+
+/* ─────────── KONKURRENZBÜROS ─────────── */
+function rivalRoom(idx){
+  const c = G.ch[idx];
+  const slots = getDay(c, G.day);
+  let h = '<div class="room">' + head('🚪','Büro '+c.name,'Ein kurzer Blick auf den Sendeplan der Konkurrenz');
+  h += '<div class="grid3" style="margin-bottom:10px">'+
+    '<div class="kpi"><div class="k">Marktanteil</div><div class="v">'+c.image.toFixed(1).replace('.',',')+'%</div></div>'+
+    '<div class="kpi"><div class="k">Reichweite</div><div class="v">'+Math.round(reachOf(c)*100)+'%</div>'+
+    '<div class="d">'+c.transmitters+' Masten'+(c.satellite?' + Satellit':'')+'</div></div>'+
+    '<div class="kpi"><div class="k">Betty ♥</div><div class="v" style="color:var(--love)">'+Math.round(c.love)+'</div></div></div>';
+  h += '<div class="card"><h3>Heutiges Programm</h3><table class="tbl">'+
+    '<tr><th>Zeit</th><th>Sendung</th><th class="right">Zuschauer</th></tr>'+
+    slots.map((s,b)=>'<tr><td class="num">'+String(BLOCK_H[b]).padStart(2,'0')+':00</td>'+
+      '<td>'+(s.prog?esc(s.prog.title)+' <span class="dim">'+GENRES[s.prog.genre].name+'</span>':'<span class="dim">—</span>')+'</td>'+
+      '<td class="right num">'+(s.aired&&s.res?viewers(s.res.total):'<span class="dim">…</span>')+'</td></tr>').join('')+
+    '</table></div>';
+  h += '<div class="hint">Wer weiß, was drüben läuft, kann sein eigenes Programm daneben legen — '+
+       'gleiches Genre zur gleichen Zeit teilt die Zuschauer.</div></div>';
+  return h;
+}
+ROOMS.rival1 = ()=>rivalRoom(1);
+ROOMS.rival2 = ()=>rivalRoom(2);
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 10 — AKTIONEN
+   ═══════════════════════════════════════════════════════════════════ */
+
+const ACT = {
+  back(){ leaveRoom(); },
+
+  setday(d){ viewDay = +d.d; },
+
+  pickprog(d){
+    const day = +d.day, b = +d.b;
+    const p = G.player;
+    const slots = getDay(p, day);
+    const items = [];
+    if(slots[b].prog) items.push({ label:'⌫ Sendeplatz leeren', sub:'Testbild senden', value:{clear:true} });
+    p.licences.slice().sort((a,x)=> estimateBlock(day,b,x).total - estimateBlock(day,b,a).total).forEach(l=>{
+      const est = estimateBlock(day,b,l);
+      const gd = GENRES[l.genre];
+      const warn = (l.fsk>=18 && BLOCK_H[b]<22 && BLOCK_H[b]>=6) ? ' <span class="tag b">zu früh!</span>' : '';
+      const used = slots.some((s,i)=> i!==b && s.prog && s.prog.uid===l.uid) ? ' <span class="tag w">läuft heute schon</span>' : '';
+      items.push({
+        label: esc(l.title)+' '+fskTag(l.fsk)+warn+used,
+        sub: gd.ico+' '+gd.name+' · Frische '+Math.round(l.fresh*100)+'% · Zuschauerwert '+l.qual,
+        right: '<b>'+viewers(est.total)+'</b>',
+        value:{ lic:l }
+      });
+    });
+    chooser(String(BLOCK_H[b]).padStart(2,'0')+':00 Uhr — Sendung wählen','Sendeplan','📺', items, v=>{
+      if(v.clear) slots[b].prog = null;
+      else slots[b].prog = v.lic;
+    }, 'Dein Archiv ist leer. Kauf erst Lizenzen in der Filmagentur.');
+  },
+
+  pickad(d){
+    const day = +d.day, b = +d.b;
+    const p = G.player;
+    const slots = getDay(p, day);
+    const items = [];
+    if(slots[b].ad || slots[b].trailer) items.push({ label:'⌫ Werbeplatz leeren', sub:'nichts senden', value:{clear:true} });
+    const est = estimateBlock(day,b,null);
+    p.contracts.forEach(c=>{
+      if(c.done >= c.spots) return;
+      const reached = c.group ? est.groups[c.gi] : est.total;
+      const ok = reached >= c.minAud;
+      items.push({
+        label:'📣 '+esc(c.brand)+' '+(ok?'<span class="tag g">Quote reicht</span>':'<span class="tag b">zu wenig</span>'),
+        sub: 'Braucht '+viewers(c.minAud)+(c.group?' '+GROUPS[c.gi].name:'')+' · Prognose '+viewers(reached)+
+             ' · '+c.done+'/'+c.spots+' Spots',
+        right:'<b class="ok">'+moneyShort(c.perSpot)+'</b>',
+        value:{ ad:c }
+      });
+    });
+    slots.forEach((s,i)=>{
+      if(i<=b || !s.prog) return;
+      if(items.some(x=>x.value.trail && x.value.trail.uid===s.prog.uid)) return;
+      items.push({
+        label:'🎞️ Trailer: '+esc(s.prog.title),
+        sub:'Bewirbt die Sendung um '+String(BLOCK_H[i]).padStart(2,'0')+':00 Uhr (+13% Zuschauer)',
+        value:{ trail:s.prog }
+      });
+    });
+    chooser(String(BLOCK_H[b]).padStart(2,'0')+':00 Uhr — Werbeblock','Sendeplan','📣', items, v=>{
+      slots[b].ad = null; slots[b].trailer = null;
+      if(v.ad) slots[b].ad = { id:v.ad.id, brand:v.ad.brand };
+      else if(v.trail) slots[b].trailer = v.trail;
+    }, 'Kein Vertrag im Koffer und keine spätere Sendung zum Bewerben.');
+  },
+
+  filmfilter(d){ filmFilter = d.g; },
+
+  buy(d){
+    const m = G.market.find(x=>x.uid === +d.u);
+    if(!m) return;
+    if(G.player.money < m.price){ toast('bad','Zu teuer','Dafür reicht das Konto nicht.'); return; }
+    buyLicence(G.player, m, false);
+    addTime(3);
+    toast('good','Gekauft','«'+m.title+'» liegt im Archiv.');
+  },
+
+  bid(){
+    const a = G.auction;
+    if(!a || a.closed) return;
+    const next = Math.round(a.bid*1.12/1000)*1000;
+    if(G.player.money < next){ toast('bad','Zu teuer','Die Bank sagt nein.'); return; }
+    a.bid = next; a.leader = G.player.name; a.rounds++;
+    addTime(4);
+    // Gegengebote
+    let counter = false;
+    for(let i=1;i<3;i++){
+      const c = G.ch[i];
+      const limit = a.price * (0.8 + c.aiSkill*0.75);
+      if(c.money > a.bid*1.12 && a.bid*1.12 < limit && rnd() < c.aiSkill){
+        a.bid = Math.round(a.bid*1.12/1000)*1000;
+        a.leader = c.name; counter = true;
+      }
+    }
+    if(!counter || a.rounds >= 6){
+      a.closed = true;
+      if(a.leader === G.player.name){
+        G.player.money -= a.bid;
+        G.stats.costs += a.bid;
+        const lic = Object.assign({},a,{uid:uid(),fresh:1,aired:0,lastDay:-99,ep:1});
+        delete lic.bid; delete lic.leader; delete lic.rounds; delete lic.closed;
+        G.player.licences.push(lic);
+        modal('🔨','Zuschlag!','Auktion','«'+esc(a.title)+'» gehört für '+money(a.bid)+' dir.',[{t:'Sehr gut',cls:'btn'}]);
+      } else {
+        const w = G.ch.find(c=>c.name===a.leader);
+        if(w) w.licences.push(Object.assign({},a,{uid:uid(),fresh:1,aired:0,lastDay:-99,ep:1}));
+        modal('🔨','Verloren','Auktion',esc(a.leader)+' erhält den Zuschlag für '+money(a.bid)+'.',[{t:'Ärgerlich',cls:'btn ghost'}]);
+      }
+    }
+  },
+  passauction(){ if(G.auction) G.auction.closed = true; },
+
+  takead(d){
+    const p = G.player;
+    if(p.contracts.length >= 4){ toast('warn','Koffer voll','Höchstens vier Verträge gleichzeitig.'); return; }
+    const c = G.adMarket.find(x=>x.id === +d.i);
+    if(!c) return;
+    G.adMarket.splice(G.adMarket.indexOf(c),1);
+    p.contracts.push(Object.assign({},c,{ deadline: G.day + c.days, done:0 }));
+    addTime(3);
+    toast('good','Vertrag unterschrieben', c.brand + ' · ' + c.spots + ' Spots bis Tag ' + (G.day+c.days));
+  },
+
+  sub(d){
+    G.player.newsSub[d.r] = +d.l;
+    G.player.newsShow = G.player.newsShow.filter(n => (G.player.newsSub[n.res]||0) > 0);
+  },
+
+  addnews(d){
+    const p = G.player;
+    if(p.newsShow.length >= 3) return;
+    const n = G.newsPool[d.r].find(x=>x.id === +d.i);
+    if(n) p.newsShow.push(n);
+    addTime(2);
+  },
+  unnews(d){
+    G.player.newsShow = G.player.newsShow.filter(n=>n.id !== +d.i);
+  },
+
+  sell(d){
+    const p = G.player;
+    const l = p.licences.find(x=>x.uid === +d.u);
+    if(!l) return;
+    const sum = Math.round(l.price*0.42*(0.4+0.6*l.fresh)/1000)*1000;
+    modal('🗄️','Lizenz verkaufen','Archiv','«'+esc(l.title)+'» für '+money(sum)+' abgeben?',[
+      {t:'Verkaufen',cls:'btn',fn:()=>{
+        p.licences.splice(p.licences.indexOf(l),1);
+        removeFromSchedules(p,l);
+        p.money += sum; G.stats.revenue += sum;
+        toast('good','Verkauft', money(sum)+' gutgeschrieben.');
+        dirty=true; renderView();
+      }},
+      {t:'Behalten',cls:'btn ghost'}
+    ]);
+  },
+
+  rentstudio(){
+    const p = G.player;
+    if(p.money < 250000) return;
+    p.money -= 250000; p.studio = true; G.stats.costs += 250000;
+    addTime(10);
+    toast('good','Studio angemietet','40.000 € Tagesmiete laufen ab sofort.');
+  },
+
+  produce(d){
+    const p = G.player;
+    const pr = PRODUCTIONS.find(x=>x.id === d.p);
+    if(!pr || G.production || p.money < pr.cost) return;
+    p.money -= pr.cost; G.stats.costs += pr.cost;
+    G.production = { def:pr, left:pr.days, no: (G._prodNo = (G._prodNo||0)+1) };
+    addTime(15);
+    toast('good','Dreh gestartet', pr.name + ' — fertig in ' + pr.days + ' Tag(en).');
+  },
+
+  mast(){
+    const p = G.player;
+    if(p.transmitters>=4 || p.money<380000) return;
+    p.money -= 380000; p.transmitters++; G.stats.costs += 380000;
+    addTime(8);
+    toast('good','Sendemast steht','Reichweite jetzt '+Math.round(reachOf(p)*100)+'%.');
+  },
+  sat(){
+    const p = G.player;
+    if(p.satellite || p.money<900000) return;
+    p.money -= 900000; p.satellite = true; G.stats.costs += 900000;
+    addTime(8);
+    toast('good','Satellit aufgeschaltet','Reichweite jetzt '+Math.round(reachOf(p)*100)+'%.');
+  },
+
+  loan(d){
+    const v = +d.v;
+    if(G.player.credit + v > 2000000) return;
+    G.player.credit += v; G.player.money += v;
+    toast('warn','Kredit aufgenommen', money(v)+' — 0,6% Zins pro Tag.');
+  },
+  repay(d){
+    const v = +d.v;
+    if(G.player.credit < v || G.player.money < v) return;
+    G.player.credit -= v; G.player.money -= v;
+    toast('good','Getilgt', money(v)+' zurückgezahlt.');
+  },
+
+  visit(){
+    const p = G.player;
+    addTime(15);
+    const gain = clamp(0.6 + p.image/60, 0, 3);
+    p.love = clamp(Math.min(p.love + gain, p.image), 0, 100);
+    const lines = [
+      '«Sie riechen nach Archivstaub.»',
+      '«Haben Sie das Ballett gesehen? Nein? Dachte ich mir.»',
+      '«Man sagt, Ihr Sender hätte gestern Testbild gezeigt.»',
+      '«Sie sind hartnäckig. Das gefällt mir fast.»',
+      '«Bringen Sie mir mehr Kultur. Dann reden wir weiter.»'
+    ];
+    modal('💗','Betty Botterbloom','Kulturredaktion', esc(pick(lines))+
+      '<br><br><span class="dim">Zuneigung +'+gain.toFixed(1).replace('.',',')+'</span>',
+      [{t:'Bis morgen',cls:'btn love'}]);
+  },
+
+  gift(d){
+    const p = G.player;
+    const g = G.gifts[+d.i];
+    if(!g || p.love < g.min) return;
+    G.gifts.splice(+d.i,1);
+    const before = p.love;
+    p.love = clamp(Math.min(p.love + g.love, p.image), 0, 100);
+    addTime(10);
+    const capped = (before + g.love) > p.image + 0.01;
+    modal(g.ico,'Sie freut sich','Betty Botterbloom',
+      '«'+esc(pick(['Oh! Das wäre doch nicht nötig gewesen.','Sie sind ja verrückt.','Wie aufmerksam.']))+'»'+
+      '<br><br>Zuneigung: '+Math.round(before)+' → <b class="heart">'+Math.round(p.love)+'</b>'+
+      (capped?'<br><span class="warn">Ihre Zuneigung ist durch dein Image gedeckelt ('+Math.round(p.image)+'). Mehr Quote, mehr Herz.</span>':''),
+      [{t:'Gern geschehen',cls:'btn love'}]);
+  },
+
+  buygift(d){
+    const p = G.player;
+    const g = GIFTS.find(x=>x.id === d.g);
+    if(!g || p.money < g.cost) return;
+    p.money -= g.cost; G.stats.costs += g.cost;
+    G.gifts.push(g);
+    addTime(4);
+    toast('good','Eingepackt', g.name + ' liegt in deiner Tasche.');
+  },
+
+  sign(d){
+    G.events.terrorSign = d.t;
+    toast('warn','Türschild geändert', d.t==='self' ? 'Alles bleibt, wie es ist.' : 'Die Beschriftung zeigt jetzt woandershin.');
+  }
+};
+
+function bindView(){
+  el('view').querySelectorAll('[data-act]').forEach(n=>{
+    n.onclick = (ev)=>{
+      ev.stopPropagation();
+      if(n.hasAttribute('disabled')) return;
+      const fn = ACT[n.dataset.act];
+      if(fn){ fn(Object.assign({}, n.dataset)); dirty = true; renderView(); renderTop(); renderBottom(); }
+    };
+  });
+  el('view').querySelectorAll('[data-go]').forEach(n=>{
+    n.onclick = ()=> goFloor(+n.dataset.go);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEIL 11 — MENÜ, SPEICHERN, START, ENDE
+   ═══════════════════════════════════════════════════════════════════ */
+
+const SAVEKEY = 'madtv_save_v1';
+
+function serialize(){
+  const s = {
+    v:1, UID, day:G.day, weekday:G.weekday, week:G.week, time:G.time,
+    diff:G.diff, speed:G.speed, floor:G.floor, room:G.room,
+    market:G.market, adMarket:G.adMarket, newsPool:G.newsPool, auction:G.auction,
+    events:G.events, stats:G.stats, gifts:G.gifts.map(g=>g.id),
+    production:G.production ? { id:G.production.def.id, left:G.production.left, no:G.production.no } : null,
+    prodNo:G._prodNo||0,
+    ch: G.ch.map(c=>({
+      name:c.name, isAI:c.isAI, money:c.money, credit:c.credit,
+      licences:c.licences, contracts:c.contracts,
+      newsSub:c.newsSub, newsShow:c.newsShow,
+      transmitters:c.transmitters, satellite:c.satellite, studio:c.studio,
+      image:c.image, love:c.love, aiSkill:c.aiSkill,
+      lastAud:c.lastAud, todayAud:c.todayAud, audHist:c.audHist,
+      awards:c.awards, culturePoints:c.culturePoints, newsPoints:c.newsPoints,
+      primePoints:c.primePoints, lowImageDays:c.lowImageDays,
+      sched: Object.keys(c.sched).reduce((o,d)=>{
+        o[d] = c.sched[d].map(s=>({
+          p: s.prog?s.prog.uid:null, a: s.ad||null, t: s.trailer?s.trailer.uid:null,
+          aired:s.aired, res:s.res
+        }));
+        return o;
+      },{})
+    }))
+  };
+  return JSON.stringify(s);
+}
+
+function deserialize(json){
+  const s = JSON.parse(json);
+  const d = DIFFS[s.diff] || DIFFS.normal;
+  G = {
+    diff:s.diff, D:d, day:s.day, weekday:s.weekday, week:s.week, time:s.time,
+    speed:s.speed||2, paused:false, over:false, overMsg:null,
+    floor:s.floor||6, elevBusy:0, elevTarget:null, room:s.room||null,
+    catalog: buildCatalog(),
+    market:s.market, adMarket:s.adMarket, newsPool:s.newsPool, auction:s.auction,
+    events:s.events, stats:s.stats,
+    gifts:(s.gifts||[]).map(id=>GIFTS.find(g=>g.id===id)).filter(Boolean),
+    log:[], production:null,
+    player:null, ch:[], _prodNo:s.prodNo||0
+  };
+  UID = s.UID || 5000;
+  G.ch = s.ch.map(c=>{
+    const ch = makeChannel(c.name, c.isAI, c.money, c.aiSkill);
+    Object.assign(ch, {
+      credit:c.credit, licences:c.licences, contracts:c.contracts,
+      newsSub:c.newsSub, newsShow:c.newsShow, transmitters:c.transmitters,
+      satellite:c.satellite, studio:c.studio, image:c.image, love:c.love,
+      lastAud:c.lastAud, todayAud:c.todayAud, audHist:c.audHist, awards:c.awards,
+      culturePoints:c.culturePoints, newsPoints:c.newsPoints, primePoints:c.primePoints,
+      lowImageDays:c.lowImageDays
+    });
+    ch.sched = {};
+    Object.keys(c.sched).forEach(dd=>{
+      ch.sched[dd] = c.sched[dd].map(sl=>({
+        prog: sl.p ? ch.licences.find(l=>l.uid===sl.p)||null : null,
+        ad: sl.a || null,
+        trailer: sl.t ? ch.licences.find(l=>l.uid===sl.t)||null : null,
+        aired: sl.aired, res: sl.res
+      }));
+    });
+    return ch;
+  });
+  G.player = G.ch[0];
+  if(s.production){
+    const def = PRODUCTIONS.find(p=>p.id===s.production.id);
+    if(def) G.production = { def, left:s.production.left, no:s.production.no };
+  }
+}
+
+function saveGame(){
+  try{
+    localStorage.setItem(SAVEKEY, serialize());
+    toast('good','Gespeichert','Spielstand liegt im Browser.');
+  }catch(e){ toast('bad','Fehler','Speichern nicht möglich.'); }
+}
+function hasSave(){ try{ return !!localStorage.getItem(SAVEKEY); }catch(e){ return false; } }
+function loadGame(){
+  try{
+    const j = localStorage.getItem(SAVEKEY);
+    if(!j) return false;
+    deserialize(j);
+    el('start').style.display = 'none';
+    startLoop(); dirty = true; renderAll();
+    toast('good','Geladen','Weiter geht die Sendung.');
+    return true;
+  }catch(e){ toast('bad','Fehler','Spielstand beschädigt.'); return false; }
+}
+
+function openMenu(){
+  G.paused = true;
+  modal('☰','Pause','Menü',
+    '<span class="dim">Tag '+G.day+' · '+WEEKDAYS[G.weekday]+' · '+hhmm(G.time)+'</span>',
+    [
+      {t:'Weiter',cls:'btn',fn:()=>{ G.paused=false; renderTop(); }},
+      {t:'Speichern',cls:'btn ghost',fn:()=>{ saveGame(); G.paused=false; renderTop(); }},
+      {t:'Regeln',cls:'btn ghost',fn:()=>{ showRules(); }},
+      {t:'Neues Spiel',cls:'btn danger',fn:()=>{ el('start').style.display='flex'; showStart(); }}
+    ]);
+}
+
+function showRules(){
+  modal('📖','Spielregeln','Handbuch',
+    '<b>Ziel:</b> '+G.D.winImage+'% Marktanteil <i>und</i> '+G.D.winImage+' Zuneigungspunkte bei Betty Botterbloom.<br><br>'+
+    '<b>Der Tag:</b> 17:00 bis 01:00. Ab 18:00 laufen sieben Sendeblöcke — je 4 Minuten Nachrichten, dann die Sendung, '+
+    'dann 5 Minuten Werbung. Was zur vollen Stunde nicht im Plan steht, wird zum Testbild.<br><br>'+
+    '<b>Geld:</b> kommt ausschließlich aus Werbeverträgen. Ein Spot zahlt nur, wenn der Block die Mindestquote erreicht. '+
+    'Verfällt ein Vertrag, wird die Strafe fällig.<br><br>'+
+    '<b>Quote:</b> hängt an Genre, Zielgruppe zur Sendezeit, Frische des Titels, deinen Nachrichten, Trailern, '+
+    'dem Zuschauerfluss und dem, was die Konkurrenz gerade sendet.<br><br>'+
+    '<b>Betty:</b> Ihre Zuneigung kann dein Image nie überflügeln. Kultursendungen und Geschenke bringen Punkte — '+
+    'aber ohne Quote bleibt sie kühl.<br><br>'+
+    '<b>Gefahr:</b> Drei Tage unter '+G.D.fireImage+'% Marktanteil und Herr Raffer wirft dich raus. '+
+    'Filme ab 18 vor 22 Uhr rufen den Gerichtsvollzieher.',
+    [{t:'Alles klar',cls:'btn',fn:()=>{ G.paused=false; renderTop(); }}]);
+}
+
+function showEnd(){
+  const m = G.overMsg;
+  const p = G.player;
+  el('start').style.display = 'flex';
+  el('start').innerHTML =
+    '<div class="sbox">'+
+      '<div style="font-size:62px">'+m.ico+'</div>'+
+      '<h1 style="font-size:32px;margin-top:6px">'+esc(m.title)+'</h1>'+
+      '<p class="sub" style="max-width:440px;margin:10px auto 20px">'+m.text+'</p>'+
+      '<div class="grid3" style="max-width:460px;margin:0 auto 18px">'+
+        '<div class="kpi"><div class="k">Marktanteil</div><div class="v">'+p.image.toFixed(1).replace('.',',')+'%</div></div>'+
+        '<div class="kpi"><div class="k">Betty</div><div class="v" style="color:var(--love)">'+Math.round(p.love)+'</div></div>'+
+        '<div class="kpi"><div class="k">Konto</div><div class="v">'+moneyShort(p.money)+'</div></div>'+
+      '</div>'+
+      '<button class="go" id="againbtn">Neues Spiel</button>'+
+    '</div>';
+  el('againbtn').onclick = showStart;
+}
+
+/* ─── Startbildschirm ─── */
+let startDiff = 'normal';
+function showStart(){
+  if(tickTimer) clearInterval(tickTimer);
+  el('start').style.display = 'flex';
+  el('start').innerHTML =
+    '<div class="sbox">'+
+      '<h1>MAD<span>TV</span></h1>'+
+      '<div class="sub">Der Sendermanager · eine Hommage an den Klassiker von 1991</div>'+
+      '<div class="lbl">Name deines Senders</div>'+
+      '<input type="text" id="chname" maxlength="18" value="Mad TV">'+
+      '<div class="lbl" style="margin-top:18px">Schwierigkeit</div>'+
+      '<div class="optrow" id="diffrow">'+
+        Object.keys(DIFFS).map(k=>'<button class="opt '+(startDiff===k?'on':'')+'" data-d="'+k+'">'+
+          DIFFS[k].ico+' '+DIFFS[k].name+'<small>'+DIFFS[k].desc+'</small></button>').join('')+
+      '</div>'+
+      '<button class="go" id="gobtn">Sendebetrieb aufnehmen</button>'+
+      (hasSave()?'<div style="margin-top:12px"><button class="opt" id="loadbtn">💾 Spielstand laden</button></div>':'')+
+      '<div class="foot">Du bist neuer Programmdirektor. Fülle den Sendeplan, verkaufe Werbung, halte die Quote oben —<br>'+
+      'und gewinne das Herz von Betty Botterbloom, ehe die Konkurrenz es tut.<br><br>'+
+      'Eigenständige Nachbildung. Alle Titel, Marken und Personen sind frei erfunden.</div>'+
+    '</div>';
+  el('diffrow').querySelectorAll('.opt').forEach(b=>{
+    b.onclick = ()=>{ startDiff = b.dataset.d; showStart(); };
+  });
+  el('gobtn').onclick = ()=>{
+    const nm = (el('chname').value || 'Mad TV').trim().slice(0,18);
+    newGame(nm, startDiff);
+    el('start').style.display = 'none';
+    startLoop(); dirty = true; renderAll();
+    intro();
+  };
+  const lb = el('loadbtn');
+  if(lb) lb.onclick = ()=>{ loadGame(); };
+}
+
+function intro(){
+  modal('🧔','Willkommen im Haus','Herr Raffer',
+    'Sie sind der neue Programmdirektor. Ich sage es nur einmal: Ich will Quote. '+
+    'Unten steht Ihr Startkapital von '+money(G.D.money)+' — davon kaufen Sie Filme, davon bezahlen Sie Nachrichten, '+
+    'und davon leben Sie, bis die Werbung Geld bringt.<br><br>'+
+    'Um 18 Uhr geht der Sender auf Sendung. Was bis dahin nicht im Plan steht, ist Testbild. '+
+    'Und lassen Sie die Finger von Frau Botterbloom — die ist zu schade für Sie.',
+    [{t:'Ans Werk',cls:'btn',fn:()=>{
+      modal('📖','Der erste Abend','Kurzanleitung',
+        '1. <b>Filmagentur</b> (Etage 5): Lizenzen kaufen.<br>'+
+        '2. <b>Werbeagentur</b> (Etage 6): Verträge holen — nur so kommt Geld herein.<br>'+
+        '3. <b>Nachrichtenstudio</b> (Etage 8): Abos abschließen, Meldungen wählen.<br>'+
+        '4. <b>Dein Büro</b> (Etage 7): Sendeplan füllen, Werbespots setzen.<br><br>'+
+        'Der Fahrstuhl kostet Zeit. Plane deine Wege.',
+        [{t:'Los geht\'s',cls:'btn'}]);
+    }}]);
+}
+
+/* ─── Tastatur ─── */
+document.addEventListener('keydown', e=>{
+  if(!G || el('start').style.display !== 'none') return;
+  if(e.key === 'Escape'){ if(modalOpen) closeModal(); else if(G.room) leaveRoom(); }
+  if(e.key === ' '){ e.preventDefault(); G.paused = !G.paused; renderTop(); }
+  const map = {'1':'office','2':'film','3':'werbe','4':'news','5':'archiv','6':'studio','7':'betty','8':'chef'};
+  if(map[e.key]){ goFloor(FLOORS.findIndex(f=>f.id===map[e.key])); }
+});
+
+/* ─── Start ─── */
+showStart();
+
+</script>
+</body>
+</html>
