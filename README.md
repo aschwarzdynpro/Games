@@ -50,6 +50,11 @@ Konventionalstrafen. Das ist repariert; die Konkurrenz spielt jetzt bis zum
 Schluss mit, und die Siegschwellen sind entsprechend nachgezogen. Details in
 [`madtv-app/README.md`](madtv-app/README.md).
 
+Damit wurde Gegenprogrammierung erst zur Aufgabe — und die Steckwand hat eine
+dritte Spalte bekommen: Neben Sendeplatz und Werbung steht für jede Halbstunde,
+was bei beiden Konkurrenten läuft. Läuft dort dasselbe Genre wie im eigenen
+Feld, färbt sich die Zeile.
+
 Und die Figuren reden mit: Betty schaut zur besten Zeit selbst zu und nimmt
 Reißerisches übel, Herr Raffer wird bei fallender Quote persönlich, und die
 Konkurrenz reibt einem den weggeschnappten Spitzenfilm unter die Nase. Welcher

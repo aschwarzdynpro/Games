@@ -149,6 +149,15 @@ sechs Millionen, ihr Marktanteil liegt bei 20–28 statt 15 Prozent — und
 Gegner den erreichbaren Marktanteil deckelt, sind die Siegschwellen
 entsprechend nachgezogen worden: 50 / 58 / 63 statt 55 / 65 / 70 Prozent.
 
+Der Fund hatte eine Folge für die Oberfläche. Im Rivalenbüro stand seit jeher
+der Hinweis, gleiches Genre zur gleichen Zeit teile die Zuschauer — beim Planen
+sah man aber nur den eigenen Abend. Solange die Konkurrenz ohnehin zusammenbrach,
+war das folgenlos; jetzt ist Gegenprogrammierung die eigentliche Aufgabe. Die
+Steckwand hat deshalb eine dritte Spalte: für jede Halbstunde, was bei beiden
+Konkurrenten läuft, mit Genre-Symbol. Trifft das eigene Genre auf dasselbe
+drüben, färbt sich die Zeile. Unter 520 Pixeln Breite hat der eigene Plan
+Vorrang und die Spalte verschwindet.
+
 **Drei Startwerte sind zu wenig, um eine Kurve zu beurteilen.** Als der Katalog
 auf über tausend Titel wuchs, sahen die drei Läufe von `npm run sim` nach einem
 Einbruch aus: leicht plötzlich bei Tag 32–38, ein „normal"-Lauf bei Tag 67, die
