@@ -1,12 +1,14 @@
 # Mad TV — Sendermanager (App-Fassung)
 
 Umbau des Einzeldatei-Spiels aus `../madtv/` zu einem richtigen Projekt.
-Stand: **Etappe 5 — fertig** — Vite + TypeScript, Spielkern herausgelöst und
+Der Umbau ist abgeschlossen (Etappen 1–5); seitdem wächst der **Inhalt**.
+
+Stand: **Etappe 6, erste Runde** — Vite + TypeScript, Spielkern herausgelöst und
 testbar, Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit
-laufender Figur, Sendeplan als Steckwand im Halbstundenraster, Filmagentur als
-Regalwand, Nachrichtenstudio als Redaktionstisch — und seit Etappe 5 ein
-eigener gezeichneter Zeichensatz, Übergänge zwischen den Ansichten sowie eine
-installierbare, offline spielbare Ausgabe.
+laufender Figur, eigener Zeichensatz, installierbare und offline spielbare
+Ausgabe. Fünf Räume haben eine eigene Kulisse: Sendeplan als Steckwand,
+Filmagentur als Regalwand, Nachrichtenstudio als Redaktionstisch, Werbeagentur
+als Kundenkartei, Archiv als Regal mit Rollwagen.
 
 Die alte `../madtv/index.html` bleibt unangetastet, bis diese Fassung sie
 eingeholt hat.
@@ -35,7 +37,7 @@ src/
   assets/icons/   86 Symbole, je eine SVG-Datei
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
-tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Balancing
+tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Balancing
 ```
 
 Die Trennung ist der eigentliche Zweck dieser Etappe. `core` lässt sich in
@@ -57,7 +59,8 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 71 automatische Prüfungen |
+| Tests | Handarbeit im Browser | 82 automatische Prüfungen |
+| Material | 107 Filme, 15 Serien, 50 Marken | 186 Filme, 25 Serien, 100 Marken |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
@@ -92,13 +95,25 @@ Gemessen mit `npm run sim` (drei Startwerte je Grad, solide spielender Bot):
 
 | Grad | Sieg um Tag | Anmerkung |
 |---|---|---|
-| leicht | 15–22 | |
-| normal | 27–38 | |
-| schwer | 35–51 | mit Satellit, Starmoderator und Exklusivpaket |
-| schwer | 68+ | ohne diese Werkzeuge — und mit 20–28 Mio € totem Kapital |
+| leicht | 12–32 | |
+| normal | 34–48 | |
+| schwer | 46–55 | mit Satellit, Starmoderator und Exklusivpaket |
+| schwer | 78+ | ohne diese Werkzeuge — und mit 20–29 Mio € totem Kapital |
 
 Der letzte Fall ist Absicht: Wer die Geldsenken des Spätspiels nicht nutzt,
 gewinnt zwar irgendwann, aber quälend langsam.
+
+Der größere Katalog aus Etappe 6 hat die Partien um rund ein Fünftel verlängert.
+Das war zu erwarten und ist nicht schlimm: Mehr Titel heißt auch mehr Auswahl
+für die Konkurrenz, und die Spitzenklasse ist nicht mitgewachsen. Die Ordnung
+der Grade — worauf es ankommt — bleibt unberührt.
+
+Eine Prüfung musste dabei umgestellt werden. Sie verglich das **Spitzenimage**
+mit und ohne Spätspiel-Werkzeuge — und maß damit in Wahrheit die Spieldauer:
+Ein Lauf, der erst an Tag 78 gewinnt, hat 78 Tage Zeit zum Klettern; einer, der
+an Tag 46 heiratet, hört genau dann auf. Je besser die Werkzeuge wirkten, desto
+schlechter schnitten sie in dieser Messung ab. Gemessen wird jetzt, was die
+Werkzeuge wirklich kaufen: Siegquote, Dauer bis zum Sieg und Reichweite.
 
 ## Sendetafel (Etappe 3)
 
@@ -327,13 +342,93 @@ stellen. Wer das anders will, nimmt die drei auskommentierten Zeilen unter
 `on:` dazu; Voraussetzung ist außerdem, dass in den Repository-Einstellungen
 unter Pages «GitHub Actions» als Quelle steht.
 
+## Kundenkartei, Regal, mehr Material (Etappe 6, erste Runde)
+
+Mit Etappe 5 war der Umbau durch. Von hier an geht es um Inhalt — und zwar
+verzahnt: je Runde ein paar Räume mit eigener Kulisse **und** das Material, das
+sie füllt. So bleibt das Spiel nach jeder Runde spielbar, statt monatelang
+Baustelle zu sein.
+
+### Ziehen wurde erst einmal herausgelöst
+
+Die gesamte Zeigerbehandlung steckte in `board.ts` und kannte genau drei
+Kartenarten der Sendetafel. Jeder weitere Raum hätte sie kopiert — samt
+Ziehschwelle, Geisterkarte, Randscrollen und der Falle mit dem abgebrochenen
+Fingerzug. Bei neun noch offenen Räumen lohnt sich das Herauslösen sofort.
+
+`ui/drag.ts` kennt jetzt nur noch drei Dinge:
+
+```
+data-drag="<art>"    an der Karte      — was gezogen wird
+data-drop="<name>"   am Ziel           — wo es hin darf
+registerDrag(art, { accepts, drop })   — die Regel dazu
+```
+
+Die Räume steuern also nur noch Regeln bei. Und diese Regeln rufen **dieselben
+Aktionen auf wie der Klickweg**: Ein Zug ist eine bequemere Art, denselben Knopf
+zu drücken — nie ein zweiter Weg mit eigener Logik, die irgendwann auseinander-
+läuft. Wer die Tastatur benutzt, verliert dadurch nichts.
+
+### Werbeagentur als Kundenkartei
+
+Statt zweier Listen liegt jetzt oben der **Koffer** mit vier Fächern und darunter
+die **Kartei** mit den Angeboten. Karteikarten trägt man in ein freies Fach —
+oder klickt sie an, wie bisher.
+
+Der Reiter oben auf jeder Karte nennt die Zielgruppe, denn danach sucht man
+hier: Ein Vertrag ist genau dann gut, wenn man die geforderte Gruppe ohnehin
+schon erreicht.
+
+Beim Bauen fiel eine alte Schwäche auf. Die Warnung «erreichst du nicht»
+verglich die Forderung mit dem, was der Sendeplan **gerade** hergibt — an Tag 1
+vor leerem Plan also mit dem Testbild. Damit war jede Karte rot und die Warnung
+wertlos. Jetzt wird gegen den besten Primetime-Platz **mit dem besten eigenen
+Film** gerechnet: also gegen das, was ginge, wenn man gut plant. Rot heißt
+seitdem etwas.
+
+### Archiv als Regal mit Rollwagen
+
+Die Lizenzliste ist eine Regalwand geworden, in derselben Sprache wie die
+Filmagentur: **Die Breite eines Bandes ist seine Sendelänge.** Der Streifen
+unten zeigt die Frische.
+
+Sortiert wird aber nicht nach Güte, sondern nach Frische — *einsatzbereit*,
+*angespielt*, *ausgelaugt*. Das ist die Frage, die man sich im Archiv wirklich
+stellt: Was trägt heute Abend noch? Unten steht der **Rollwagen zum Verleih**;
+was dort landet, wird verkauft. Ein Klick auf ein Band zeigt seine Kennzahlen
+samt Verkaufspreis.
+
+### Material
+
+| | vorher | jetzt |
+|---|---|---|
+| Spielfilme | 107 | 186 |
+| Serien | 15 | 25 |
+| Werbekunden | 50 | 100 |
+
+Die neuen Titel füllen vor allem die dünnen Genres auf — Talkshow, Quiz, Kultur
+und Western hatten drei bis fünf Titel und liefen sich schnell leer; jetzt hat
+jedes Genre mindestens sechs.
+
+Beim Auffüllen sind mir prompt drei Doppelungen durchgerutscht: zwei Marken und
+ein Filmtitel, den es zweimal mit verschiedenen Jahreszahlen gab. Nichts davon
+bricht den Build, es fällt erst im Spiel auf — genau die Sorte Fehler, die mit
+jedem weiteren Titel wahrscheinlicher wird. `tests/data.test.ts` liest die
+Tabellen deshalb jetzt so, wie der Kern sie liest, und prüft: Feldzahl,
+bekannte Genres und Zielgruppen, Jahreszahlen, Folgenzahl 8–24, keine
+Doppelungen, mindestens sechs Titel je Genre, mindestens acht Marken je
+Zielgruppe — und dass die Spitzenklasse knapp bleibt, sonst ist sie nichts
+wert.
+
 ## Was als Nächstes läge
 
-Der Umbau ist damit abgeschlossen: Der Kern ist getrennt und geprüft, alle
-Räume sind gezeichnet, beide Ausgabeformen stehen. Was sich jetzt anböte, ist
-kein Umbau mehr, sondern Inhalt — mehr Räume mit eigener Kulisse, Ton, eine
-Kampagne über mehrere Sender. Die alte `../madtv/index.html` bleibt weiterhin
-unangetastet.
+Im selben Muster weiter: Produktionsstudio als Drehbühne, Technik als
+Schaltraum, Chefbüro und Bettys Büro als Orte mit Figuren statt Karten — und
+dazu jeweils das Material, das sie braucht. Danach die Figuren selbst: Betty,
+die auf dein Programm reagiert, ein Herr Raffer, der bei Misserfolg persönlich
+wird, und eine Konkurrenz, die dir sichtbar Filme wegkauft.
+
+Die alte `../madtv/index.html` bleibt weiterhin unangetastet.
 
 ## Hinweis
 

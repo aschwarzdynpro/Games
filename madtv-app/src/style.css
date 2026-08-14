@@ -732,3 +732,127 @@ body.dragging .pocket{transition:none;}
 .ticker-item:hover{border-color:var(--acc);}
 .ticker-item small{display:block;font-size:9px;color:var(--dim2);}
 .ticker-none{font-size:10.5px;color:var(--dim2);padding:8px 4px;}
+
+/* ─────────── Archiv: Bänder im Regal ─────────── */
+/* Dieselbe Sprache wie die Filmagentur — die Breite ist die Sendelänge.
+   Der Unterschied: Ein Band im eigenen Regal zeigt seine Frische. */
+.band{
+  --h:210;
+  flex:0 0 auto;position:relative;
+  height:88px;padding:7px 7px 12px;
+  border-radius:2px 2px 3px 3px;
+  background:linear-gradient(100deg,hsl(var(--h) 26% 26%),hsl(var(--h) 28% 16%));
+  border:1px solid hsl(var(--h) 24% 38%);
+  border-bottom:3px solid hsl(var(--h) 30% 42%);
+  box-shadow:1px 3px 7px rgba(0,0,0,.45), inset 1px 0 0 rgba(255,255,255,.07);
+  display:flex;flex-direction:column;overflow:hidden;
+  cursor:grab;transition:transform .13s, box-shadow .13s;
+  touch-action:none;
+}
+.band:hover{transform:translateY(-5px);box-shadow:2px 8px 16px rgba(0,0,0,.55);}
+.band.muede{filter:saturate(.45);}
+.band-spine{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-size:10px;font-weight:600;color:#dbe4ef;
+  margin:0 auto;overflow:hidden;text-overflow:ellipsis;max-height:62px;
+}
+.band-breit{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.band-titel{
+  font-size:10.5px;font-weight:700;color:#f0f5fb;line-height:1.25;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.band-sub{font-size:8.5px;color:hsl(var(--h) 24% 74%);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.band-eigen{
+  position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;
+  background:var(--ok);box-shadow:0 0 5px var(--ok);
+}
+.band-frische{
+  position:absolute;left:5px;right:5px;bottom:4px;height:3px;border-radius:2px;
+  background:rgba(0,0,0,.5);overflow:hidden;
+}
+.band-frische i{display:block;height:100%;background:var(--ok);}
+.band.mittel .band-frische i{background:var(--warn);}
+.band.muede .band-frische i{background:var(--bad);}
+
+/* Rollwagen: Ablage und Erklärung in einem */
+.rollwagen{
+  margin-top:12px;position:relative;
+  border:2px dashed #4a5568;border-radius:12px;
+  background:linear-gradient(180deg,#171d27,#11161e);
+  padding:12px 14px 18px;
+}
+.rollwagen.drop-ok{border-color:var(--ok);background:#12251a;}
+.rw-kopf{font-size:12.5px;font-weight:700;color:var(--dim);display:flex;align-items:center;gap:6px;}
+.rw-text{font-size:11px;color:var(--dim2);margin-top:3px;max-width:52ch;}
+.rw-raeder{position:absolute;left:22px;right:22px;bottom:-7px;display:flex;justify-content:space-between;}
+.rw-raeder i{width:12px;height:12px;border-radius:50%;background:#2b3444;border:1px solid #46536a;}
+
+/* ─────────── Werbeagentur: Koffer und Kundenkartei ─────────── */
+.koffer{
+  background:linear-gradient(180deg,#2a2118,#1d160f);
+  border:1px solid #4a3a26;border-radius:12px;padding:10px 12px 12px;margin-bottom:14px;
+  box-shadow:inset 0 1px 0 rgba(255,220,170,.08), 0 6px 18px rgba(0,0,0,.3);
+}
+.koffer-kopf{
+  font-size:10px;font-weight:700;color:#c8a97f;letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:8px;display:flex;gap:8px;align-items:baseline;
+}
+.koffer-kopf span{text-transform:none;letter-spacing:0;color:#8a7358;font-weight:400;}
+.faecher{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:8px;}
+.fach{
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:8px 10px;min-height:78px;display:flex;flex-direction:column;gap:3px;
+}
+.fach.eilig{border-color:var(--bad);}
+.fach.leer{
+  border-style:dashed;color:var(--dim2);font-size:10.5px;
+  align-items:center;justify-content:center;gap:5px;flex-direction:row;
+}
+.fach.drop-ok{border-color:var(--ok);background:#12251a;color:var(--ok);}
+.fach.drop-no{border-color:var(--bad);}
+.f-marke{font-size:12.5px;font-weight:700;}
+.f-produkt{font-size:10px;color:var(--dim2);}
+.f-fort{display:flex;align-items:center;gap:6px;margin-top:auto;}
+.f-fort .bar{flex:1;}
+.f-fort span{font-size:10px;font-weight:700;color:var(--dim);font-variant-numeric:tabular-nums;}
+.f-frist{display:flex;justify-content:space-between;font-size:10px;color:var(--dim2);}
+
+.schrank{
+  background:linear-gradient(180deg,#1a212c,#141a23);
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;
+}
+.schrank-kopf{
+  font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;
+}
+.schrank-kopf span{text-transform:none;letter-spacing:0;color:var(--dim2);font-weight:400;}
+/* Die Karten stehen wie im Schubfach nebeneinander und werden gescrollt —
+   so bleibt der Koffer darüber immer im Blick. */
+.kartei{display:flex;gap:9px;overflow-x:auto;padding:14px 2px 8px;scroll-snap-type:x proximity;}
+.kkarte{
+  flex:0 0 auto;width:186px;scroll-snap-align:start;position:relative;
+  background:linear-gradient(180deg,#f4efe3,#e2dac9);color:#2a2418;
+  border-radius:3px 3px 6px 6px;padding:9px 10px 8px;
+  box-shadow:0 3px 9px rgba(0,0,0,.45);
+  cursor:grab;transition:transform .13s, box-shadow .13s;
+  touch-action:none;
+}
+.kkarte:hover{transform:translateY(-4px);box-shadow:0 9px 18px rgba(0,0,0,.5);}
+.kkarte.knapp{background:linear-gradient(180deg,#f6e4e0,#e6cec8);}
+.kk-reiter{
+  position:absolute;top:-13px;left:9px;
+  background:#c3b393;color:#2a2418;font-size:8.5px;font-weight:800;
+  padding:2px 8px;border-radius:4px 4px 0 0;
+  display:flex;align-items:center;gap:3px;white-space:nowrap;max-width:calc(100% - 18px);
+}
+.kkarte.knapp .kk-reiter{background:#c99a92;}
+.kk-marke{font-size:13px;font-weight:800;margin-top:2px;}
+.kk-produkt{font-size:10px;color:#6b6151;margin-bottom:6px;}
+.kk-zeile{
+  display:flex;justify-content:space-between;gap:8px;
+  font-size:10px;color:#6b6151;padding:2px 0;border-top:1px solid #cfc5b0;
+}
+.kk-zeile b{color:#2a2418;font-weight:700;}
+.kk-zeile .ok{color:#1f6b3e;}
+.kk-zeile .bad{color:#9c2f2f;}
+.kk-zeile .warn{color:#8a5a12;}

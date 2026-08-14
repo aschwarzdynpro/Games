@@ -12,7 +12,7 @@ import {
   dailyCosts, esc, estimateBlock, getDay, lengthLabel, money, moneyShort,
   newsAttraction, pct, reachOf, slotLabel, trendOf, viewers,
 } from '../core';
-import type { Channel, GenreId, Licence, RoomId } from '../core';
+import type { Channel, Contract, GenreId, Licence, RoomId } from '../core';
 import { icon } from './icons';
 import { G, S } from './session';
 import { renderBoard } from './board';
@@ -42,10 +42,6 @@ export function licMeta(l: Licence): string {
   const g = GENRES[l.genre];
   return `${icon(g.ico)} ${g.name} · ${l.year} · ${lengthLabel(l.lenSlots)}` +
     (l.isSerie ? ` je Folge · Staffel mit ${l.eps} Folgen (aktuell ${l.ep})` : '');
-}
-
-function sellPrice(l: Licence): number {
-  return Math.round((l.price * 0.42 * (0.4 + 0.6 * l.fresh)) / 1000) * 1000;
 }
 
 /* ─────────── Dein Büro ─────────── */
@@ -301,40 +297,87 @@ function film(): string {
 
 /* ─────────── Werbeagentur ─────────── */
 
+/**
+ * Eine Karteikarte im Schrank. Der Reiter oben trägt die Zielgruppe — danach
+ * sucht man hier, denn ein Vertrag ist genau dann gut, wenn man die geforderte
+ * Gruppe ohnehin schon erreicht.
+ */
+function kundenkarte(g: ReturnType<typeof G>, c: Contract, est: number): string {
+  const grp = c.group ? GROUPS[c.gi]! : null;
+  const erreichbar = grp ? est * grp.share * 1.1 : est;
+  // Erst deutlich unter der Forderung wird die ganze Karte rot — knapp
+  // daneben ist eine Wette, kein Fehler.
+  const knapp = erreichbar < c.minAud * 0.85;
+  const voll = g.player.contracts.length >= MAX_CONTRACTS;
+
+  return `<div class="kkarte${knapp ? ' knapp' : ''}" data-drag="kunde" data-ad="${c.id}" ` +
+    `role="button" tabindex="0" data-act="takead" data-i="${c.id}" ${voll ? 'aria-disabled="true"' : ''} ` +
+    `title="${esc(c.brand)} — ${esc(c.product)}">` +
+    `<div class="kk-reiter">${grp ? `${icon(grp.ico)} ${esc(grp.name)}` : 'alle Zuschauer'}</div>` +
+    `<div class="kk-marke">${esc(c.brand)}</div>` +
+    `<div class="kk-produkt">${esc(c.product)}</div>` +
+    '<div class="kk-zeile"><span>Mindestens</span>' +
+    `<b class="${knapp ? 'warn' : 'ok'}">${viewers(c.minAud)}</b></div>` +
+    `<div class="kk-zeile"><span>Umfang</span><b>${c.spots} Spots · ${c.days} Tage</b></div>` +
+    `<div class="kk-zeile"><span>Je Spot</span><b class="ok">${moneyShort(c.perSpot)}</b></div>` +
+    `<div class="kk-zeile"><span>Strafe</span><b class="bad">${moneyShort(c.penalty)}</b></div>` +
+    '</div>';
+}
+
+/** Ein Fach im Koffer — belegt mit Vertrag oder offen als Ablageziel. */
+function kofferfach(g: ReturnType<typeof G>, c: Contract | undefined): string {
+  if (!c) {
+    return '<div class="fach leer" data-drop="koffer">' +
+      `${icon('ui-plus')}<span>Karte hierher ziehen</span></div>`;
+  }
+  const rest = c.deadline - g.day;
+  const anteil = Math.min(100, (c.done / Math.max(1, c.spots)) * 100);
+  const eilig = rest <= 1 && c.done < c.spots;
+  return `<div class="fach${eilig ? ' eilig' : ''}" data-drop="koffer">` +
+    `<div class="f-marke">${esc(c.brand)}</div>` +
+    `<div class="f-produkt">${esc(c.product)}</div>` +
+    `<div class="f-fort">${bar(anteil, 100, anteil >= 100 ? 'var(--ok)' : 'var(--acc)')}` +
+    `<span>${c.done}/${c.spots}</span></div>` +
+    `<div class="f-frist${eilig ? ' bad' : ''}">` +
+    (rest <= 0 ? 'läuft heute ab' : `noch ${rest} Tag${rest === 1 ? '' : 'e'}`) +
+    `<span class="ok">${moneyShort(c.perSpot)}/Spot</span></div></div>`;
+}
+
 function werbe(): string {
   const g = G();
   const p = g.player;
-  const full = p.contracts.length >= MAX_CONTRACTS;
-  let h = '<div class="room">' + head('flr-werbe', 'Werbeagentur', 'Verträge mit Mindestquote, Frist und Konventionalstrafe');
+  const voll = p.contracts.length >= MAX_CONTRACTS;
+  // Nicht «was bringt mein Plan gerade», sondern «was ginge, wenn ich gut plane».
+  // Sonst ist an Tag 1 vor leerem Sendeplan jeder Vertrag rot, und die Warnung
+  // sagt nichts mehr aus.
+  const beste = [...p.licences].sort((a, b) => b.qual - a.qual)[0];
+  let est = 0;
+  for (let i = 4; i <= 7; i++) est = Math.max(est, estimateBlock(g, g.day, i, beste).total);
 
-  h += `<div class="card"><h3>Dein Koffer (${p.contracts.length}/${MAX_CONTRACTS})</h3>`;
-  if (!p.contracts.length) h += '<div class="empty-note">Leer.</div>';
-  else h += '<div class="list">' + p.contracts.map((c) =>
-    `<div class="item"><div style="flex:1"><div class="t">${esc(c.brand)}</div>` +
-    `<div class="m">${esc(c.product)} · ${c.done}/${c.spots} Spots · noch ${c.deadline - g.day} Tage</div></div>` +
-    `<div class="r"><div class="ok" style="font-weight:700">${moneyShort(c.perSpot)}</div>` +
-    `<div class="m bad">Strafe ${moneyShort(c.penalty)}</div></div></div>`).join('') + '</div>';
+  let h = '<div class="room">' + head('flr-werbe', 'Werbeagentur',
+    'Kundenkartei — Karte in den Koffer ziehen, dann steht der Vertrag');
+
+  // Der Koffer liegt oben und bleibt sichtbar: Man muss beim Blättern wissen,
+  // wie viel Platz noch da ist.
+  h += `<div class="koffer${voll ? ' voll' : ''}">` +
+    `<div class="koffer-kopf">Dein Koffer <span>${p.contracts.length}/${MAX_CONTRACTS} Verträge` +
+    (voll ? ' · voll' : '') + '</span></div><div class="faecher">' +
+    Array.from({ length: MAX_CONTRACTS }, (_, i) => kofferfach(g, p.contracts[i])).join('') +
+    '</div></div>';
+
+  h += '<div class="schrank"><div class="schrank-kopf">Kundenkartei' +
+    `<span>gut geplant bringt deine Primetime derzeit rund ${viewers(est)}</span></div>`;
+  if (!g.adMarket.length) {
+    h += '<div class="empty-note">Die Kartei ist leer. Morgen liegen neue Karten da.</div>';
+  } else {
+    h += '<div class="kartei" data-scroll>' +
+      g.adMarket.map((c) => kundenkarte(g, c, est)).join('') + '</div>';
+  }
   h += '</div>';
 
-  const est = estimateBlock(g, g.day, 3).total;
-  h += '<div class="card"><h3>Angebote <span class="dim" style="text-transform:none;letter-spacing:0">' +
-    `· deine Primetime bringt derzeit rund ${viewers(est)}</span></h3><div class="list">`;
-  g.adMarket.forEach((c) => {
-    const reachable = c.group ? est * GROUPS[c.gi]!.share * 1.1 : est;
-    const risky = reachable < c.minAud;
-    h += '<div class="item"><div style="flex:1;min-width:0">' +
-      `<div class="t">${esc(c.brand)} <span class="tag">${esc(c.product)}</span>` +
-      (c.group ? ` <span class="tag p">${icon(GROUPS[c.gi]!.ico)} ${GROUPS[c.gi]!.name}</span>` : '') + '</div>' +
-      `<div class="m">Mindestens <b class="${risky ? 'warn' : 'ok'}">${viewers(c.minAud)}</b> ` +
-      `${c.group ? GROUPS[c.gi]!.name : 'Zuschauer'} · ${c.spots} Spots in ${c.days} Tagen</div></div>` +
-      `<div class="r"><div class="ok" style="font-weight:800">${moneyShort(c.perSpot)}<span class="dim">/Spot</span></div>` +
-      `<div class="m bad">Strafe ${moneyShort(c.penalty)}</div>` +
-      `<button class="btn sm" style="margin-top:4px" data-act="takead" data-i="${c.id}" ${full ? 'disabled' : ''}>Annehmen</button>` +
-      '</div></div>';
-  });
-  h += '</div></div>';
   h += '<div class="hint">Ein Spot zählt nur, wenn der Sendeblock die Mindestquote wirklich erreicht. ' +
-    'Verfällt der Vertrag, wird die volle Strafe fällig.</div></div>';
+    'Verfällt der Vertrag, wird die volle Strafe fällig. Rot hinterlegte Karten fordern mehr, ' +
+    'als deine Primetime derzeit hergibt.</div></div>';
   return h;
 }
 
@@ -399,7 +442,7 @@ function news(): string {
       } else {
         items.slice(0, 4).forEach((n) => {
           const age = g.day - n.day;
-          h += `<div class="ticker-item" data-news="${n.id}" data-res="${r.id}" tabindex="0" role="button">` +
+          h += `<div class="ticker-item" data-drag="news" data-news="${n.id}" data-res="${r.id}" tabindex="0" role="button">` +
             `${esc(n.text)}<small>${age === 0 ? 'heute' : `${age} Tage alt`} · Wert ${Math.round(n.weight * 100)}</small></div>`;
         });
       }
@@ -418,25 +461,70 @@ function news(): string {
 
 /* ─────────── Archiv ─────────── */
 
+/**
+ * Ein Band im Regal. Breite = Sendelänge wie in der Filmagentur, damit beide
+ * Räume dieselbe Sprache sprechen. Der Streifen unten ist die Frische — man
+ * sieht dem Regal an, was heute Abend noch trägt.
+ */
+function bandRuecken(l: Licence): string {
+  const gd = GENRES[l.genre];
+  const w = 34 + l.lenSlots * 24;
+  const breit = l.lenSlots >= 3;
+  const f = Math.round(l.fresh * 100);
+  const zustand = l.fresh >= 0.7 ? 'frisch' : l.fresh >= 0.4 ? 'mittel' : 'muede';
+
+  return `<div class="band ${zustand}" data-drag="band" data-lic="${l.uid}" ` +
+    `style="--h:${BOX_HUE[l.genre] ?? 210};width:${w}px" role="button" tabindex="0" ` +
+    `data-act="bandinfo" data-u="${l.uid}" ` +
+    `title="${esc(l.title)} — ${gd.name}, ${lengthLabel(l.lenSlots)}, Frische ${f}%">` +
+    (breit
+      ? `<div class="band-breit"><span class="band-titel">${esc(l.title)}</span>` +
+        `<span class="band-sub">${icon(gd.ico)} ${gd.name} · ${l.aired}× gesendet</span></div>`
+      : `<div class="band-spine">${esc(l.title)}</div>`) +
+    (l.produced ? '<div class="band-eigen" title="Eigenproduktion"></div>' : '') +
+    `<div class="band-frische"><i style="width:${f}%"></i></div></div>`;
+}
+
 function archiv(): string {
   const p = G().player;
-  let h = '<div class="room">' + head('flr-archiv', 'Archiv', 'Dein Programmordner — hier steht alles, was du senden darfst');
-  h += `<div class="card"><h3>${p.licences.length} Lizenzen</h3><div class="list">`;
-  if (!p.licences.length) h += '<div class="empty-note">Leer. Ohne Filme kein Programm.</div>';
-  [...p.licences].sort((a, b) => b.qual - a.qual).forEach((l) => {
-    h += '<div class="item"><div style="flex:1;min-width:0">' +
-      `<div class="t">${esc(l.title)} ${fskTag(l.fsk)}` +
-      (l.produced ? ' <span class="tag g">Eigenproduktion</span>' : '') + '</div>' +
-      `<div class="m">${licMeta(l)} · ${l.aired}× gesendet</div>` +
-      `<div class="statline" style="margin-top:4px">Frische ` +
-      `${bar(l.fresh * 100, 100, l.fresh < 0.4 ? 'var(--bad)' : 'var(--ok)')}${Math.round(l.fresh * 100)}% · ` +
-      `Zuschauerwert ${bar(l.qual)}${l.qual}</div></div>` +
-      `<div class="r"><button class="btn sm ghost" data-act="sell" data-u="${l.uid}">` +
-      `Verkaufen<br>${moneyShort(sellPrice(l))}</button></div></div>`;
-  });
-  h += '</div></div>';
+  let h = '<div class="room">' + head('flr-archiv', 'Archiv',
+    'Regalwand — Bänder auf den Rollwagen ziehen, was raus soll');
+
+  if (!p.licences.length) {
+    h += '<div class="empty-note">Das Regal ist leer. Ohne Filme kein Programm.</div>';
+    return h + '</div>';
+  }
+
+  // Sortiert wird nach Frische, nicht nach Güte: Das ist die Frage, die man
+  // sich im Archiv stellt — was kann ich heute Abend noch senden?
+  const bretter: { titel: string; note: string; test: (l: Licence) => boolean }[] = [
+    { titel: 'Einsatzbereit', note: 'volle Quote', test: (l) => l.fresh >= 0.7 },
+    { titel: 'Angespielt', note: 'zieht spürbar weniger', test: (l) => l.fresh >= 0.4 && l.fresh < 0.7 },
+    { titel: 'Ausgelaugt', note: 'braucht Pause oder muss weg', test: (l) => l.fresh < 0.4 },
+  ];
+  const sortiert = [...p.licences].sort((a, b) => b.fresh - a.fresh || b.qual - a.qual);
+
+  h += '<div class="wall">';
+  for (const br of bretter) {
+    const teil = sortiert.filter(br.test);
+    if (!teil.length) continue;
+    h += `<div class="wall-shelf"><div class="wall-label">${br.titel} · ${br.note} · ` +
+      `${teil.length} ${teil.length === 1 ? 'Band' : 'Bänder'}</div>` +
+      `<div class="wall-row">${teil.map(bandRuecken).join('')}</div>` +
+      '<div class="wall-board"></div></div>';
+  }
+  h += '</div>';
+
+  // Der Rollwagen ist zugleich Ablage und Erklärung: Was hier landet, geht raus.
+  h += '<div class="rollwagen" data-drop="wagen">' +
+    `<div class="rw-kopf">${icon('ui-karton')} Rollwagen zum Verleih</div>` +
+    '<div class="rw-text">Band hierher ziehen, um es zu verkaufen. Der Verleih zahlt nach ' +
+    'Güte und Restfrische — ein ausgelaugter Titel bringt wenig.</div>' +
+    '<div class="rw-raeder"><i></i><i></i></div></div>';
+
   h += '<div class="hint">Frisch gekaufte Titel bringen die volle Quote. Nach jeder Ausstrahlung sinkt die ' +
-    'Frische — lass einem Film ein paar Tage Pause, dann erholt er sich.</div></div>';
+    'Frische — lass einem Film ein paar Tage Pause, dann erholt er sich. Ein Klick auf ein Band ' +
+    'zeigt seine Kennzahlen.</div></div>';
   return h;
 }
 

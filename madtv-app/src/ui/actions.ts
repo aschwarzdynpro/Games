@@ -12,12 +12,13 @@ import {
   lengthLabel, money, moneyShort, nextUid, placeProgramme, removeFromSchedules,
   slotHour, slotLabel, trendOf, viewers,
 } from '../core';
-import type { GenreId, Licence, RessortId } from '../core';
+import type { Channel, GenreId, Licence, RessortId } from '../core';
 import { G, S, markDirty } from './session';
 import { chooser, dialog, toast } from './overlay';
 import { playSfx } from './sfx';
 import { addTime, leaveRoom } from './loop';
 import { bar, fskTag, licMeta } from './rooms';
+import { registerDrag } from './drag';
 
 type Data = Record<string, string | undefined>;
 
@@ -33,6 +34,17 @@ function slotEditable(day: number, b: number): boolean {
     return false;
   }
   return true;
+}
+
+/** Wie oft dieses Band in den kommenden Sendeplänen steht. */
+function countScheduled(p: Channel, uid: number): number {
+  let n = 0;
+  for (const day of Object.keys(p.sched)) {
+    for (const slot of p.sched[Number(day)] ?? []) {
+      if (slot.start && slot.prog?.uid === uid) n++;
+    }
+  }
+  return n;
 }
 
 function sellPrice(l: Licence): number {
@@ -403,6 +415,38 @@ const ACTIONS: Record<string, (d: Data) => void> = {
 
   /* ── Archiv ── */
 
+  /** Kennzahlen eines eigenen Bandes — der Gegenstück-Dialog zur Schachtel im Verleih. */
+  bandinfo(d) {
+    const g = G();
+    const p = g.player;
+    const l = p.licences.find((x) => x.uid === Number(d.u));
+    if (!l) return;
+    const gd = GENRES[l.genre];
+    const sum = sellPrice(l);
+    const tv = Math.round(trendOf(g, l.genre) * 100);
+    const geplant = countScheduled(p, l.uid);
+
+    dialog(gd.ico, l.title, 'Archiv',
+      '<table class="tbl">' +
+      `<tr><td>Genre</td><td class="right">${gd.name}${l.isSerie ? ' · Serie' : ''}</td></tr>` +
+      `<tr><td>Sendelänge</td><td class="right num"><b>${lengthLabel(l.lenSlots)}</b>` +
+      `${l.isSerie ? ' je Folge' : ''}</td></tr>` +
+      (l.isSerie ? `<tr><td>Folge</td><td class="right num">${l.ep}/${l.eps}</td></tr>` : '') +
+      `<tr><td>Altersfreigabe</td><td class="right">${l.fsk === 0 ? 'ohne' : `ab ${l.fsk}`}</td></tr>` +
+      `<tr><td>Zuschauerwert</td><td class="right num">${l.qual}</td></tr>` +
+      `<tr><td>Frische</td><td class="right num ${l.fresh < 0.4 ? 'bad' : l.fresh >= 0.7 ? 'ok' : 'warn'}">` +
+      `${Math.round(l.fresh * 100)}%</td></tr>` +
+      `<tr><td>Bisher gesendet</td><td class="right num">${l.aired}×</td></tr>` +
+      `<tr><td>Genre-Konjunktur</td><td class="right num ${tv > 106 ? 'ok' : tv < 94 ? 'bad' : ''}">${tv}%</td></tr>` +
+      (geplant ? `<tr><td>Eingeplant</td><td class="right num warn">${geplant}× im Sendeplan</td></tr>` : '') +
+      `<tr><td>Verleih zahlt</td><td class="right num"><b>${money(sum)}</b></td></tr>` +
+      '</table>',
+      [
+        { t: `Verkaufen · ${moneyShort(sum)}`, cls: 'btn ghost', fn: () => runAction('sell', { u: String(l.uid) }) },
+        { t: 'Zurück ins Regal', cls: 'btn' },
+      ]);
+  },
+
   sell(d) {
     const g = G();
     const p = g.player;
@@ -602,5 +646,28 @@ export function runAction(name: string, data: Data): void {
   fn(data);
   markDirty();
 }
+
+/* ─────────── Ziehen in den Räumen ─────────── */
+
+/**
+ * Die beiden neuen Räume ziehen auf dieselben Aktionen, die auch der Klickweg
+ * benutzt. Das ist Absicht: Ein Zug ist eine bequemere Art, denselben Knopf zu
+ * drücken — nie ein zweiter Weg mit eigener Logik, die auseinanderlaufen kann.
+ */
+registerDrag('kunde', {
+  accepts: (target) => target.dataset.drop === 'koffer',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'koffer') return;
+    runAction('takead', { i: card.dataset.ad });
+  },
+});
+
+registerDrag('band', {
+  accepts: (target) => target.dataset.drop === 'wagen',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'wagen') return;
+    runAction('sell', { u: card.dataset.lic });
+  },
+});
 
 export { licMeta };

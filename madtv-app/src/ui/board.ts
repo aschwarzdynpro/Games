@@ -17,8 +17,9 @@ import {
   BLOCKS, GENRES, GROUPS, SLOTS, adSlotOf, clearProgramme, esc, estimateBlock,
   getDay, isPrime, lengthLabel, moneyShort, placeProgramme, slotHour, slotLabel, viewers,
 } from '../core';
-import type { Contract, Licence } from '../core';
+import type { Contract, Licence, Slot } from '../core';
 import { G, S, markDirty } from './session';
+import { bindDrag, isDragging, registerDrag } from './drag';
 import { toast } from './overlay';
 import { playSfx } from './sfx';
 
@@ -45,7 +46,7 @@ export function progCard(l: Licence, opts: { grabbable?: boolean; span?: number 
   const wear = Math.round(l.fresh * 100);
   const span = opts.span ?? 2;
   const sz = span <= 1 ? 'sz1' : span === 2 ? 'sz2' : 'sz3';
-  const grab = opts.grabbable ? ` data-lic="${l.uid}" tabindex="0" role="button"` : '';
+  const grab = opts.grabbable ? ` data-drag="prog" data-lic="${l.uid}" tabindex="0" role="button"` : '';
   const title = `title="${esc(l.title)} — ${gd.name}, ${lengthLabel(l.lenSlots)}, Frische ${wear}%"`;
 
   if (sz === 'sz1') {
@@ -70,7 +71,7 @@ export function progCard(l: Licence, opts: { grabbable?: boolean; span?: number 
 function adCard(c: Contract, opts: { grabbable?: boolean } = {}): string {
   const left = c.spots - c.done;
   return (
-    `<div class="spot"${opts.grabbable ? ` data-ad="${c.id}" tabindex="0" role="button"` : ''}` +
+    `<div class="spot"${opts.grabbable ? ` data-drag="ad" data-ad="${c.id}" tabindex="0" role="button"` : ''}` +
     ` title="${esc(c.brand)} — mindestens ${viewers(c.minAud)}">` +
     `<div class="spot-brand">${esc(c.brand)}</div>` +
     `<div class="spot-need">${viewers(c.minAud)}${c.group ? ` · ${icon(GROUPS[c.gi]!.ico)}` : ''}</div>` +
@@ -176,7 +177,7 @@ export function renderBoard(day: number): string {
 
   return (
     `<div class="board" data-board-day="${day}">` +
-    `<div class="board-grid">${cells}</div>` +
+    `<div class="board-grid" data-scroll>${cells}</div>` +
     '<div class="board-foot">' +
     (frei
       ? `<b class="warn">${frei} × 30 Minuten Testbild</b>`
@@ -199,83 +200,16 @@ function shelfBlock(title: string, note: string, inner: string): string {
 
 /* ─────────── Ziehen und Ablegen ─────────── */
 
-interface DragState {
-  kind: 'prog' | 'ad' | 'news';
-  licUid?: number;
-  contractId?: number;
-  newsId?: number;
-  newsRes?: string;
-  /** Herkunft: Feldnummer, oder null für die Ablage. */
-  fromSlot: number | null;
-  ghost: HTMLElement;
-  pointerId: number;
+/** Feldnummer, aus der die Karte stammt — oder null, wenn aus der Ablage. */
+function slotOf(card: HTMLElement): number | null {
+  const pocket = card.closest<HTMLElement>('.pocket');
+  return pocket ? Number(pocket.dataset.b) : null;
 }
 
-let drag: DragState | null = null;
-let pending: { x: number; y: number; card: HTMLElement; pointerId: number } | null = null;
-let boardWired = false;
-
-export function isDragging(): boolean {
-  return drag !== null;
-}
-
-function makeGhost(card: HTMLElement, x: number, y: number): HTMLElement {
-  const g = card.cloneNode(true) as HTMLElement;
-  g.classList.add('drag-ghost');
-  g.style.width = `${Math.min(200, card.offsetWidth)}px`;
-  g.style.left = `${x}px`;
-  g.style.top = `${y}px`;
-  document.body.appendChild(g);
-  return g;
-}
-
-function scrollEdge(box: HTMLElement, y: number, top: number, bottom: number, zone: number): boolean {
-  // Nur schieben, wenn es in die Richtung überhaupt noch weitergeht. Sonst
-  // wandern die Zeilen unter dem Zeiger weg, obwohl gar nichts zu holen ist.
-  const canUp = box.scrollTop > 1;
-  const canDown = box.scrollTop + box.clientHeight < box.scrollHeight - 1;
-  if (canUp && y < top + zone) { box.scrollTop -= (top + zone - y) * 0.4; return true; }
-  if (canDown && y > bottom - zone) { box.scrollTop += (y - (bottom - zone)) * 0.4; return true; }
-  return false;
-}
-
-function edgeScroll(x: number, y: number): void {
-  const zone = 44;
-  const rows = document.querySelector<HTMLElement>('.board-grid');
-  if (rows) {
-    const r = rows.getBoundingClientRect();
-    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-      scrollEdge(rows, y, r.top, r.bottom, zone);
-      return;
-    }
-  }
-  const main = document.getElementById('main');
-  if (main) scrollEdge(main, y, 0, window.innerHeight, zone + 56);
-}
-
-function pocketUnder(x: number, y: number): HTMLElement | null {
-  const n = document.elementFromPoint(x, y);
-  return (n as HTMLElement | null)?.closest<HTMLElement>('[data-drop]') ?? null;
-}
-
-function clearHighlights(): void {
-  document.querySelectorAll('.drop-ok, .drop-no').forEach((n) => {
-    n.classList.remove('drop-ok', 'drop-no');
-  });
-}
-
-/** Passt die gezogene Karte auf dieses Ziel? */
-function accepts(target: HTMLElement, kind: DragState['kind']): boolean {
-  const t = target.dataset.drop;
-  if (kind === 'news') return t === 'news';
-  if (t === 'news') return false;
-  if (t === 'shelf') return true;                 // zurücklegen ist immer erlaubt
-  if (t === 'ad') return true;                    // Werbung oder Trailer
-  if (t !== 'prog' || kind !== 'prog') return false;
-  // Die Sendung muss ab hier noch in den Abend passen
-  const at = Number(target.dataset.b);
-  const lic = G().player.licences.find((l) => l.uid === drag?.licUid);
-  return !lic || at + lic.lenSlots <= SLOTS;
+/** Der Sendeplan, den die gerade sichtbare Tafel zeigt. */
+function shownDay(): number {
+  const g = G();
+  return Number(document.querySelector<HTMLElement>('.board')?.dataset.boardDay ?? g.day);
 }
 
 /** Meldung auf einen Prompterplatz setzen. */
@@ -291,56 +225,59 @@ function placeNews(index: number, id: number, res: string): void {
   markDirty();
 }
 
-function drop(target: HTMLElement | null): void {
-  if (!drag) return;
-  const g = G();
-  const s = S();
+/**
+ * Das Feld räumen, aus dem die Karte kam. Muss vor dem Neuplatzieren
+ * geschehen, sonst verdrängt sich eine Sendung beim Umhängen selbst.
+ */
+function clearOrigin(slots: Slot[], card: HTMLElement, kind: 'prog' | 'ad'): void {
+  const from = slotOf(card);
+  if (from === null) return;
+  const f = slots[from];
+  if (!f || f.aired) return;
+  if (kind === 'prog') { if (f.prog) clearProgramme(slots, f.prog.uid); f.trailer = null; }
+  else f.ad = null;
+}
 
-  if (drag.kind === 'news') {
-    if (target?.dataset.drop === 'news') {
-      placeNews(Number(target.dataset.i), drag.newsId!, drag.newsRes!);
+/** Zurücklegen: gilt für die Ablage genauso wie für den Wurf ins Leere. */
+function putBack(card: HTMLElement, kind: 'prog' | 'ad'): void {
+  if (slotOf(card) === null) return;
+  clearOrigin(getDay(G().player, shownDay()), card, kind);
+  playSfx('buy');
+  toast('info', 'Zurückgelegt',
+    kind === 'prog' ? 'Der Sendeplatz ist wieder frei.' : 'Der Werbeplatz ist wieder frei.');
+  markDirty();
+}
+
+registerDrag('prog', {
+  accepts: (target, card) => {
+    const t = target.dataset.drop;
+    if (t === 'shelf') return true;                 // zurücklegen ist immer erlaubt
+    if (t === 'ad') return true;                    // wird dann zum Trailer
+    if (t !== 'prog') return false;
+    // Die Sendung muss ab hier noch in den Abend passen
+    const at = Number(target.dataset.b);
+    const lic = G().player.licences.find((l) => l.uid === Number(card.dataset.lic));
+    return !lic || at + lic.lenSlots <= SLOTS;
+  },
+  drop: (target, card) => {
+    const g = G();
+    const s = S();
+    if (!target || target.dataset.drop === 'shelf') { putBack(card, 'prog'); return; }
+    if (target.dataset.drop === 'news') return;
+
+    const day = shownDay();
+    const slots = getDay(g.player, day);
+    const at = Number(target.dataset.b);
+    const slot = slots[at];
+    if (!slot || slot.aired) {
+      toast('warn', 'Zu spät', `${slotLabel(at)} läuft bereits.`);
+      return;
     }
-    finishDrag();
-    return;
-  }
-
-  const day = Number(document.querySelector<HTMLElement>('.board')?.dataset.boardDay ?? g.day);
-  const slots = getDay(g.player, day);
-  const { kind, fromSlot } = drag;
-
-  const clearFrom = () => {
-    if (fromSlot === null) return;
-    const f = slots[fromSlot];
-    if (!f || f.aired) return;
-    if (kind === 'prog') { if (f.prog) clearProgramme(slots, f.prog.uid); f.trailer = null; }
-    else f.ad = null;
-  };
-
-  if (!target || target.dataset.drop === 'shelf') {
-    if (fromSlot !== null) {
-      clearFrom();
-      playSfx('buy');
-      toast('info', 'Zurückgelegt',
-        kind === 'prog' ? 'Der Sendeplatz ist wieder frei.' : 'Der Werbeplatz ist wieder frei.');
-    }
-    finishDrag();
-    return;
-  }
-
-  const at = Number(target.dataset.b);
-  const slot = slots[at];
-  if (!slot || slot.aired) {
-    toast('warn', 'Zu spät', `${slotLabel(at)} läuft bereits.`);
-    finishDrag();
-    return;
-  }
-
-  if (kind === 'prog') {
-    const lic = g.player.licences.find((l) => l.uid === drag!.licUid);
-    if (!lic) { finishDrag(); return; }
+    const lic = g.player.licences.find((l) => l.uid === Number(card.dataset.lic));
+    if (!lic) return;
 
     if (target.dataset.drop === 'ad') {
-      clearFrom();
+      clearOrigin(slots, card, 'prog');
       slot.ad = null;
       slot.trailer = lic;
       playSfx('buy');
@@ -348,14 +285,12 @@ function drop(target: HTMLElement | null): void {
       if (at + lic.lenSlots > SLOTS) {
         toast('warn', 'Zu lang',
           `${lengthLabel(lic.lenSlots)} passen ab ${slotLabel(at)} nicht mehr in den Abend.`);
-        finishDrag();
         return;
       }
-      clearFrom();
+      clearOrigin(slots, card, 'prog');
       const weg = placeProgramme(slots, at, lic);
       if (!slots[at]!.prog) {
         toast('warn', 'Geht nicht', 'In diesem Bereich läuft schon gesendetes Programm.');
-        finishDrag();
         return;
       }
       const verdraengt = weg.filter((w) => w.uid !== lic.uid);
@@ -365,64 +300,55 @@ function drop(target: HTMLElement | null): void {
       }
       playSfx('buy');
     }
-  } else {
+    s.viewDay = Math.max(0, Math.min(3, day - g.day));
+    markDirty();
+  },
+});
+
+registerDrag('ad', {
+  accepts: (target) => target.dataset.drop === 'ad' || target.dataset.drop === 'shelf',
+  drop: (target, card) => {
+    const g = G();
+    const s = S();
+    if (!target || target.dataset.drop === 'shelf') { putBack(card, 'ad'); return; }
     if (target.dataset.drop !== 'ad') {
       toast('warn', 'Falscher Platz', 'Werbespots gehören auf den Werbeplatz rechts.');
-      finishDrag();
       return;
     }
-    const ct = g.player.contracts.find((c) => c.id === drag!.contractId);
-    if (!ct) { finishDrag(); return; }
-    clearFrom();
+    const day = shownDay();
+    const slots = getDay(g.player, day);
+    const at = Number(target.dataset.b);
+    const slot = slots[at];
+    if (!slot || slot.aired) {
+      toast('warn', 'Zu spät', `${slotLabel(at)} läuft bereits.`);
+      return;
+    }
+    const ct = g.player.contracts.find((c) => c.id === Number(card.dataset.ad));
+    if (!ct) return;
+    clearOrigin(slots, card, 'ad');
     slot.trailer = null;
     slot.ad = { id: ct.id, brand: ct.brand };
     playSfx('buy');
-  }
+    s.viewDay = Math.max(0, Math.min(3, day - g.day));
+    markDirty();
+  },
+});
 
-  s.viewDay = Math.max(0, Math.min(3, day - g.day));
-  markDirty();
-  finishDrag();
-}
-
-function finishDrag(): void {
-  drag?.ghost.remove();
-  drag = null;
-  pending = null;
-  clearHighlights();
-  document.body.classList.remove('dragging');
-  markDirty();
-}
-
-function beginDrag(card: HTMLElement, x: number, y: number, pointerId: number): void {
-  const licUid = card.dataset.lic ? Number(card.dataset.lic) : undefined;
-  const contractId = card.dataset.ad ? Number(card.dataset.ad) : undefined;
-  const newsId = card.dataset.news ? Number(card.dataset.news) : undefined;
-  if (licUid === undefined && contractId === undefined && newsId === undefined) return;
-
-  const pocket = card.closest<HTMLElement>('.pocket');
-  drag = {
-    kind: newsId !== undefined ? 'news' : licUid !== undefined ? 'prog' : 'ad',
-    licUid,
-    contractId,
-    newsId,
-    newsRes: card.dataset.res,
-    fromSlot: pocket ? Number(pocket.dataset.b) : null,
-    ghost: makeGhost(card, x, y),
-    pointerId,
-  };
-  document.body.classList.add('dragging');
-}
+registerDrag('news', {
+  accepts: (target) => target.dataset.drop === 'news',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'news') return;
+    placeNews(Number(target.dataset.i), Number(card.dataset.news), card.dataset.res!);
+  },
+});
 
 /** Nach jedem Neuzeichnen der Ansicht aufrufen. */
 export function bindBoard(root: HTMLElement): void {
-  wireGestures();
+  bindDrag(root);
 
-  // Redaktionstisch: Meldungen lassen sich ziehen oder anklicken
+  // Redaktionstisch: Meldungen lassen sich ziehen — oder anklicken, dann
+  // landen sie auf dem nächsten freien Platz.
   root.querySelectorAll<HTMLElement>('[data-news]').forEach((item) => {
-    item.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 && e.pointerType === 'mouse') return;
-      pending = { x: e.clientX, y: e.clientY, card: item, pointerId: e.pointerId };
-    });
     const go = () => {
       const g = G();
       if (g.player.newsShow.length >= 3) {
@@ -431,59 +357,18 @@ export function bindBoard(root: HTMLElement): void {
       }
       placeNews(g.player.newsShow.length, Number(item.dataset.news), item.dataset.res!);
     };
-    item.addEventListener('click', () => { if (!drag) go(); });
+    item.addEventListener('click', () => { if (!isDragging()) go(); });
     item.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
     });
   });
 
-  const board = root.querySelector<HTMLElement>('.board');
-  if (!board) return;
-
   // Ablagen lassen sich mit den Pfeilen verschieben; auf Karten ist die
   // Wischgeste fürs Ziehen reserviert.
-  board.querySelectorAll<HTMLElement>('[data-rail]').forEach((btn) => {
+  root.querySelectorAll<HTMLElement>('[data-rail]').forEach((btn) => {
     const rail = btn.closest('.shelf')?.querySelector<HTMLElement>('.shelf-rail');
     if (!rail) return;
     if (rail.scrollWidth <= rail.clientWidth + 4) btn.setAttribute('disabled', '');
     btn.onclick = () => rail.scrollBy({ left: Number(btn.dataset.rail) * 168, behavior: 'smooth' });
   });
-
-  board.querySelectorAll<HTMLElement>('[data-lic],[data-ad]').forEach((card) => {
-    card.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 && e.pointerType === 'mouse') return;
-      pending = { x: e.clientX, y: e.clientY, card, pointerId: e.pointerId };
-    });
-  });
-}
-
-/** Zeigerbehandlung einmalig am Dokument, damit sie Neuzeichnungen übersteht. */
-function wireGestures(): void {
-  if (boardWired) return;
-  boardWired = true;
-
-  document.addEventListener('pointermove', (e) => {
-    if (!drag && pending && e.pointerId === pending.pointerId) {
-      const d = Math.hypot(e.clientX - pending.x, e.clientY - pending.y);
-      // Erst ab einer klaren Bewegung ziehen — sonst wäre jeder Klick ein Zug
-      if (d > 6) beginDrag(pending.card, e.clientX, e.clientY, e.pointerId);
-    }
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    e.preventDefault();
-    drag.ghost.style.left = `${e.clientX}px`;
-    drag.ghost.style.top = `${e.clientY}px`;
-    edgeScroll(e.clientX, e.clientY);
-    clearHighlights();
-    const target = pocketUnder(e.clientX, e.clientY);
-    if (target && target.dataset.drop !== 'shelf') {
-      target.classList.add(accepts(target, drag.kind) ? 'drop-ok' : 'drop-no');
-    }
-  }, { passive: false });
-
-  document.addEventListener('pointerup', (e) => {
-    if (drag && e.pointerId === drag.pointerId) { drop(pocketUnder(e.clientX, e.clientY)); return; }
-    pending = null;
-  });
-
-  document.addEventListener('pointercancel', () => finishDrag());
 }

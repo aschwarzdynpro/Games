@@ -20,7 +20,7 @@ import { G, S, markDirty } from './session';
 import { dialog, modalHoldsClock, toast } from './overlay';
 import { playSfx } from './sfx';
 import { autosave } from './persist';
-import { isDragging } from './board';
+import { isDragging } from './drag';
 import { beginTravel, clearTravel, isMounted, updateWorld } from '../world/world';
 
 /** Größter Zeitsprung, der auf einmal nachgeholt wird (Tab war im Hintergrund). */

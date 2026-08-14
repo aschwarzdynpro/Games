@@ -168,6 +168,85 @@ Meister der Renaissance|kultur|1990|5
 Literatur am Kamin|kultur|1991|3
 Ballett aus Sankt Petersburg|kultur|1989|4
 Architektur der Moderne|kultur|1987|3
+Straßenwölfe|action|1980|3
+Der Kurier von Neapel|action|1990|4
+Panzerfaust|action|1977|2
+Countdown in Kapstadt|action|1989|3
+Die Rache des Kickboxers|action|1987|2
+Turbo Trouble|komoed|1985|3
+Der Hundefänger von Buxtehude|komoed|1976|2
+Drei Damen und ein Dackel|komoed|1988|3
+Mein Chef, das Chamäleon|komoed|1991|4
+Ferien auf dem Bauernhof|komoed|1983|2
+Die Bank am Ende der Straße|komoed|1989|3
+Verlorene Jahre|drama|1975|4
+Der Bergdoktor von Sankt Anna|drama|1981|3
+Salz auf unserer Haut|drama|1987|4
+Kinder des Reviers|drama|1979|3
+Wenn der Nebel steigt|drama|1990|4
+Die Erben von Gut Falkenstein|drama|1985|3
+Der Wechselbalg|horror|1988|3
+Krallen im Dachstuhl|horror|1980|2
+Die Klinik der Ratten|horror|1991|3
+Blutorange|horror|1984|2
+Sirius Protokoll|scifi|1983|4
+Die Kolonie|scifi|1989|3
+Roboter weinen nicht|scifi|1991|5
+Schwarzes Loch|scifi|1977|3
+Botschaft aus dem Nichts|scifi|1986|2
+Der Mörder trug Handschuhe|krimi|1974|3
+Blutspur im Schnee|krimi|1985|4
+Inspektor Behrens und der letzte Zug|krimi|1980|3
+Die Akte Lindberg|krimi|1989|4
+Anruf um drei|krimi|1991|3
+Tod im Wintergarten|krimi|1983|3
+Ein Herz für Emilia|liebe|1979|2
+Die Tänzerin von Sevilla|liebe|1983|3
+Nächte in Neapel|liebe|1988|3
+Zweite Chance|liebe|1991|4
+Der Brief aus Kanada|liebe|1976|2
+Revolverwind|western|1969|3
+Der Marshal von Tucson|western|1974|3
+Blut am Rio Verde|western|1978|2
+Die Frau des Ranchers|western|1982|4
+Colorado brennt|western|1970|3
+Tiefsee – Die letzte Grenze|doku|1990|4
+Die Wüste lebt noch|doku|1984|3
+Wölfe in den Karpaten|doku|1991|4
+Berlin – Eine Stadt erzählt|doku|1989|5
+Der Nil von der Quelle bis zum Meer|doku|1986|3
+Flip und Flap im Weltall|trick|1981|2
+Die Schlümpfe von Schlumpfhausen|trick|1985|3
+Kater Karlos große Reise|trick|1989|4
+Ritter Rüdiger|trick|1991|3
+Das Zauberkarussell|trick|1977|2
+Nachts im Wellnesstempel|erotik|1988|2
+Die Sekretärin|erotik|1985|1
+Sommer, Sonne, Sünde|erotik|1990|2
+Marathon der Träume|sport|1984|3
+Die Wilden Kerle vom Bolzplatz|sport|1991|3
+Auf dem Eis|sport|1987|2
+Tour der Leiden|sport|1989|4
+Bühne frei für Bernie Brass|musik|1982|3
+Schlagerparade '89|musik|1989|2
+Die Oper der Straße|musik|1990|4
+Gitarren am Lagerfeuer|musik|1978|2
+Die große Samstagsshow|show|1988|3
+Kuno Kelchs Wundertüte|show|1990|4
+Wetten, dass ich das kann?|show|1987|3
+Zirkus der Rekorde|show|1985|2
+Wer weiß was?|quiz|1986|3
+Die Millionenfrage|quiz|1990|4
+Buchstabensalat|quiz|1983|2
+Zahlen bitte!|quiz|1991|3
+Klartext mit Kurt Kranich|talk|1989|3
+Der späte Stuhl|talk|1991|4
+Reden wir darüber|talk|1985|2
+Museum der stillen Dinge|kultur|1988|4
+Schwanensee in Sankt Petersburg|kultur|1990|4
+Die Bibliothek von Alexandria|kultur|1986|5
+Handwerk aus fünf Jahrhunderten|kultur|1984|3
+Klaviersonaten im Herbstlicht|kultur|1991|4
 `.trim().split('\n');
 
 /** Serien. Aufbau: Titel | Genre | Jahr | Güteklasse | Folgen */
@@ -187,6 +266,16 @@ Agenten in Aspik|action|1983|3|12
 Die Küstenwache von Kiel|action|1991|3|13
 Herzflimmern|liebe|1989|3|15
 Galaxy Rangers|trick|1987|3|22
+Der Bulle vom Bodensee|krimi|1989|4|14
+Zimmer 21|drama|1991|3|12
+Die Wanderpraxis|serie|1986|3|16
+Sturmfrei|komoed|1990|2|22
+Raumstation Kepler|scifi|1988|4|10
+Die Bergrettung|serie|1991|3|18
+Kanzlei Sonnenschein|serie|1987|3|20
+Zwei Schwestern|drama|1985|3|13
+Die Hafenkommissarin|krimi|1990|4|11
+Nachbarschaftshilfe|komoed|1989|2|24
 `.trim().split('\n');
 
 /** Werbekunden. Aufbau: Marke | Produkt | Zielgruppe */
@@ -205,7 +294,7 @@ Gummiflitzer|Turnschuhe|teen
 Opa Lehmanns|Kräuterlikör|rent
 Kuschelweich Plus|Weichspüler|haus
 Titan Rasierer|Nassrasierer|ang
-Sonnenklar Reisen|Pauschalurlaub|rent
+Weitblick Reisen|Busreise ins Grüne|rent
 Blitzblank|Scheuermilch|haus
 Mondrakete|Spielzeugbausatz|kind
 Ferdis Fritten|Imbisskette|arbl
@@ -241,6 +330,56 @@ Bärenstark Klebstoff|Alleskleber|kind
 Diva Parfum|Damenparfum|haus
 Granit Baumarkt|Baumarkt|ang
 Wunschlos Möbel|Möbelhaus|haus
+Fluffo Weichspüler|Weichspüler|haus
+Krallmann Werkzeug|Akkuschrauber|ang
+Fernblick Reisen|Busreise ins Grüne|rent
+Zwergenland|Bauklötze|kind
+Prallo Kaugummi|Kaugummi|teen
+Herzhaft & Co.|Wurstwaren|haus
+Nordlicht Bier|Pilsener|arbl
+Spuli Spülmaschine|Geschirrspüler|haus
+Rasant Rasierer|Nassrasierer|ang
+Bunte Blase|Limonade|kind
+Vitaflex Turnschuh|Sportschuh|teen
+Kanzlei Vorsicht|Rechtsschutz|ang
+Grabesruh|Sterbevorsorge|rent
+Wolkenweich Matratzen|Federkernmatratze|rent
+Rasenmaxe|Rasenmäher|ang
+Trallala Schallplatten|Schlagerplatten|rent
+Klarsicht|Fensterreiniger|haus
+Kraftmeier Proteinriegel|Eiweißriegel|teen
+Pixelpower|Spielkonsole|kind
+Kummerkasten Versicherung|Hausratpolice|ang
+Fettarm Margarine|Halbfettmargarine|haus
+Bärenstark Kleber|Alleskleber|ang
+Süßholz Bonbons|Lutschbonbons|kind
+Hüpfburg Freizeitpark|Tageskarte|kind
+Donnerkeil Motorrad|Straßenmaschine|teen
+Wachhund Alarmanlage|Einbruchmelder|ang
+Torfrock Gummistiefel|Gartenstiefel|rent
+Bierbaum Bratwurst|Rostbratwurst|arbl
+Zackzack Kurierdienst|Paketversand|ang
+Milde Sorte Tee|Kräutertee|rent
+Kicker Klaus|Fußballmagazin|arbl
+Frisch & Fröhlich|Joghurtdrink|haus
+Meisterlack|Wandfarbe|ang
+Nimmersatt Tiefkühl|Fertigpizza|arbl
+Silberpfeil Fahrrad|Rennrad|teen
+Ohrwurm Kassetten|Leerkassetten|teen
+Kleiderbügel Mode|Herrenanzug|ang
+Puppenstube|Puppenhaus|kind
+Rentnerglück|Seniorenresidenz|rent
+Schaumkrone|Duschgel|haus
+Tempolimit Reifen|Winterreifen|ang
+Naschkatze|Schokoriegel|kind
+Beinfrei Strumpfhosen|Feinstrumpfhose|haus
+Kabelsalat Elektronik|Verlängerungskabel|arbl
+Wackelpudding|Dessertpulver|kind
+Hammerhart Baumarkt|Werkzeugkoffer|ang
+Fernweh Fluglinie|Ferienflieger|ang
+Stubenrein Tiernahrung|Katzenfutter|rent
+Krachbumm Feuerwerk|Silvesterbatterie|arbl
+Wattebausch Windeln|Babywindeln|haus
 `.trim().split('\n');
 
 /* ─────────── Nachrichtenressorts ─────────── */

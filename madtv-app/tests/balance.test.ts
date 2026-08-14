@@ -11,9 +11,11 @@ import { runBot } from './bot';
 import type { DifficultyId } from '../src/core';
 
 const SEEDS = [20250814, 777, 31337];
+/** Obergrenze der Messläufe — ein nicht gewonnener Lauf zählt schlechter als jeder Sieg. */
+const MAX_DAYS = 80;
 
 function bestOf(diff: DifficultyId, lateGame: boolean) {
-  return SEEDS.map((seed) => runBot(diff, { seed, lateGame, maxDays: 80 }));
+  return SEEDS.map((seed) => runBot(diff, { seed, lateGame, maxDays: MAX_DAYS }));
 }
 
 function report(name: string, runs: ReturnType<typeof bestOf>): string {
@@ -48,9 +50,20 @@ describe('Schwierigkeitskurve', () => {
     const mit = bestOf('schwer', true);
     console.log(report('schwer ohne Satellit/Star:', ohne));
     console.log(report('schwer mit vollem Werkzeugkasten:', mit));
-    // Satellit und Starmoderator müssen sich messbar auszahlen
-    const bestImage = (rs: typeof ohne) => Math.max(...rs.map((r) => r.image));
-    expect(bestImage(mit)).toBeGreaterThan(bestImage(ohne));
+
+    // Gemessen wird, wie schnell gewonnen wird — nicht, wie hoch das Image am
+    // Ende steht. Ein Lauf, der erst an Tag 78 gewinnt, hatte 78 Tage Zeit zum
+    // Klettern; ein Lauf, der an Tag 46 heiratet, hört genau dann auf. Nach dem
+    // Spitzenimage zu fragen belohnte also die lange Partie und verkehrte den
+    // Nutzen der Werkzeuge ins Gegenteil.
+    const siege = (rs: typeof ohne) => rs.filter((r) => r.won).length;
+    const dauer = (rs: typeof ohne) =>
+      rs.reduce((a, r) => a + (r.won ? r.days : MAX_DAYS + 20), 0) / rs.length;
+
+    expect(siege(mit)).toBeGreaterThanOrEqual(siege(ohne));
+    expect(dauer(mit)).toBeLessThan(dauer(ohne) - 10);
+    // Und die Reichweite ist der Weg dorthin: Satellit und Masten wirken direkt
+    expect(Math.max(...mit.map((r) => r.reach))).toBeGreaterThan(Math.max(...ohne.map((r) => r.reach)));
   });
 
   it('führt nirgends zu absurden Zuständen', () => {
