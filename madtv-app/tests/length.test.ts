@@ -7,8 +7,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  BLOCKS, MAX_LEN, SLOTS, SLOT_MIN,
-  adSlotOf, isAdSlot, isPrime, lengthLabel, slotHour, slotLabel,
+  BLOCKS, DAY_END, DAY_START, MAX_LEN, SLOTS, SLOT_MIN,
+  adSlotOf, currentSlot, isAdSlot, isPrime, lengthLabel, slotHour, slotLabel, slotTime,
   airBlock, buildCatalog, clearProgramme, createGame, emptyDay, getDay,
   placeProgramme, startOf,
 } from '../src/core';
@@ -230,6 +230,57 @@ describe('Die KI füllt den Abend', () => {
           expect(slots[i + k]!.start).toBe(false);
         }
       }
+    }
+  });
+});
+
+/**
+ * Der Sendetakt.
+ *
+ * Mit dem Halbstundenraster wurde aus sieben Sendeplätzen vierzehn — die
+ * Spieluhr schaltete aber weiter im Stundentakt und benutzte die Blocknummer
+ * als Feldnummer. Um 21:00 ging dadurch das 19:30-Feld auf Sendung, und die
+ * Felder ab 21:30 liefen live überhaupt nie. Aufgefallen ist das erst, als
+ * jemand während der Sendung auf die Tafel schaute.
+ */
+describe('Sendetakt', () => {
+  it('legt jedes Feld auf seine eigene Uhrzeit', () => {
+    expect(slotTime(0)).toBe(18 * 60);
+    expect(slotTime(1)).toBe(18 * 60 + 30);
+    expect(slotTime(13)).toBe(24 * 60 + 30);
+    // Alle Felder müssen vor Sendeschluss liegen
+    for (let i = 0; i < SLOTS; i++) expect(slotTime(i)).toBeLessThan(DAY_END);
+  });
+
+  it('nennt zu jeder Minute das laufende Feld', () => {
+    expect(currentSlot(17 * 60)).toBeNull();          // vor Sendebeginn
+    expect(currentSlot(18 * 60)).toBe(0);
+    expect(currentSlot(18 * 60 + 29)).toBe(0);
+    expect(currentSlot(18 * 60 + 30)).toBe(1);
+    expect(currentSlot(21 * 60 + 54)).toBe(7);        // aus dem gemeldeten Fall
+    expect(slotLabel(currentSlot(21 * 60 + 54)!)).toBe('21:30');
+    expect(currentSlot(24 * 60 + 30)).toBe(13);
+    expect(currentSlot(DAY_END)).toBeNull();          // nach Sendeschluss
+  });
+
+  it('bringt im Tagesverlauf jedes Feld genau einmal auf Sendung', () => {
+    const g = createGame({ seed: 313, diff: 'normal' });
+    const gesendet: number[] = [];
+    for (let t = DAY_START; t < DAY_END; t++) {
+      for (let i = 0; i < SLOTS; i++) {
+        if (t === slotTime(i)) { airBlock(g, g.day, i); gesendet.push(i); }
+      }
+    }
+    expect(gesendet).toEqual(Array.from({ length: SLOTS }, (_, i) => i));
+    expect(getDay(g.player, g.day).every((s) => s.aired)).toBe(true);
+  });
+
+  it('lässt zur Sendezeit den Werbeblock derselben Stunde laufen', () => {
+    // Werbung liegt auf dem halben Feld jeder Stunde — 18:30 gehört zu 18 Uhr
+    for (let b = 0; b < BLOCKS; b++) {
+      const ad = adSlotOf(b);
+      expect(isAdSlot(ad)).toBe(true);
+      expect(slotTime(ad)).toBe(slotTime(b * 2) + 30);
     }
   });
 });

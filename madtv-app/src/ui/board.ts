@@ -16,8 +16,9 @@ import { icon } from './icons';
 import {
   BLOCKS, GENRES, GROUPS, SLOTS, adSlotOf, clearProgramme, esc, estimateBlock,
   getDay, isPrime, lengthLabel, moneyShort, placeProgramme, slotHour, slotLabel, viewers,
+  currentSlot,
 } from '../core';
-import type { Contract, Licence, Slot } from '../core';
+import type { BlockResult, Contract, Licence, Slot } from '../core';
 import { G, S, markDirty } from './session';
 import { bindDrag, isDragging, registerDrag } from './drag';
 import { toast } from './overlay';
@@ -68,14 +69,32 @@ export function progCard(l: Licence, opts: { grabbable?: boolean; span?: number 
     '</div>';
 }
 
-function adCard(c: Contract, opts: { grabbable?: boolean } = {}): string {
+/**
+ * Werbekarte. Sobald der Block gelaufen ist, steht dort nicht mehr die
+ * Forderung, sondern was daraus geworden ist — vorher wusste man erst am
+ * nächsten Tag, ob ein Spot gezählt hat.
+ */
+function adCard(
+  c: Contract,
+  opts: { grabbable?: boolean; res?: BlockResult | null; laeuft?: boolean } = {},
+): string {
   const left = c.spots - c.done;
+  const erreicht = opts.res ? (c.group ? opts.res.groups[c.gi]! : opts.res.total) : null;
+  const geschafft = erreicht !== null && erreicht >= c.minAud;
+
+  const fuss = erreicht !== null
+    ? `<div class="spot-foot ${geschafft ? 'ok' : 'bad'}">` +
+      `<span>${geschafft ? 'gezählt' : 'verfehlt'}</span><b>${viewers(erreicht)}</b></div>`
+    : `<div class="spot-foot"><span>${left}× offen</span><b>${moneyShort(c.perSpot)}</b></div>`;
+
   return (
-    `<div class="spot"${opts.grabbable ? ` data-drag="ad" data-ad="${c.id}" tabindex="0" role="button"` : ''}` +
+    `<div class="spot${erreicht !== null ? (geschafft ? ' geschafft' : ' verfehlt') : ''}` +
+    `${opts.laeuft ? ' laeuft' : ''}"` +
+    `${opts.grabbable ? ` data-drag="ad" data-ad="${c.id}" tabindex="0" role="button"` : ''}` +
     ` title="${esc(c.brand)} — mindestens ${viewers(c.minAud)}">` +
     `<div class="spot-brand">${esc(c.brand)}</div>` +
     `<div class="spot-need">${viewers(c.minAud)}${c.group ? ` · ${icon(GROUPS[c.gi]!.ico)}` : ''}</div>` +
-    `<div class="spot-foot"><span>${left}× offen</span><b>${moneyShort(c.perSpot)}</b></div>` +
+    fuss +
     '</div>'
   );
 }
@@ -87,11 +106,15 @@ export function renderBoard(day: number): string {
   const p = g.player;
   const slots = getDay(p, day);
 
+  // Welches Feld gerade auf Sendung ist — nur für den heutigen Plan
+  const jetzt = day === g.day ? currentSlot(g.time) : null;
+
   let cells = '';
 
   // Stundenschilder, jeweils über zwei Halbstundenzeilen
   for (let b = 0; b < BLOCKS; b++) {
-    cells += `<div class="bhour${isPrime(b * 2) ? ' prime' : ''}" ` +
+    const laeuft = jetzt !== null && Math.floor(jetzt / 2) === b;
+    cells += `<div class="bhour${isPrime(b * 2) ? ' prime' : ''}${laeuft ? ' jetzt' : ''}" ` +
       `style="grid-row:${b * 2 + 1}/span 2;grid-column:1">` +
       `${String(slotHour(b * 2)).padStart(2, '0')}<small>Uhr</small></div>`;
   }
@@ -103,25 +126,37 @@ export function renderBoard(day: number): string {
     const span = s.prog ? Math.max(1, s.len) : 1;
     const aired = s.aired;
 
+    // Läuft dieses Feld gerade? Bei einer langen Sendung auch jedes Folgefeld.
+    const laeuft = jetzt !== null && jetzt >= i && jetzt < i + span;
+
     let inner: string;
     let cls = 'pocket prog';
     if (s.prog) {
-      const est = aired && s.res ? s.res.total : estimateBlock(g, day, i).total;
+      // Läuft die Sendung gerade, zählt das Feld, das *jetzt* auf Sendung ist —
+      // sonst stünde auf der Karte die erste halbe Stunde und in der Kopfzeile
+      // die laufende, und beide Zahlen widersprächen sich.
+      const jetztRes = laeuft && jetzt !== null ? slots[jetzt]?.res : null;
+      const est = jetztRes ? jetztRes.total
+        : aired && s.res ? s.res.total : estimateBlock(g, day, i).total;
       const tooEarly = s.prog.fsk >= 18 && slotHour(i) < 22 && slotHour(i) >= 6;
       const endet = i + span >= SLOTS ? '01:00' : slotLabel(i + span);
       // Auf einem einzelnen Halbstundenfeld ist für die Fußzeile kein Platz;
       // ihre Angaben stehen dann im Kurzhinweis der Karte.
-      inner = progCard(s.prog, { grabbable: !aired, span }) +
+      inner = (laeuft ? '<div class="onair-pip">auf Sendung</div>' : '') +
+        progCard(s.prog, { grabbable: !aired, span }) +
         (span >= 2
           ? `<div class="pocket-note${tooEarly ? ' bad' : ''}">` +
             (tooEarly ? `${icon('ui-warnung')} zu früh · ` : '') +
-            `bis ${endet} · <b>${viewers(est)}</b> ${aired ? 'gesehen' : 'erwartet'}</div>`
+            `bis ${endet} · <b>${viewers(est)}</b> ` +
+            (laeuft ? 'schauen zu' : aired ? 'gesehen' : 'erwartet') + '</div>'
           : '');
       cls += aired ? ' aired' : ' filled';
     } else {
-      inner = `<div class="pocket-empty">${icon('ui-plus')} ${slotLabel(i)}</div>`;
+      inner = (laeuft ? '<div class="onair-pip">auf Sendung</div>' : '') +
+        `<div class="pocket-empty">${icon('ui-plus')} ${slotLabel(i)}</div>`;
       if (aired) cls += ' aired';
     }
+    if (laeuft) cls += ' jetzt';
 
     const act = aired
       ? (s.res ? `data-act="showres" data-b="${i}" data-day="${day}"` : '')
@@ -137,12 +172,14 @@ export function renderBoard(day: number): string {
     const s = slots[i]!;
     const aired = s.aired;
 
+    const laeuft = jetzt === i;
+
     let inner: string;
     let cls = 'pocket ad';
     if (s.ad) {
       const ct = p.contracts.find((c) => c.id === s.ad!.id);
       inner = ct
-        ? adCard(ct, { grabbable: !aired })
+        ? adCard(ct, { grabbable: !aired, res: aired ? s.res : null, laeuft })
         : `<div class="spot ghost"><div class="spot-brand">${esc(s.ad.brand)}</div>` +
           '<div class="spot-need">Vertrag beendet</div></div>';
       cls += aired ? ' aired' : ' filled';
@@ -153,6 +190,8 @@ export function renderBoard(day: number): string {
       inner = `<div class="pocket-empty">${icon('ui-plus')} Werbung</div>`;
       if (aired) cls += ' aired';
     }
+
+    if (laeuft) cls += ' jetzt';
 
     const act = aired ? '' : `data-act="pickad" data-b="${i}" data-day="${day}" data-drop="ad"`;
     cells += `<div class="${cls}" style="grid-row:${b * 2 + 1}/span 2;grid-column:3" ${act} ` +
@@ -173,6 +212,14 @@ export function renderBoard(day: number): string {
     : '<div class="shelf-none">Kein offener Vertrag — ab in die Werbeagentur.</div>';
 
   const frei = slots.filter((s) => !s.prog && !s.aired).length;
+  // Was der Abend bisher gebracht hat — Summe über die gelaufenen Felder
+  const bisher = slots.reduce((a, s) => a + (s.aired && s.res ? s.res.total : 0), 0);
+  const gelaufen = slots.filter((s) => s.aired && s.ad);
+  const spotsOk = gelaufen.filter((s) => {
+    const ct = p.contracts.find((c) => c.id === s.ad!.id);
+    if (!ct || !s.res) return false;
+    return (ct.group ? s.res.groups[ct.gi]! : s.res.total) >= ct.minAud;
+  }).length;
   const stunden = p.licences.reduce((a, l) => a + l.lenSlots, 0) / 2;
 
   return (
@@ -182,7 +229,12 @@ export function renderBoard(day: number): string {
     (frei
       ? `<b class="warn">${frei} × 30 Minuten Testbild</b>`
       : '<b class="ok">Abend vollständig belegt</b>') +
-    ` · Archiv reicht für ${stunden.toFixed(1).replace('.', ',')} Sendestunden</div>` +
+    ` · Archiv reicht für ${stunden.toFixed(1).replace('.', ',')} Sendestunden` +
+    (bisher > 0
+      ? ` · <b>${viewers(bisher)}</b> Zuschauer bisher` +
+        (gelaufen.length ? ` · ${spotsOk}/${gelaufen.length} Spots gezählt` : '')
+      : '') +
+    '</div>' +
     shelfBlock(`${icon('ui-kassette')} Programmordner`, `${p.licences.length} Titel · zum Sendeplatz ziehen`,
       shelf || '<div class="shelf-none">Archiv leer.</div>') +
     shelfBlock(`${icon('flr-werbe')} Werbekoffer`, `${open.length} offen · auf den Werbeplatz ziehen`, koffer) +

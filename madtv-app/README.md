@@ -3,12 +3,12 @@
 Umbau des Einzeldatei-Spiels aus `../madtv/` zu einem richtigen Projekt.
 Der Umbau ist abgeschlossen (Etappen 1–5); seitdem wächst der **Inhalt**.
 
-Stand: **Etappe 6, vierte Runde** — Vite + TypeScript, Spielkern herausgelöst und
+Stand: **Etappe 6 abgeschlossen** — Vite + TypeScript, Spielkern herausgelöst und
 testbar, Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit
 laufender Figur, eigener Zeichensatz, installierbare und offline spielbare
-Ausgabe. **Alle dreizehn Räume** haben eine eigene Kulisse, und Betty, Herr
-Raffer und die Konkurrenz reden mit — abhängig davon, was tatsächlich passiert
-ist.
+Ausgabe. **Alle dreizehn Räume** haben eine eigene Kulisse, Betty, Herr Raffer
+und die Konkurrenz reden abhängig vom Spielverlauf mit, und während der
+Ausstrahlung sieht man, was läuft, wer zuschaut und ob der Spot zählt.
 
 Die alte `../madtv/index.html` bleibt unangetastet, bis diese Fassung sie
 eingeholt hat.
@@ -62,7 +62,7 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 100 automatische Prüfungen |
+| Tests | Handarbeit im Browser | 104 automatische Prüfungen |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -94,8 +94,6 @@ bleiben dabei exakt erhalten**; das ist die Ressource, um die gespielt wird, und
 `tests/travel.test.ts` prüft genau diese Invariante.
 
 ## Schwierigkeitskurve
-
-Gemessen mit `npm run sim` (drei Startwerte je Grad, solide spielender Bot):
 
 Gemessen mit `npm run sim:breit` (zehn Startwerte je Grad, solide spielender
 Bot):
@@ -594,6 +592,51 @@ Katalog den Zufallslauf verschob und die Prüfung „übersteht Speichern und La
 unverändert" plötzlich anschlug. Der Spielstand führt jetzt die verwaisten
 Lizenzen mit — meist eine leere Liste, im Ernstfall ein, zwei Einträge. Eine
 eigene Prüfung hält den Fall fest.
+
+### Auf Sendung
+
+Während der Ausstrahlung war die Tafel blind: Überall stand «erwartet», die
+Kopfzeile zeigte Konto und Image, aber nirgends, **wer gerade zuschaut, was
+gerade läuft und ob der Werbespot zählt**. Genau das ist jetzt sichtbar:
+
+- Die Kopfzeile trägt neben der Uhr den **Titel der laufenden Sendung und ihre
+  Zuschauer**, mit blinkendem roten Punkt. Nach Sendeschluss steht dort die
+  Tagessumme.
+- Das laufende Feld auf der Sendetafel ist rot gerahmt und trägt die Marke
+  **«auf Sendung»**; das Stundenschild daneben färbt mit. Bei einer langen
+  Sendung gilt das für alle ihre Felder.
+- Aus «erwartet» wird während der Ausstrahlung **«schauen zu»** und danach
+  «gesehen» — und zwar mit der Zahl der *gerade laufenden* halben Stunde, damit
+  Karte und Kopfzeile nicht zwei verschiedene Werte zeigen.
+- Die Werbekarte zeigt nach dem Block nicht mehr die Forderung, sondern das
+  Ergebnis: **gezählt** in Grün oder **verfehlt** in Rot, mit der tatsächlich
+  erreichten Zuschauerzahl.
+- Die Fußzeile summiert: Zuschauer bisher und gezählte Spots.
+
+#### Der Grund, warum es überhaupt auffiel
+
+Beim Nachschauen zeigte sich ein Fehler, der seit Etappe 4 im Spiel war. Mit
+dem Halbstundenraster wurde aus sieben Sendeplätzen vierzehn — die Spieluhr
+schaltete aber weiter im **Stundentakt** und benutzte die Blocknummer als
+Feldnummer:
+
+| Uhrzeit | ging auf Sendung |
+|---|---|
+| 18:00 | 18:00 ✓ |
+| 19:00 | 18:30 |
+| 20:00 | 19:00 |
+| 21:00 | 19:30 |
+| … | … |
+| 00:00 | 21:00 |
+
+Die Felder ab 21:30 liefen live **überhaupt nie**; sie wurden erst beim
+Tagesabschluss in einem Rutsch abgerechnet. Deshalb stand um 21:54 auf der
+21-Uhr-Sendung noch «erwartet» — sie war schlicht noch nicht dran.
+
+Der Fehler war für die Bilanz folgenlos (am Tagesende lief alles nach), aber er
+machte die halbe Sendezeit unbeobachtbar. Jedes Feld geht jetzt zu seiner
+eigenen Zeit auf Sendung, und vier Prüfungen in `tests/length.test.ts` halten
+den Takt fest — darunter der gemeldete Fall: um 21:54 läuft das 21:30-Feld.
 
 ## Was als Nächstes läge
 

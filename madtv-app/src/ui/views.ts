@@ -4,7 +4,9 @@
  * In Etappe 2 wird die Hochhausansicht durch eine gezeichnete SVG-Szene mit
  * laufender Figur ersetzt. Die Etagenliste bleibt als Sprungmarke bestehen.
  */
-import { BLOCKS, FLOORS, esc, getDay, hhmm, moneyShort, reachOf, WEEKDAYS } from '../core';
+import {
+  BLOCKS, FLOORS, currentSlot, esc, getDay, hhmm, moneyShort, reachOf, viewers, WEEKDAYS,
+} from '../core';
 import type { RoomId } from '../core';
 import { activate, el } from './dom';
 import { icon } from './icons';
@@ -41,6 +43,8 @@ function buildTop(): void {
     '<div class="brand">MAD<span>TV</span></div>' +
     '<div class="clock" id="t-clock" aria-label="Uhrzeit">--:--</div>' +
     '<div class="stat"><div class="k">Tag</div><div class="v" id="t-day"></div></div>' +
+    '<div class="stat live" id="t-livebox"><div class="k" id="t-livek">Zuschauer</div>' +
+    '<div class="v" id="t-live">—</div></div>' +
     '<div class="stat money" id="t-moneybox"><div class="k">Konto</div>' +
     '<div class="v" id="t-money"></div></div>' +
     '<div class="stat img"><div class="k">Image</div><div class="v" id="t-image"></div></div>' +
@@ -81,6 +85,23 @@ function updateTop(): void {
   el('t-moneybox').classList.toggle('neg', p.money < 0);
   el('t-image').textContent = `${p.image.toFixed(1).replace('.', ',')}%`;
   el('t-love').textContent = String(Math.round(p.love));
+
+  // Wer gerade zuschaut. Während der Sendung die Zuschauer des laufenden
+  // Feldes, danach die Summe des Abends — vorher gibt es nichts zu zeigen.
+  const jetzt = currentSlot(g.time);
+  const heute = getDay(p, g.day);
+  const box = el('t-livebox');
+  if (jetzt !== null && heute[jetzt]?.aired && heute[jetzt]!.res) {
+    const s2 = heute[jetzt]!;
+    el('t-livek').textContent = s2.prog ? s2.prog.title : 'Testbild';
+    el('t-live').textContent = viewers(s2.res!.total);
+    box.classList.add('on');
+  } else {
+    const summe = heute.reduce((a, x) => a + (x.aired && x.res ? x.res.total : 0), 0);
+    el('t-livek').textContent = summe > 0 ? 'Zuschauer heute' : 'Zuschauer';
+    el('t-live').textContent = summe > 0 ? viewers(summe) : '—';
+    box.classList.remove('on');
+  }
 
   el('topbar').querySelectorAll<HTMLButtonElement>('[data-sp]').forEach((b) => {
     const v = Number(b.dataset.sp);

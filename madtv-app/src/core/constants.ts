@@ -47,6 +47,23 @@ export function adSlotOf(block: number): number {
 }
 
 /** Primetime: 20:00 bis 22:00. */
+/**
+ * Uhrzeit, zu der ein Feld auf Sendung geht — Minuten seit Mitternacht.
+ *
+ * Der Sendeabend beginnt um 18:00, jedes Feld dauert eine halbe Stunde. Der
+ * Arbeitstag läuft von 17:00 (1020) bis 01:00 (1500), deshalb braucht es keine
+ * Sonderbehandlung für Mitternacht: 00:30 ist schlicht Minute 1470.
+ */
+export function slotTime(slot: number): number {
+  return 18 * 60 + slot * SLOT_MIN;
+}
+
+/** Welches Feld gerade läuft — null vor Sendebeginn und nach Sendeschluss. */
+export function currentSlot(time: number): number | null {
+  const i = Math.floor((time - 18 * 60) / SLOT_MIN);
+  return i >= 0 && i < SLOTS ? i : null;
+}
+
 export function isPrime(slot: number): boolean {
   return slot >= 4 && slot <= 7;
 }

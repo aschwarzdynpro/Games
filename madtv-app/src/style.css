@@ -1391,3 +1391,42 @@ body.dragging .tresen-kante{pointer-events:auto;}
 .pa-name{position:relative;font-size:9.5px;font-weight:700;line-height:1.3;min-height:25px;}
 .pa-wert{position:relative;font-size:9.5px;color:var(--love);display:flex;justify-content:center;align-items:center;gap:3px;margin-top:3px;}
 .pa-warn{position:relative;font-size:8.5px;color:var(--warn);margin-top:2px;}
+
+/* ─────────── Auf Sendung ─────────── */
+/* Während der Ausstrahlung soll auf einen Blick klar sein, was läuft, wer
+   zuschaut und ob der Spot zählt. Vorher stand dort überall nur «erwartet». */
+.stat.live .k{
+  max-width:18ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.stat.live.on .v{color:var(--bad);}
+.stat.live.on .k::before{
+  content:'';display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--bad);margin-right:4px;vertical-align:1px;
+  animation:onairBlink 1.6s ease-in-out infinite;
+}
+@keyframes onairBlink{50%{opacity:.25;}}
+
+.pocket.jetzt{
+  box-shadow:inset 0 0 0 2px var(--bad), 0 0 14px rgba(255,107,107,.25);
+  border-radius:9px;
+}
+.bhour.jetzt{color:var(--bad);border-color:var(--bad);}
+.onair-pip{
+  position:absolute;top:-1px;right:6px;z-index:2;
+  font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--bad);color:#fff;border-radius:0 0 4px 4px;padding:1px 6px;
+}
+.onair-pip::before{
+  content:'';display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:#fff;margin-right:4px;vertical-align:.5px;
+  animation:onairBlink 1.6s ease-in-out infinite;
+}
+.pocket{position:relative;}
+
+/* Werbespot: Ergebnis statt Forderung, sobald der Block gelaufen ist */
+.spot.geschafft{border-color:var(--ok);}
+.spot.verfehlt{border-color:var(--bad);}
+.spot-foot.ok span{color:var(--ok);font-weight:700;}
+.spot-foot.ok b{color:var(--ok);}
+.spot-foot.bad span{color:var(--bad);font-weight:700;}
+.spot-foot.bad b{color:var(--bad);}

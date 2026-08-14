@@ -12,8 +12,8 @@
  * Weltschicht, damit die Figur nicht im Minutentakt ruckt.
  */
 import {
-  BLOCKS, BLOCK_H, DAY_END, FLOORS, SPEEDS,
-  airBlock, auctionTick, endOfDay,
+  DAY_END, FLOORS, SLOTS, SPEEDS,
+  airBlock, auctionTick, currentSlot, endOfDay, isAdSlot, slotTime,
 } from '../core';
 import type { GameEvent } from '../core';
 import { G, S, markDirty } from './session';
@@ -137,10 +137,14 @@ function stepMinute(): boolean {
   const s = S();
   const g = s.g;
 
+  const vorher = currentSlot(g.time);
   g.time++;
   s.tickCount++;
   needTop = true;
   if (s.tickCount % 12 === 0) needView = true;
+  // Wechselt das laufende Feld, muss die Tafel sofort nachziehen — sonst
+  // stünde der Sendemarker bis zu zwölf Minuten auf dem falschen Platz.
+  if (currentSlot(g.time) !== vorher) needView = true;
 
   if (s.elevBusy > 0) {
     s.elevBusy--;
@@ -153,12 +157,18 @@ function stepMinute(): boolean {
     }
   }
 
-  for (let b = 0; b < BLOCKS; b++) {
-    const t = (BLOCK_H[b]! < 6 ? BLOCK_H[b]! + 24 : BLOCK_H[b]!) * 60;
-    if (g.time === t) {
-      airBlock(g, g.day, b);
-      auctionTick(g);
-      if (b === 0) playSfx('onair');
+  // Jedes Halbstundenfeld geht zu seiner eigenen Zeit auf Sendung.
+  //
+  // Bis hierher lief diese Schleife noch über die sieben Werbeblöcke und
+  // benutzte deren Nummer als Feldnummer — ein Überbleibsel aus der Zeit vor
+  // dem Halbstundenraster. Um 21:00 ging dadurch das 19:30-Feld auf Sendung,
+  // und die Felder 7 bis 13 liefen live überhaupt nie, sondern wurden erst
+  // beim Tagesabschluss in einem Rutsch abgerechnet.
+  for (let i = 0; i < SLOTS; i++) {
+    if (g.time === slotTime(i)) {
+      airBlock(g, g.day, i);
+      if (isAdSlot(i)) auctionTick(g);
+      if (i === 0) playSfx('onair');
       markDirty();
     }
   }
