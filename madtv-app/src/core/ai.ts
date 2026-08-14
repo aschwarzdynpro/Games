@@ -13,6 +13,19 @@ import {
 import { buyLicence, getDay, placeProgramme, reachOf, toast, trendOf } from './state';
 import type { Channel, Game, Licence } from './types';
 
+/**
+ * Wieviel von einer Zuschauerzahl für einen Werbevertrag zählt.
+ *
+ * Ein Zielgruppenvertrag misst nicht das ganze Publikum, sondern nur seine
+ * Gruppe. Die Konkurrenz hat diese Unterscheidung lange nicht gemacht und ihre
+ * Gruppenquoten am Gesamtpublikum gemessen — sie unterschrieb dadurch Verträge,
+ * von denen sie keinen einzigen Spot erfüllen konnte, und zahlte statt Einnahmen
+ * nur noch Konventionalstrafen.
+ */
+function erreichbar(total: number, group: string | null | undefined, gi: number): number {
+  return group ? total * (GROUPS[gi]?.share ?? 0.2) * 1.1 : total;
+}
+
 /** Grobe Selbsteinschätzung eines Senders für ein Halbstundenfeld. */
 export function estimateAudience(ch: Channel, slot: number): number {
   let pot = 0;
@@ -157,10 +170,23 @@ export function aiTurn(g: Game, ch: Channel): void {
   for (let d = nextDay; d <= nextDay + 2; d++) aiPlanDay(g, ch, d);
   const slots = getDay(ch, nextDay);
 
-  // Werbeverträge annehmen
-  const estMax = estimateAudience(ch, 5);
+  // Werbeverträge annehmen. Der Sender rechnet nach, bevor er unterschreibt:
+  // Was seine Reichweite nicht hergibt oder nicht mehr in die verbleibenden
+  // Werbeplätze passt, lässt er liegen. Ohne diese Rechnung nahm er stur alle
+  // vier Verträge, verfehlte die Hälfte und war nach einer Woche so tief im
+  // Minus, dass er nie wieder eine Lizenz kaufte — die Konkurrenz verschwand
+  // dann als Gegner aus dem Spiel, ohne dass es jemand merkte.
+  // Maßstab ist, was gestern tatsächlich zugeschaut hat, nicht was der Sender
+  // sich für den besten Sendeplatz ausrechnet: Wer dem Spieler das Publikum
+  // gerade verloren hat, darf sich nicht weiter Quoten zutrauen, die er nicht
+  // mehr erreicht.
+  const gestern = ch.lastAud.length ? Math.max(...ch.lastAud) : 0;
+  const estMax = Math.max(gestern, estimateAudience(ch, 5) * 0.6);
+  const offen = (): number => ch.contracts.reduce((a, c) => a + (c.spots - c.done), 0);
   while (ch.contracts.length < MAX_CONTRACTS) {
-    const fit = g.adMarket.filter((c) => c.minAud <= estMax * (0.55 + sk * 0.6));
+    const fit = g.adMarket.filter((c) =>
+      c.minAud <= erreichbar(estMax, c.group, c.gi) * (0.5 + sk * 0.35)
+      && (offen() + c.spots) / Math.max(1, c.days) <= BLOCKS * 0.75);
     if (!fit.length) break;
     fit.sort((a, b) => b.perSpot * b.spots - a.perSpot * a.spots);
     const take = fit[0]!;
@@ -168,12 +194,19 @@ export function aiTurn(g: Game, ch: Channel): void {
     ch.contracts.push({ ...take, deadline: g.day + take.days, done: 0 });
   }
 
-  // Spots auf die stündlichen Werbeplätze verteilen
-  ch.contracts.forEach((ct) => {
+  // Spots auf die stündlichen Werbeplätze verteilen — die anspruchsvollsten
+  // Verträge zuerst und immer auf den stärksten noch freien Platz. Vorher lief
+  // die Schleife von hinten, der Sender legte seine Spots also zuerst auf
+  // Mitternacht und verfehlte reihenweise die zugesagte Quote; die Strafen
+  // dafür waren am Ende ein Vielfaches seiner Werbeeinnahmen.
+  const beste = Array.from({ length: BLOCKS }, (_, b) => adSlotOf(b))
+    .sort((a, b) => estimateAudience(ch, b) - estimateAudience(ch, a));
+  [...ch.contracts].sort((a, b) => b.minAud - a.minAud).forEach((ct) => {
     let need = ct.spots - ct.done;
-    for (let b = BLOCKS - 1; b >= 0 && need > 0; b--) {
-      const slot = adSlotOf(b);
-      if (!slots[slot]!.ad && estimateAudience(ch, slot) >= ct.minAud * (ct.group ? 0.25 : 1)) {
+    for (const slot of beste) {
+      if (need <= 0) break;
+      const da = erreichbar(estimateAudience(ch, slot), ct.group, ct.gi);
+      if (!slots[slot]!.ad && da >= ct.minAud) {
         slots[slot]!.ad = { id: ct.id, brand: ct.brand };
         need--;
       }

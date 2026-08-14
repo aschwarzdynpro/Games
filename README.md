@@ -43,6 +43,13 @@ Richtungen wandern, der Kiosk ein Verkaufstresen mit Vitrine. Der Fundus ist
 auf 186 Filme, 25 Serien, 100 Werbekunden, 14 Eigenproduktionen, 7 Moderatoren
 und 12 Geschenke gewachsen — der Filmkatalog allein umfasst 1008 Titel.
 
+Beim Nachmessen fiel auf, dass die beiden Konkurrenzsender ab Tag 7 pleite
+waren und nie wieder etwas kauften — sie verglichen die Mindestquote von
+Zielgruppenverträgen mit ihrer Gesamtzuschauerzahl und zahlten deshalb nur noch
+Konventionalstrafen. Das ist repariert; die Konkurrenz spielt jetzt bis zum
+Schluss mit, und die Siegschwellen sind entsprechend nachgezogen. Details in
+[`madtv-app/README.md`](madtv-app/README.md).
+
 Und die Figuren reden mit: Betty schaut zur besten Zeit selbst zu und nimmt
 Reißerisches übel, Herr Raffer wird bei fallender Quote persönlich, und die
 Konkurrenz reibt einem den weggeschnappten Spitzenfilm unter die Nase. Welcher

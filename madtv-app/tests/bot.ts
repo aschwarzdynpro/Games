@@ -31,10 +31,14 @@ export interface BotResult {
   licences: number;
   reach: number;
   rivalImages: number[];
+  /** Kassenstand der beiden Konkurrenzsender am Ende — sie sollen mitspielen können. */
+  rivalMoney: number[];
+  /** Wie oft die Konkurrenz dem Spieler einen guten Titel vor der Nase weggekauft hat. */
+  snipes: number;
   history: { day: number; image: number; money: number; love: number }[];
 }
 
-function playDay(g: Game, o: BotOptions): void {
+export function playDay(g: Game, o: BotOptions): void {
   const P = g.player;
 
   // Nachrichten: Abostufe nach Kassenlage
@@ -149,9 +153,13 @@ export function runBot(diff: DifficultyId, o: BotOptions = {}): BotResult {
   const maxDays = o.maxDays ?? 70;
   const g = createGame({ name: 'Bot TV', diff, seed: o.seed ?? 20250814 });
   const history: BotResult['history'] = [];
+  // Die Liste im Spiel ist bei 24 Einträgen gedeckelt; gezählt wird deshalb
+  // nach jedem Tag, was neu dazugekommen ist.
+  const gesehen = new Set<string>();
 
   for (let d = 0; d < maxDays; d++) {
     playDay(g, o);
+    g.snipes.forEach((s) => gesehen.add(`${s.day}|${s.channel}|${s.title}`));
     history.push({
       day: g.day,
       image: g.player.image,
@@ -171,6 +179,8 @@ export function runBot(diff: DifficultyId, o: BotOptions = {}): BotResult {
     licences: g.player.licences.length,
     reach: reachOf(g.player),
     rivalImages: g.ch.slice(1).map((c) => c.image),
+    rivalMoney: g.ch.slice(1).map((c) => c.money),
+    snipes: gesehen.size,
     history,
   };
 }

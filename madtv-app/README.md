@@ -100,14 +100,54 @@ Bot):
 
 | Grad | Siege | Median | Spanne |
 |---|---|---|---|
-| leicht | 10/10 | Tag 26 | 19–38 |
-| normal | 10/10 | Tag 33 | 22–45 |
-| schwer, voller Werkzeugkasten | 9/10 | Tag 43 | 36–64 |
-| schwer, ohne Satellit und Star | 8/10 | Tag 74 | 43–80 |
+| leicht | 9/10 | Tag 37 | 22–62 |
+| normal | 9/10 | Tag 42 | 31–87 |
+| schwer, voller Werkzeugkasten | 8/10 | Tag 46 | 37–64 |
+| schwer, ohne Satellit und Star | 7/10 | Tag 57 | 43–78 |
 
 Der letzte Fall ist Absicht: Wer die Geldsenken des Spätspiels nicht nutzt,
-gewinnt zwar meistens noch, aber quälend langsam — und in zwei von zehn Partien
+gewinnt zwar meistens noch, aber quälend langsam — und in drei von zehn Partien
 gar nicht mehr.
+
+Diese Zahlen sind gegenüber der vorigen Messung (leicht Tag 26, normal Tag 33)
+deutlich länger geworden, und zwar aus einem Grund, der nichts mit Feinschliff
+zu tun hat: **Die Konkurrenz spielt jetzt überhaupt erst mit.** Siehe unten.
+
+## Die Konkurrenz war pleite
+
+Ein Ereignis im Spiel heißt „Weggeschnappt": Ein Konkurrenzsender kauft einen
+Titel weg, den man selbst im Regal liegen sah. Beim Nachmessen kam es in
+200 Spieltagen **null Mal** vor. Die Ursache lag drei Schichten tiefer.
+
+Werbeverträge gibt es in zwei Sorten: solche, die eine Gesamtzuschauerzahl
+verlangen, und solche, die eine Zahl **in einer Zielgruppe** verlangen. Die KI
+verglich beides mit derselben Größe — der Gesamtzuschauerzahl. Sie unterschrieb
+dadurch reihenweise Zielgruppenverträge, deren Quote sie nie erreichen konnte.
+Gemessen an einem Konkurrenten über 30 Tage:
+
+```
+  -6.864k  Konventionalstrafen
+    -176k  laufende Kosten
+       0k  Werbeeinnahmen        ← kein einziger Spot wurde je gezählt
+    +200k  Sammy-Preisgelder
+```
+
+Ab etwa Tag 7 war jeder Konkurrenzsender so tief im Minus, dass er keine Lizenz
+mehr kaufte. Damit verschwand er als Gegner — lautlos, denn im Spiel sieht man
+seine Kasse nicht. Der Marktanteil, den man ab Woche zwei gewann, war zu einem
+guten Teil nur der Anteil zweier Sender, die sich selbst abgeschafft hatten.
+
+Repariert sind drei Dinge: die Zielgruppenrechnung, die Reihenfolge der
+Werbeplätze (die Schleife lief von hinten, legte Spots also zuerst auf
+Mitternacht) und der Maßstab für neue Verträge — jetzt zählt, was gestern
+tatsächlich zugeschaut hat, nicht die Selbsteinschätzung für den besten
+Sendeplatz.
+
+Danach stehen die Konkurrenzsender bei Partieende im Plus statt bei minus
+sechs Millionen, ihr Marktanteil liegt bei 20–28 statt 15 Prozent — und
+„Weggeschnappt" kommt an **13 %** der Tage vor. Weil ein funktionierender
+Gegner den erreichbaren Marktanteil deckelt, sind die Siegschwellen
+entsprechend nachgezogen worden: 50 / 58 / 63 statt 55 / 65 / 70 Prozent.
 
 **Drei Startwerte sind zu wenig, um eine Kurve zu beurteilen.** Als der Katalog
 auf über tausend Titel wuchs, sahen die drei Läufe von `npm run sim` nach einem

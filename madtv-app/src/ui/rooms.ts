@@ -6,8 +6,8 @@
  * gezeichnete SVG-Szenen — die Datenzugriffe hier bleiben dabei dieselben.
  */
 import {
-  SLOTS, DIFFS, FLOORS, GENRES, GIFTS, GROUPS, MAX_CONTRACTS, MAX_CREDIT,
-  MAX_TRANSMITTERS, NEWS_COST, NEWS_QUAL, PACKAGE_COST, POP, PRICE_SATELLITE,
+  SLOTS, AD_MINUTES, DIFFS, GENRES, GIFTS, GROUPS, MAX_CONTRACTS, MAX_CREDIT,
+  MAX_TRANSMITTERS, NEWS_COST, NEWS_MINUTES, NEWS_QUAL, PACKAGE_COST, POP, PRICE_SATELLITE,
   PRICE_TRANSMITTER, PRODUCTIONS, RESSORTS, STARS, STUDIO_RENT, WEEKDAYS,
   dailyCosts, esc, estimateBlock, getDay, lengthLabel, money, moneyShort,
   newsAttraction, pct, reachOf, slotLabel, trendOf, viewers,
@@ -17,6 +17,7 @@ import type { Channel, Contract, GenreId, Licence, RoomId, Talk } from '../core'
 import { icon } from './icons';
 import { G, S } from './session';
 import { renderBoard } from './board';
+import { RAILBOX, railNav } from './rail';
 
 /* ─────────── Bausteine ─────────── */
 
@@ -73,7 +74,7 @@ function office(): string {
       `${i === 0 ? 'Heute' : i === 1 ? 'Morgen' : wd}</button>`;
   }
   h += '<span class="dim" style="font-size:11px;margin-left:auto">' +
-    'Sendeschema: 4 Min Nachrichten · Film · 5 Min Werbung</span></div>';
+    `Sendeschema: ${NEWS_MINUTES} Min Nachrichten · Film · ${AD_MINUTES} Min Werbung</span></div>`;
 
   const openSlots = slots.filter((x) => !x.prog && !x.aired).length;
   h += '<div class="btnrow" style="margin-bottom:9px">' +
@@ -368,8 +369,9 @@ function werbe(): string {
     Array.from({ length: MAX_CONTRACTS }, (_, i) => kofferfach(g, p.contracts[i])).join('') +
     '</div></div>';
 
-  h += '<div class="schrank"><div class="schrank-kopf">Kundenkartei' +
-    `<span>gut geplant bringt deine Primetime derzeit rund ${viewers(est)}</span></div>`;
+  h += `<div class="schrank" ${RAILBOX}><div class="schrank-kopf">Kundenkartei` +
+    `<span>gut geplant bringt deine Primetime derzeit rund ${viewers(est)}</span>` +
+    `${railNav('Kartei')}</div>`;
   if (!g.adMarket.length) {
     h += '<div class="empty-note">Die Kartei ist leer. Morgen liegen neue Karten da.</div>';
   } else {
@@ -606,15 +608,17 @@ function studio(): string {
 
   /* Das Drehbuchregal */
   if (gemietet && !laeuft) {
-    h += '<div class="regal"><div class="regal-kopf">Drehbücher' +
-      '<span>die Dicke zeigt die Drehdauer</span></div>' +
+    h += `<div class="regal" ${RAILBOX}><div class="regal-kopf">Drehbücher` +
+      '<span>die Dicke zeigt die Drehdauer</span>' +
+      `${railNav('Regal')}</div>` +
       '<div class="regal-reihe" data-scroll>' +
       PRODUCTIONS.map((pr) => drehbuch(g, pr)).join('') + '</div></div>';
   }
 
   /* Die Garderoben */
-  h += '<div class="gang"><div class="gang-kopf">Garderoben' +
-    `<span>${p.star ? 'ein Star unter Vertrag' : 'nur einer gleichzeitig'}</span></div>` +
+  h += `<div class="gang" ${RAILBOX}><div class="gang-kopf">Garderoben` +
+    `<span>${p.star ? 'ein Star unter Vertrag' : 'nur einer gleichzeitig'}</span>` +
+    `${railNav('Gang')}</div>` +
     '<div class="gang-reihe" data-scroll>' +
     STARS.map((st) => garderobe(g, st, p.star?.id === st.id)).join('') +
     '</div></div>';
@@ -862,8 +866,9 @@ function betty(): string {
     '<button class="btn love" data-act="visit">Auf einen Kaffee bleiben (15 Min)</button></div></div>';
 
   // Die Tasche mit den mitgebrachten Stücken, ziehbar auf den Schreibtisch
-  h += '<div class="mitbringsel"><div class="mi-kopf">Mitgebracht' +
-    `<span>${g.gifts.length ? 'auf den Schreibtisch ziehen' : 'der Kiosk im Foyer hat geöffnet'}</span></div>`;
+  h += `<div class="mitbringsel" ${RAILBOX}><div class="mi-kopf">Mitgebracht` +
+    `<span>${g.gifts.length ? 'auf den Schreibtisch ziehen' : 'der Kiosk im Foyer hat geöffnet'}</span>` +
+    `${g.gifts.length ? railNav('Tasche') : ''}</div>`;
   h += g.gifts.length
     ? '<div class="mi-reihe" data-scroll>' + g.gifts.map((gift, i) => {
         const zuFrueh = p.love < gift.min;
@@ -923,8 +928,9 @@ function foyer(): string {
       '</div></div>';
   }
 
-  h += '<div class="kiosk">';
-  h += `<div class="ki-schild">Kiosk im Foyer<span>Zuneigung ${Math.round(p.love)} ${icon('ui-herz')}</span></div>`;
+  h += `<div class="kiosk" ${RAILBOX}>`;
+  h += `<div class="ki-schild">Kiosk im Foyer<span>Zuneigung ${Math.round(p.love)} ${icon('ui-herz')}</span>` +
+    `${railNav('Vitrine')}</div>`;
   h += '<div class="vitrine" data-scroll>' +
     [...GIFTS].sort((a, b) => a.cost - b.cost).map((gift) => auslage(g, gift)).join('') +
     '</div>';
@@ -998,9 +1004,5 @@ export const ROOMS: Record<RoomId, () => string> = {
   rival1: () => rivalRoom(G().ch[1]!),
   rival2: () => rivalRoom(G().ch[2]!),
 };
-
-export function floorIndex(id: RoomId): number {
-  return FLOORS.findIndex((f) => f.id === id);
-}
 
 export { DIFFS };

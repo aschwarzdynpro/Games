@@ -59,7 +59,6 @@ function showNext(): void {
     open = false;
     pauses = true;
     el('modal').classList.remove('on');
-    afterClose?.();
     return;
   }
   open = true;
@@ -89,13 +88,6 @@ function showNext(): void {
 
   el('modal').classList.add('on');
   next.onShow?.(el('mbox'));
-}
-
-let afterClose: (() => void) | null = null;
-
-/** Wird aufgerufen, sobald der Dialogstapel leer ist. */
-export function onAllClosed(fn: () => void): void {
-  afterClose = fn;
 }
 
 /** Erzähldialog — hält die Uhr an. */

@@ -178,32 +178,60 @@ export function closeAuction(g: Game): void {
 
 /* ─────────── Zufallsereignisse ─────────── */
 
+/**
+ * Was einem an einem Sendetag sonst noch dazwischenkommt.
+ *
+ * Früher entschied ein einziger Wurf über alle vier Zweige — sie teilten sich
+ * denselben Zahlenstrahl und schlossen sich damit gegenseitig aus. An drei von
+ * vier Tagen passierte gar nichts. Jetzt würfelt jedes Ereignis für sich; damit
+ * ein Tag trotzdem nicht zum Jahrmarkt wird, sind höchstens zwei erlaubt.
+ */
 export function randomEvent(g: Game): void {
   const p = g.player;
-  const r = g.rng.next();
+  let heute = 0;
+  const wuerfel = (chance: number, abTag: number): boolean =>
+    heute < 2 && g.day > abTag && g.rng.chance(chance) && ++heute > 0;
 
-  if (r < 0.1 && g.day > 3) {
+  if (wuerfel(0.1, 3)) {
     g.pendingTerror = true;
     g.terrorDay = g.day + 1;
     dialog(g, 'ui-bombe', 'Bombendrohung', 'Nachrichtenagentur',
       'Eine anonyme Drohung ist eingegangen: Morgen soll im Sendehochhaus ein Sprengsatz hochgehen. ' +
       'Im Foyer hängt das Türschild-Verzeichnis — wer es umhängt, schickt die Herrschaften in eine andere Etage.',
       [{ t: 'Verstanden', cls: 'btn' }]);
-  } else if (r < 0.16 && g.day > 2 && g.market.length) {
+  }
+
+  // Die Konkurrenz greift nach dem Besten, was ihre Kasse hergibt. Vorher stand
+  // hier immer das teuerste Stück im Regal — das konnte sie sich an sieben von
+  // hundert Tagen leisten, und der Toast fiel praktisch nie.
+  if (g.market.length && wuerfel(0.16, 2)) {
     const rival = g.rng.pick(g.ch.slice(1));
-    const m = g.market[g.market.length - 1]!;
-    if (rival.money > m.price) {
+    const bezahlbar = g.market.filter((m) => m.price <= rival.money * 0.4);
+    // aus dem oberen Drittel des Bezahlbaren — es soll wehtun
+    const m = bezahlbar[g.rng.int(Math.floor(bezahlbar.length * 0.66), bezahlbar.length - 1)];
+    if (m) {
       g.market.splice(g.market.indexOf(m), 1);
       rival.money -= m.price;
       rival.licences.push(copyLicence(m, nextUid(g)));
+      g.snipes.push({
+        day: g.day, channel: rival.name, title: m.title,
+        genre: m.genre, price: m.price, tier: m.tier,
+      });
+      if (g.snipes.length > 24) g.snipes.shift();
       toast(g, 'warn', 'Weggeschnappt', `${rival.name} hat «${m.title}» gekauft.`);
+    } else {
+      heute--;
     }
-  } else if (r < 0.21 && g.day > 4) {
+  }
+
+  if (wuerfel(0.12, 4)) {
     const bonus = g.rng.int(40_000, 140_000);
     p.money += bonus;
     toast(g, 'good', 'Sponsorenscheck',
       `Ein Getränkekonzern überweist ${money(bonus)} fürs Product Placement.`);
-  } else if (r < 0.26 && g.day > 5) {
+  }
+
+  if (wuerfel(0.11, 5)) {
     const loss = g.rng.int(30_000, 110_000);
     p.money -= loss;
     toast(g, 'bad', 'Technischer Defekt', `Die Sendeleitung ist durchgeschmort: ${money(loss)} Reparatur.`);

@@ -21,6 +21,7 @@ import {
 import type { BlockResult, Contract, Licence, Slot } from '../core';
 import { G, S, markDirty } from './session';
 import { bindDrag, isDragging, registerDrag } from './drag';
+import { bindRails, railNav } from './rail';
 import { toast } from './overlay';
 import { playSfx } from './sfx';
 
@@ -244,9 +245,7 @@ export function renderBoard(day: number): string {
 
 function shelfBlock(title: string, note: string, inner: string): string {
   return '<div class="shelf">' +
-    `<div class="shelf-head">${title} <span>${note}</span>` +
-    `<span class="shelf-nav"><button data-rail="-1" aria-label="Ablage nach links">${icon('ui-links')}</button>` +
-    `<button data-rail="1" aria-label="Ablage nach rechts">${icon('ui-rechts')}</button></span></div>` +
+    `<div class="shelf-head">${title} <span>${note}</span>${railNav('Ablage')}</div>` +
     `<div class="shelf-rail" data-drop="shelf">${inner}</div></div>`;
 }
 
@@ -417,10 +416,5 @@ export function bindBoard(root: HTMLElement): void {
 
   // Ablagen lassen sich mit den Pfeilen verschieben; auf Karten ist die
   // Wischgeste fürs Ziehen reserviert.
-  root.querySelectorAll<HTMLElement>('[data-rail]').forEach((btn) => {
-    const rail = btn.closest('.shelf')?.querySelector<HTMLElement>('.shelf-rail');
-    if (!rail) return;
-    if (rail.scrollWidth <= rail.clientWidth + 4) btn.setAttribute('disabled', '');
-    btn.onclick = () => rail.scrollBy({ left: Number(btn.dataset.rail) * 168, behavior: 'smooth' });
-  });
+  bindRails(root);
 }

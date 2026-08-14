@@ -44,10 +44,6 @@ export function startSession(g: Game): Session {
   return session;
 }
 
-export function setSession(s: Session): void {
-  session = s;
-}
-
 /** Aktive Sitzung. Wirft, wenn noch kein Spiel läuft — das wäre ein Fehler. */
 export function S(): Session {
   if (!session) throw new Error('Keine laufende Sitzung');

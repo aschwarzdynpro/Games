@@ -83,10 +83,6 @@ export function setWorldVisible(v: boolean): void {
   host?.classList.toggle('hidden', !v);
 }
 
-export function isWorldVisible(): boolean {
-  return visible;
-}
-
 /** Neue Fahrt ankündigen, damit die Szene den Weg aufteilen kann. */
 export function beginTravel(from: number, to: number, totalMinutes: number): void {
   plan = planTravel(from, to, totalMinutes);

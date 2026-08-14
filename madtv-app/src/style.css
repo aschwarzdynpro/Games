@@ -472,7 +472,7 @@ table.tbl tr:last-child td{border-bottom:none;}
 .bhour.prime{color:var(--gold);border-color:#4a3d1c;background:linear-gradient(180deg,#3a3120,#241d10);}
 
 .pocket{
-  min-width:0;
+  min-width:0;position:relative;   /* die Anzeige «läuft gerade» sitzt darin */
   background:
     repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 2px,transparent 2px 6px),
     linear-gradient(180deg,#10161f,#0c1118);
@@ -580,7 +580,9 @@ table.tbl tr:last-child td{border-bottom:none;}
   display:flex;align-items:center;gap:8px;
 }
 .shelf-head span{font-size:10px;font-weight:400;color:var(--dim2);}
-.shelf-nav{margin-left:auto;display:flex;gap:4px;}
+/* Dieselben Pfeile stehen über jeder Regalwand — in Köpfen, die ihre Zeile
+   an der Schrift ausrichten, müssen sie sich selbst mittig setzen. */
+.shelf-nav{margin-left:auto;align-self:center;display:flex;gap:4px;flex:0 0 auto;}
 .shelf-nav button{
   width:26px;height:22px;border-radius:5px;
   background:var(--panel2);border:1px solid var(--line2);
@@ -1421,7 +1423,6 @@ body.dragging .tresen-kante{pointer-events:auto;}
   background:#fff;margin-right:4px;vertical-align:.5px;
   animation:onairBlink 1.6s ease-in-out infinite;
 }
-.pocket{position:relative;}
 
 /* Werbespot: Ergebnis statt Forderung, sobald der Block gelaufen ist */
 .spot.geschafft{border-color:var(--ok);}

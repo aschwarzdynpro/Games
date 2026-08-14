@@ -1643,10 +1643,10 @@ export const FLOORS: readonly Floor[] = [
 
 /* ─────────── Schwierigkeitsgrade ─────────── */
 export const DIFFS: Record<DifficultyId, Difficulty> = {
-  leicht: { name: 'Leicht', money: 1_200_000, aiSkill: 0.62, winImage: 55, fireImage: 8,  ico: 'dif-leicht',
+  leicht: { name: 'Leicht', money: 1_200_000, aiSkill: 0.62, winImage: 50, fireImage: 8,  ico: 'dif-leicht',
             desc: 'Viel Startkapital, gutmütige Konkurrenz.' },
-  normal: { name: 'Normal', money: 800_000,   aiSkill: 0.80, winImage: 65, fireImage: 12, ico: 'dif-normal',
+  normal: { name: 'Normal', money: 800_000,   aiSkill: 0.80, winImage: 58, fireImage: 12, ico: 'dif-normal',
             desc: 'So war es 1991 gedacht.' },
-  schwer: { name: 'Schwer', money: 520_000,   aiSkill: 0.95, winImage: 70, fireImage: 13, ico: 'dif-schwer',
+  schwer: { name: 'Schwer', money: 520_000,   aiSkill: 0.95, winImage: 63, fireImage: 13, ico: 'dif-schwer',
             desc: 'Zwei Haie im selben Hochhaus.' },
 };

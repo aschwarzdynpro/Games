@@ -31,15 +31,6 @@ for (const [path, src] of Object.entries(RAW)) {
 
 export type IconName = string;
 
-/** Alle vorhandenen Symbolnamen — die Prüfung in tests/icons.test.ts liest sie. */
-export function iconNames(): string[] {
-  return [...PARTS.keys()].sort();
-}
-
-export function hasIcon(name: string): boolean {
-  return PARTS.has(name);
-}
-
 let spriteMounted = false;
 
 /**
