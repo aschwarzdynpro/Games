@@ -14,7 +14,7 @@ import { renderAll, renderTop, renderView } from './ui/views';
 import { goFloor, leaveRoom, togglePause, wireLoop } from './ui/loop';
 import { closeDialog, modalOpen } from './ui/overlay';
 import { showEnd, showStart, wireScreens } from './ui/screens';
-import { mountWorld } from './world/world';
+import { mountWorld, setWorldVisible } from './world/world';
 import { el } from './ui/dom';
 
 wireLoop({
@@ -37,6 +37,7 @@ wireScreens({
       // Fahrstuhl: zurück in die Etagenübersicht
       onLift: () => leaveRoom(),
     });
+    setWorldVisible(S().g.opt.world);
     renderAll();
   },
 });

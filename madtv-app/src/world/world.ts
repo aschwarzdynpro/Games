@@ -19,6 +19,8 @@ let scene: Scene | null = null;
 let figure: Character | null = null;
 let plan: TravelPlan | null = null;
 let reduceMotion = false;
+let visible = true;
+let host: HTMLElement | null = null;
 
 export interface WorldHooks {
   /** Etage, in der die Figur gerade steht. */
@@ -35,6 +37,7 @@ let hooks: WorldHooks | null = null;
 
 export function mountWorld(container: HTMLElement, h: WorldHooks): void {
   hooks = h;
+  host = container;
   reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
   scene = createScene();
@@ -68,7 +71,20 @@ export function mountWorld(container: HTMLElement, h: WorldHooks): void {
 }
 
 export function isMounted(): boolean {
-  return scene !== null;
+  return scene !== null && visible;
+}
+
+/**
+ * Flur ein- oder ausblenden. Ausgeblendet wird auch nicht mehr gerechnet —
+ * wer die Grafik abschaltet, soll auch nichts dafür bezahlen.
+ */
+export function setWorldVisible(v: boolean): void {
+  visible = v;
+  host?.classList.toggle('hidden', !v);
+}
+
+export function isWorldVisible(): boolean {
+  return visible;
 }
 
 /** Neue Fahrt ankündigen, damit die Szene den Weg aufteilen kann. */

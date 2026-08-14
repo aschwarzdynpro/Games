@@ -8,6 +8,7 @@ import { el } from './dom';
 import { G, S, hasSession, startSession, markDirty } from './session';
 import { chooser, customDialog, dialog } from './overlay';
 import { setSoundEnabled, playSfx } from './sfx';
+import { setWorldVisible } from '../world/world';
 import {
   SLOT_COUNT, anySave, listSlots, loadOptions, loadSlot, saveOptions, writeSlot,
 } from './persist';
@@ -20,7 +21,7 @@ export function wireScreens(fns: { gameStarted: () => void }): void {
 }
 
 let startDiff: DifficultyId = 'normal';
-let startOpt: Options = { timePressure: true, sound: true, ...loadOptions() };
+let startOpt: Options = { timePressure: true, sound: true, world: true, ...loadOptions() };
 
 /* ─────────── Startbildschirm ─────────── */
 
@@ -46,6 +47,8 @@ export function showStart(): void {
     `⏱️ Echtzeitdruck<small>${startOpt.timePressure ? 'Uhr läuft auch im Menü weiter' : 'Auswahl hält die Uhr an'}</small></button>` +
     `<button class="opt ${startOpt.sound ? 'on' : ''}" data-o="sound" aria-pressed="${startOpt.sound}">` +
     `🔊 Ton<small>${startOpt.sound ? 'an' : 'aus'}</small></button>` +
+    `<button class="opt ${startOpt.world ? 'on' : ''}" data-o="world" aria-pressed="${startOpt.world}">` +
+    `🏢 Flurgrafik<small>${startOpt.world ? 'an' : 'aus'}</small></button>` +
     '</div>' +
     '<button class="go" id="gobtn">Sendebetrieb aufnehmen</button>' +
     (anySave() ? '<div style="margin-top:12px"><button class="opt" id="loadbtn">💾 Spielstand laden</button></div>' : '') +
@@ -215,7 +218,9 @@ function optionsMenu(): void {
     html:
       row('timePressure', 'Echtzeitdruck',
         'Auswahldialoge halten die Uhr nicht an, der Fahrstuhl kostet volle Fahrzeit.') +
-      row('sound', 'Ton', 'Kurze Signale bei Sendestart, Werbeerlös und Quotenalarm.'),
+      row('sound', 'Ton', 'Kurze Signale bei Sendestart, Werbeerlös und Quotenalarm.') +
+      row('world', 'Flurgrafik',
+        'Der gezeichnete Flur über den Panels — Fahrstuhl, Türschild und laufende Figur.'),
     buttons: [{ t: 'Fertig', cls: 'btn', fn: () => { saveOptions(g.opt); togglePause(false); } }],
     onShow: (box) => {
       box.querySelectorAll<HTMLButtonElement>('[data-opt]').forEach((n) => {
@@ -225,6 +230,7 @@ function optionsMenu(): void {
           n.classList.toggle('on', g.opt[k]);
           n.setAttribute('aria-checked', String(g.opt[k]));
           if (k === 'sound') { setSoundEnabled(g.opt.sound); if (g.opt.sound) playSfx('buy'); }
+          if (k === 'world') setWorldVisible(g.opt.world);
           saveOptions(g.opt);
           markDirty();
         };

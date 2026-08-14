@@ -161,7 +161,11 @@ export function deserialize(json: string): Game {
 
   const g: Game = {
     diff: s.diff, D,
-    opt: { timePressure: s.opt?.timePressure ?? true, sound: s.opt?.sound ?? true },
+    opt: {
+      timePressure: s.opt?.timePressure ?? true,
+      sound: s.opt?.sound ?? true,
+      world: s.opt?.world ?? true,
+    },
     day: s.day, weekday: s.weekday, week: s.week, time: s.time,
     rng, seed: s.seed,
     catalog: buildCatalog(1).catalog,

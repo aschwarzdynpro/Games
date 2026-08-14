@@ -240,6 +240,8 @@ export interface Stats {
 export interface Options {
   timePressure: boolean;
   sound: boolean;
+  /** Gezeichneter Flur über den Panels. */
+  world: boolean;
 }
 
 export interface ProductionRun {

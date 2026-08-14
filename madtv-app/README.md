@@ -1,9 +1,10 @@
 # Mad TV — Sendermanager (App-Fassung)
 
 Umbau des Einzeldatei-Spiels aus `../madtv/` zu einem richtigen Projekt.
-Stand: **Etappe 2** — Vite + TypeScript, Spielkern herausgelöst und testbar,
-Zeitschleife mit festem Zeitschritt, und über den Panels läuft eine gezeichnete
-Flurszene mit Fahrstuhl und laufender Figur.
+Stand: **Etappe 3** — Vite + TypeScript, Spielkern herausgelöst und testbar,
+Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit laufender Figur,
+und der Sendeplan liegt als Steckwand vor: Programmkassetten werden auf die
+Sendeplätze gezogen.
 
 Die alte `../madtv/index.html` bleibt unangetastet, bis diese Fassung sie
 eingeholt hat.
@@ -56,6 +57,7 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
+| Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 
 Ein Fehler fiel beim Umzug auf: Nach der ersten KI-Runde fehlte das Auffrischen
 des Filmmarkts, sodass der Spieler an Tag 1 vor halb leeren Regalen stand. Auf
@@ -91,6 +93,44 @@ Gemessen mit `npm run sim` (drei Startwerte je Grad, solide spielender Bot):
 Der letzte Fall ist Absicht: Wer die Geldsenken des Spätspiels nicht nutzt,
 gewinnt zwar irgendwann, aber quälend langsam.
 
+## Sendetafel (Etappe 3)
+
+Der Sendeplan ist keine Liste mehr, sondern eine Steckwand: sieben Sendeplätze,
+darunter zwei Ablagen mit Programmkassetten und Werbeaufträgen. Karten werden
+mit Maus oder Finger auf die Plätze gezogen.
+
+| Zug | Wirkung |
+|---|---|
+| Ordner → Sendeplatz | Sendung einplanen |
+| Sendeplatz → Sendeplatz | umhängen |
+| Koffer → Werbeplatz | Spot einbuchen |
+| Programm → Werbeplatz | wird zum Trailer |
+| Platz → Ablage | zurücklegen |
+
+Gezeichnet wird die Tafel mit HTML und CSS, nicht in SVG oder Canvas. Die Karten
+tragen Filmtitel, und Text ist genau das, was SVG schlechter kann als DOM: kein
+Umbruch, kein Auslassungszeichen, keine Vorlesbarkeit. Die Kulisse — Kassetten­körper,
+Spulen, Schienen — entsteht aus Verläufen.
+
+**Ziehen ist eine Zugabe, kein Ersatz.** Ein Klick auf einen Sendeplatz öffnet
+weiterhin die Auswahlliste; die Tafel bleibt vollständig mit der Tastatur
+bedienbar.
+
+Drei Dinge, die beim Bauen nicht offensichtlich waren:
+
+- **Tafel und Ablage müssen gleichzeitig sichtbar sein**, sonst zieht man ins
+  Blinde. Die Sendeplätze haben deshalb eine Höhengrenze und scrollen intern.
+- **Randscrollen darf nicht zu früh greifen.** Der erste Entwurf schob die
+  Zeilen unter dem Zeiger weg, sobald man in die Nähe des Rands kam — die Karte
+  landete eine Zeile daneben. Jetzt wird nur geschoben, wenn in die Richtung
+  überhaupt noch Scrollweg übrig ist.
+- **Auf dem Handy beansprucht der Browser die Wischgeste.** Karten tragen daher
+  `touch-action: none`, sonst bricht er den Zug mit `pointercancel` ab. Die
+  Ablagen lassen sich stattdessen über Pfeiltasten verschieben.
+
+Während eines Zuges wird die Ansicht nicht neu gebaut — sonst löste sich die
+Karte unter dem Zeiger auf.
+
 ## Weltschicht
 
 Der Flur ist SVG, kein Canvas: Bei gezeichneter Vektorgrafik ist SVG das native
@@ -110,11 +150,21 @@ scharf. Die Schrittphase hängt am zurückgelegten Weg, nicht an der Uhr, damit
 die Füße nicht über den Boden rutschen. Bei `prefers-reduced-motion` steht die
 Figur still und wird nur versetzt.
 
+## Einstellungen
+
+Im Menü unter *Einstellungen* (und schon auf dem Startbildschirm):
+
+| Schalter | Wirkung |
+|---|---|
+| Echtzeitdruck | Auswahldialoge halten die Uhr nicht an, der Fahrstuhl kostet volle Fahrzeit |
+| Ton | kurze Signale bei Sendestart, Werbeerlös und Quotenalarm |
+| Flurgrafik | der gezeichnete Flur über den Panels; ausgeschaltet wird er auch nicht mehr berechnet |
+
 ## Nächste Etappen
 
-3. Räume nacheinander in gezeichnete Szenen überführen, beginnend beim Büro mit
-   Drag & Drop der Programmkarten auf die Sendetafel.
-4. Asset-Pipeline, Übergänge, Feinschliff, Verteilung.
+4. Weitere Räume grafisch: Filmagentur als Regalwand, Nachrichtenstudio als
+   Redaktionstisch.
+5. Asset-Pipeline, Übergänge, Feinschliff, Verteilung.
 
 ## Hinweis
 

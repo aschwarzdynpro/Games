@@ -20,6 +20,7 @@ import { G, S, markDirty } from './session';
 import { dialog, modalHoldsClock, toast } from './overlay';
 import { playSfx } from './sfx';
 import { autosave } from './persist';
+import { isDragging } from './board';
 import { beginTravel, clearTravel, isMounted, updateWorld } from '../world/world';
 
 /** Größter Zeitsprung, der auf einmal nachgeholt wird (Tab war im Hintergrund). */
@@ -202,9 +203,10 @@ function frame(ts: number): void {
     updateWorld(alpha);
   }
 
-  // Die Panels dagegen werden aus HTML neu gebaut; das nur bei Bedarf.
+  // Die Panels dagegen werden aus HTML neu gebaut; das nur bei Bedarf — und
+  // niemals mitten in einem Zug, sonst löst sich die Karte unter dem Zeiger auf.
   if (needTop) { onRenderTop(); needTop = false; }
-  if (s.dirty || needView) {
+  if ((s.dirty || needView) && !isDragging()) {
     onRender();
     s.dirty = false;
     needView = false;

@@ -10,6 +10,7 @@ import { activate, el } from './dom';
 import { G, S } from './session';
 import { ROOMS } from './rooms';
 import { runAction } from './actions';
+import { bindBoard } from './board';
 import { goFloor, leaveRoom, setSpeed, togglePause } from './loop';
 import { openMenu } from './screens';
 
@@ -92,6 +93,7 @@ function bindView(): void {
   view.querySelectorAll<HTMLElement>('[data-go]').forEach((n) => {
     activate(n, () => goFloor(Number(n.dataset.go)));
   });
+  bindBoard(view);
 }
 
 function viewElevator(): string {

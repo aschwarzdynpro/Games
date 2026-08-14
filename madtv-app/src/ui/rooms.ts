@@ -14,6 +14,7 @@ import {
 } from '../core';
 import type { Channel, GenreId, Licence, RoomId } from '../core';
 import { G, S } from './session';
+import { renderBoard } from './board';
 
 /* ─────────── Bausteine ─────────── */
 
@@ -95,61 +96,10 @@ function office(): string {
       : '<span class="bad">keine Sendung zusammengestellt</span>') +
     `<span style="margin-left:auto">Wirkung ${(naSum * 100).toFixed(0)}</span></div>`;
 
-  h += '<div class="sched">';
-  for (let b = 0; b < BLOCKS; b++) {
-    const sl = slots[b]!;
-    const prime = b === 2 || b === 3;
-    const aired = sl.aired;
-
-    let pc = 'slot';
-    let txt: string;
-    let sub = '';
-    if (sl.prog) {
-      pc += ' filled';
-      const est = aired && sl.res ? sl.res.total : estimateBlock(g, day, b).total;
-      txt = esc(sl.prog.title);
-      sub = `${licMeta(sl.prog)} · Frische ${Math.round(sl.prog.fresh * 100)}%` +
-        ` · <b>${viewers(est)}</b>${aired ? ' gesehen ›' : ' erwartet'}`;
-      if (sl.prog.fsk >= 18 && BLOCK_H[b]! < 22 && BLOCK_H[b]! >= 6) pc += ' bad';
-      else if (sl.prog.fresh < 0.4) pc += ' warn';
-      else pc += ' ok';
-    } else {
-      txt = '<span class="empty">＋ Sendung wählen</span>';
-    }
-    if (aired) pc += ' aired';
-
-    let ac = 'slot adslot';
-    let atxt: string;
-    let asub = '';
-    if (sl.ad) {
-      const ct = p.contracts.find((c) => c.id === sl.ad!.id);
-      ac += ' filled';
-      atxt = `📣 ${esc(sl.ad.brand)}`;
-      asub = ct ? `${viewers(ct.minAud)} nötig` : 'Vertrag beendet';
-    } else if (sl.trailer) {
-      ac += ' filled';
-      atxt = '🎞️ Trailer';
-      asub = esc(sl.trailer.title.slice(0, 18));
-    } else {
-      atxt = '<span class="empty">＋ Werbung</span>';
-    }
-    if (aired) ac += ' aired';
-
-    const progAttr = aired
-      ? (sl.res ? `data-act="showres" data-b="${b}" data-day="${day}" role="button" tabindex="0"` : '')
-      : `data-act="pickprog" data-b="${b}" data-day="${day}" role="button" tabindex="0"`;
-    const adAttr = aired ? '' : `data-act="pickad" data-b="${b}" data-day="${day}" role="button" tabindex="0"`;
-
-    h += '<div class="slotrow">' +
-      `<div class="hr${prime ? ' prime' : ''}">${String(BLOCK_H[b]).padStart(2, '0')}</div>` +
-      `<div class="${pc}" ${progAttr}><div class="st">${txt}</div>` +
-      (sub ? `<div class="ss">${sub}</div>` : '') + '</div>' +
-      `<div class="${ac}" ${adAttr}><div class="st">${atxt}</div>` +
-      (asub ? `<div class="ss">${asub}</div>` : '') + '</div></div>';
-  }
-  h += '</div>';
-  h += '<div class="hint">Ein Programm auf einem Werbeplatz wird zum <b>Trailer</b> und zieht später Zuschauer. ' +
-    'Filme ab 18 vor 22 Uhr kosten Quote — und rufen den Gerichtsvollzieher.</div></div>';
+  h += renderBoard(day);
+  h += '<div class="hint">Karten aus dem Programmordner auf einen Sendeplatz ziehen — oder den Platz ' +
+    'anklicken und aus der Liste wählen. Eine Programmkarte auf einem <b>Werbeplatz</b> wird zum Trailer ' +
+    'und zieht später Zuschauer. Filme ab 18 vor 22 Uhr kosten Quote — und rufen den Gerichtsvollzieher.</div></div>';
 
   // Werbekoffer
   h += `<div class="card"><h3>Werbekoffer (${p.contracts.length}/${MAX_CONTRACTS})</h3>`;
