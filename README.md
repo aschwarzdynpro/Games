@@ -10,6 +10,18 @@ Kleine, eigenständige Browserspiele — je eine HTML-Datei, keine Abhängigkeit
 
 Einfach die jeweilige Datei im Browser öffnen.
 
+## In Arbeit: [`madtv-app/`](madtv-app/)
+
+Umbau von Mad TV zu einem richtigen Projekt (Vite + TypeScript), damit die
+geplante grafische Fassung — gezeichnetes Hochhaus, laufende Figur über die
+Flure, Büros mit Drag & Drop — überhaupt handhabbar wird. Der Spielkern liegt
+dort getrennt von der Oberfläche und ist testbar; Balancing-Messungen sind
+Tests statt Handarbeit.
+
+`npm run build:single` erzeugt weiterhin eine selbstständige HTML-Datei — die
+Einzeldatei bleibt also als Ausgabeformat erhalten, nur nicht mehr als
+Quellformat. Details in [`madtv-app/README.md`](madtv-app/README.md).
+
 ## Mad TV
 
 **Ziel:** genug Marktanteil *und* genug Zuneigung bei Betty, um sie zu heiraten — bevor die
