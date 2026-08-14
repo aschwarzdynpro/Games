@@ -229,6 +229,20 @@ export interface Channel {
   lowImageDays: number;
   /** Kulturwirkung des laufenden Tages auf Betty. */
   cultureToday: number;
+  /** Was Betty am laufenden Tag missfallen hat — Reißerisches zur besten Zeit. */
+  trashToday: number;
+  /** Marktanteil des Vortags, für den Trend in den Figurenreden. */
+  lastImage: number;
+}
+
+/** Ein Einkauf der Konkurrenz, den der Spieler mitbekommen soll. */
+export interface Snipe {
+  day: number;
+  channel: string;
+  title: string;
+  genre: GenreId;
+  price: number;
+  tier: number;
 }
 
 export interface Auction extends Licence {
@@ -329,6 +343,11 @@ export interface Game {
   pendingTerror: boolean;
   /** Gerichtsvollzieher steht am nächsten Tagesabschluss vor der Tür. */
   bailiff: boolean;
+
+  /** Was die Konkurrenz zuletzt sichtbar weggekauft hat. */
+  snipes: Snipe[];
+  /** Zuletzt gesagter Satz je Figur — verhindert Wiederholungen. */
+  saidLast: Record<string, string>;
 
   log: LogEntry[];
   stats: Stats;

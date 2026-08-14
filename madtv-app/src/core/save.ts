@@ -13,7 +13,7 @@ import type {
   Channel, Contract, DifficultyId, Game, Licence, NewsItem, RessortId, Slot,
 } from './types';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 interface SavedSlot {
   p: number | null;
@@ -40,6 +40,7 @@ interface SavedChannel {
   lastAud: number[]; todayAud: number[]; audHist: number[];
   awards: number; culturePoints: number; newsPoints: number; primePoints: number;
   lowImageDays: number; cultureToday: number;
+  trashToday?: number; lastImage?: number;
 }
 
 export interface SavedGame {
@@ -65,6 +66,9 @@ export interface SavedGame {
   gifts: string[];
   production: { id: string; left: number; no: number } | null;
   productionNo: number;
+  /** Seit Fassung 5 — ältere Stände laden ohne sie. */
+  snipes?: Game['snipes'];
+  saidLast?: Game['saidLast'];
   ch: SavedChannel[];
 }
 
@@ -94,6 +98,8 @@ export function serialize(g: Game): string {
       ? { id: g.production.def.id, left: g.production.left, no: g.production.no }
       : null,
     productionNo: g.productionNo,
+    snipes: g.snipes.slice(-14),
+    saidLast: g.saidLast,
     ch: g.ch.map((c) => ({
       name: c.name, isAI: c.isAI, money: c.money, credit: c.credit,
       licences: c.licences, contracts: c.contracts,
@@ -118,6 +124,7 @@ export function serialize(g: Game): string {
       lastAud: c.lastAud, todayAud: c.todayAud, audHist: c.audHist,
       awards: c.awards, culturePoints: c.culturePoints, newsPoints: c.newsPoints,
       primePoints: c.primePoints, lowImageDays: c.lowImageDays, cultureToday: c.cultureToday,
+      trashToday: c.trashToday, lastImage: c.lastImage,
     })),
   };
   return JSON.stringify(save);
@@ -149,6 +156,7 @@ export function deserialize(json: string): Game {
       awards: c.awards, culturePoints: c.culturePoints, newsPoints: c.newsPoints,
       primePoints: c.primePoints, lowImageDays: c.lowImageDays,
       cultureToday: c.cultureToday ?? 0,
+      trashToday: c.trashToday ?? 0, lastImage: c.lastImage ?? 0,
     });
     // Verweise im Sendeplan wieder auflösen
     const byUid = new Map(k.licences.map((l) => [l.uid, l]));
@@ -182,6 +190,10 @@ export function deserialize(json: string): Game {
     trend: s.trend,
     player: ch[0]!, ch,
     production: null,
+    // Ältere Spielstände kennen die Figurenfelder noch nicht — sie fangen bei
+    // null an, statt das Laden scheitern zu lassen.
+    snipes: s.snipes ?? [],
+    saidLast: s.saidLast ?? {},
     productionNo: s.productionNo ?? 0,
     packageTaken: s.packageTaken ?? false,
     gifts: (s.gifts ?? []).map((id) => GIFTS.find((x) => x.id === id)).filter(Boolean) as Game['gifts'],

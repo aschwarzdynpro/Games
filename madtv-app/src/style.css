@@ -242,6 +242,9 @@ table.tbl th{
   text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;
   color:var(--dim2);padding:4px 6px;border-bottom:1px solid var(--line);font-weight:700;
 }
+/* .right allein verliert gegen table.tbl th — die Spaltenkoepfe standen
+   deshalb seit jeher links ueber rechtsbuendigen Zahlen. */
+table.tbl th.right{text-align:right;}
 table.tbl td{padding:5px 6px;border-bottom:1px solid #232b36;}
 table.tbl tr:last-child td{border-bottom:none;}
 .num{font-variant-numeric:tabular-nums;}
@@ -1205,3 +1208,186 @@ body.dragging .tresen-kante{pointer-events:auto;}
   width:32px;height:32px;border-radius:7px;font-size:17px;color:var(--gold);
   background:#1b1409;border:1px solid #6b5236;
 }
+
+/* ─────────── Figuren: Schreibtisch mit Sprechblase ─────────── */
+/* Die Stimmung kommt aus dem Kern und färbt hier Lampe, Blase und Rahmen —
+   man sieht die Laune, bevor man den Satz gelesen hat. */
+.szene{
+  position:relative;overflow:hidden;
+  border:1px solid #2f3a4a;border-radius:12px;margin-bottom:14px;
+  padding:16px 16px 0;
+  background:radial-gradient(110% 90% at 50% 0%,#232c3a,#141a23 72%);
+}
+.szene.st-gut{border-color:#2f5a3e;}
+.szene.st-schlecht{border-color:#5a2f2f;}
+/* Haengelampe: Kabel von der Decke, darunter der Schirm. Ohne das Kabel sah
+   der angeschnittene Schirm oben wie ein Fehler aus. */
+.sz-lampe{position:absolute;top:0;left:44px;width:56px;text-align:center;}
+.sz-lampe::before{
+  content:"";display:block;width:2px;height:13px;margin:0 auto;background:#3d4a5c;
+}
+.sz-lampe i{
+  display:block;width:56px;height:13px;margin:0 auto;
+  background:#3d4a5c;
+  clip-path:polygon(30% 0,70% 0,100% 100%,0 100%);
+}
+.sz-lampe::after{
+  content:"";position:absolute;top:26px;left:-24px;width:104px;height:78px;
+  pointer-events:none;opacity:.5;
+  background:linear-gradient(180deg,rgba(255,233,184,.22),rgba(255,233,184,0));
+  clip-path:polygon(28% 0,72% 0,100% 100%,0 100%);
+}
+.szene.st-schlecht .sz-lampe::after{background:linear-gradient(180deg,rgba(255,143,122,.2),rgba(255,143,122,0));}
+.szene.st-gut .sz-lampe i{background:#ffe9b8;box-shadow:0 0 16px rgba(255,233,184,.55);}
+.szene.st-schlecht .sz-lampe i{background:#ff8f7a;box-shadow:0 0 16px rgba(255,143,122,.45);}
+.sz-blase{
+  position:relative;max-width:52ch;margin:6px 0 14px 96px;
+  background:#f2efe6;color:#2a2418;border-radius:12px;padding:10px 13px;
+  font-size:12.5px;line-height:1.45;
+  box-shadow:0 4px 12px rgba(0,0,0,.45);
+}
+.sz-blase::after{
+  content:'';position:absolute;left:-9px;bottom:11px;
+  border:9px solid transparent;border-right-color:#f2efe6;border-left:0;
+}
+.szene.st-gut .sz-blase{background:#eaf5ec;}
+.szene.st-schlecht .sz-blase{background:#f6e6e2;}
+.sz-tisch{
+  display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;
+  padding:0 4px 12px;position:relative;
+}
+.sz-tisch.drop-ok{outline:2px dashed var(--ok);outline-offset:6px;border-radius:8px;}
+.sz-person{
+  width:64px;height:64px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  background:var(--panel2);border:1px solid var(--line2);color:var(--dim);
+}
+.sz-chef .sz-person{background:linear-gradient(160deg,#2c2418,#1d1a12);border-color:#4d4128;color:#d8bb72;}
+.sz-betty .sz-person{background:linear-gradient(160deg,#3a1830,#241426);border-color:#5c2e4a;color:#e78ac0;}
+.sz-rival .sz-person{background:linear-gradient(160deg,#1d2a33,#141c22);border-color:#33505e;color:#7fbcd4;}
+.sz-schild{display:flex;flex-direction:column;gap:1px;padding-bottom:4px;}
+.sz-schild b{font-size:14px;}
+.sz-schild span{font-size:10.5px;color:var(--dim2);}
+.sz-frist{
+  margin-left:auto;align-self:center;
+  font-size:10.5px;font-weight:700;color:var(--bad);
+  border:1px solid var(--bad);border-radius:6px;padding:3px 8px;
+}
+.sz-werte{margin-left:auto;display:flex;gap:12px;align-self:center;flex-wrap:wrap;}
+.sz-werte span{font-size:11px;color:var(--dim);}
+.sz-werte .love{color:var(--love);display:inline-flex;align-items:center;gap:3px;}
+/* Die Tischplatte, auf der alles steht */
+.sz-platte{
+  height:16px;margin:0 -16px;
+  background:linear-gradient(180deg,#6b5236,#3d2e1c);
+  box-shadow:0 -2px 10px rgba(0,0,0,.4);
+}
+.sz-rival .sz-platte{background:linear-gradient(180deg,#44505e,#232c36);}
+
+/* Blumenvase bei Betty — sie füllt sich mit wachsender Zuneigung */
+.vase{position:relative;width:56px;height:66px;margin-left:auto;align-self:flex-end;}
+.vase i{
+  position:absolute;bottom:20px;left:26px;width:2px;height:34px;
+  background:#2f6b45;transform-origin:bottom center;border-radius:2px;
+}
+.vase i::before{
+  content:'';position:absolute;top:-7px;left:-4px;width:10px;height:10px;
+  border-radius:50%;background:#c85a7c;
+}
+.vase i:nth-child(1){transform:rotate(-26deg);}
+.vase i:nth-child(2){transform:rotate(-16deg);}
+.vase i:nth-child(3){transform:rotate(-6deg);}
+.vase i:nth-child(4){transform:rotate(4deg);}
+.vase i:nth-child(5){transform:rotate(14deg);}
+.vase i:nth-child(6){transform:rotate(24deg);height:28px;}
+.vase i:nth-child(7){transform:rotate(-34deg);height:29px;}
+.va-glas{
+  position:absolute;bottom:0;left:16px;width:24px;height:24px;
+  background:linear-gradient(180deg,rgba(160,200,230,.35),rgba(120,160,200,.2));
+  border:1px solid rgba(180,215,240,.4);border-radius:3px 3px 9px 9px;
+}
+
+/* Aushang an der Wand */
+.aushang{
+  position:relative;background:#f2efe6;color:#2a2418;
+  border-radius:2px;padding:14px 16px 12px;margin-bottom:12px;
+  box-shadow:0 5px 14px rgba(0,0,0,.45);
+  transform:rotate(-.35deg);
+}
+.au-nadel{
+  position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:radial-gradient(circle at 35% 32%,#e06a5a,#8a2f24);
+  box-shadow:0 2px 4px rgba(0,0,0,.5);
+}
+.au-titel{
+  font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:#6b6151;border-bottom:1px solid #c6bda8;padding-bottom:6px;margin-bottom:4px;
+}
+.aushang .tbl td, .aushang .tbl th{border-color:#d5cebb;color:#2a2418;}
+.aushang .tbl th{color:#6b6151;}
+.aushang .tbl tr.ich td{background:#e6e0cf;}
+.aushang .tbl .acc{color:#1c4f86;}
+.au-fuss{font-size:10.5px;color:#6b6151;margin-top:8px;}
+
+/* Kalenderblatt für den Sammy-Termin */
+.kalender{
+  display:flex;align-items:center;gap:14px;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+}
+.ka-tag{
+  font-size:34px;font-weight:800;line-height:1;color:var(--gold);
+  min-width:52px;text-align:center;
+  border-right:1px solid var(--line);padding-right:14px;
+}
+.ka-text b{display:block;font-size:12.5px;}
+.ka-text span{font-size:10.5px;color:var(--dim2);}
+
+/* Zuneigungsmesser mit Deckel */
+.messer{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px 12px;margin-bottom:12px;
+}
+.me-kopf{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--dim2);}
+.me-bahn{
+  position:relative;height:12px;border-radius:6px;margin:6px 0 7px;
+  background:#10151d;border:1px solid #2b3444;overflow:hidden;
+}
+.me-bahn i{display:block;height:100%;background:linear-gradient(90deg,#8a3a5c,var(--love));}
+/* Der Deckel: bis hierher kann die Zuneigung überhaupt steigen */
+.me-bahn u{
+  position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--acc);
+  box-shadow:0 0 6px var(--acc);
+}
+.me-fuss{font-size:10.5px;color:var(--dim2);}
+
+/* Mitgebrachte Geschenke als Päckchen */
+.mitbringsel{
+  background:linear-gradient(180deg,#1a212c,#141a23);
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;margin-bottom:12px;
+}
+.mi-kopf{
+  font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.05em;text-transform:uppercase;
+  margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;
+}
+.mi-kopf span{text-transform:none;letter-spacing:0;color:var(--dim2);font-weight:400;}
+.mi-reihe{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 8px;}
+.mi-leer{font-size:11px;color:var(--dim2);}
+.paket{
+  flex:0 0 auto;width:104px;position:relative;padding:14px 8px 9px;text-align:center;
+  background:linear-gradient(160deg,#3a2444,#251830);
+  border:1px solid #55396a;border-radius:7px;
+  cursor:grab;transition:transform .13s, box-shadow .13s;touch-action:none;
+}
+.paket:hover{transform:translateY(-4px);box-shadow:0 9px 18px rgba(0,0,0,.5);}
+.paket.zufrueh{opacity:.5;cursor:not-allowed;}
+/* Geschenkband über das Päckchen */
+.pa-schleife{
+  position:absolute;top:0;bottom:0;left:50%;width:8px;transform:translateX(-50%);
+  background:linear-gradient(90deg,transparent,#c98ad8 22%,#c98ad8 78%,transparent);
+  opacity:.5;
+}
+.pa-ico{position:relative;font-size:22px;color:#e0b0f0;margin-bottom:5px;}
+.pa-name{position:relative;font-size:9.5px;font-weight:700;line-height:1.3;min-height:25px;}
+.pa-wert{position:relative;font-size:9.5px;color:var(--love);display:flex;justify-content:center;align-items:center;gap:3px;margin-top:3px;}
+.pa-warn{position:relative;font-size:8.5px;color:var(--warn);margin-top:2px;}

@@ -51,3 +51,6 @@ export function createGame(opts: NewGameOpts = {}): Game {
   refreshMarket(g, false);
   return g;
 }
+
+export { speak, peek, talkCtx } from './talk';
+export type { Speaker, Mood, Talk, TalkCtx } from './talk';

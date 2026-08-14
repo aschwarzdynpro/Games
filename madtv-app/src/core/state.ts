@@ -225,7 +225,7 @@ export function makeChannel(name: string, isAI: boolean, money: number, aiSkill:
     todayAud: new Array(SLOTS).fill(0),
     audHist: [],
     awards: 0, culturePoints: 0, newsPoints: 0, primePoints: 0,
-    lowImageDays: 0, cultureToday: 0,
+    lowImageDays: 0, cultureToday: 0, trashToday: 0, lastImage: 0,
   };
 }
 
@@ -371,6 +371,7 @@ export function newGame(o: NewGameOpts = {}): Game {
     player: makeChannel(o.name?.trim().slice(0, 18) || 'Mad TV', false, D.money, 0),
     ch: [],
     production: null, productionNo: 0, packageTaken: false, gifts: [],
+    snipes: [], saidLast: {},
     terrorSign: 'self', terrorDay: 0, pendingTerror: false, bailiff: false,
     log: [],
     stats: { revenue: 0, costs: 0, filmsBought: 0, contractsDone: 0, contractsFailed: 0 },

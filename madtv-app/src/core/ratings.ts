@@ -182,6 +182,13 @@ export function airBlock(g: Game, day: number, block: number): void {
       }
       if (isPrime(block)) ch.primePoints += r.total / 2_000_000;
 
+      // Betty schaut zur besten Zeit selbst zu. Was sie dort sieht, zählt —
+      // in beide Richtungen. Der Abzug ist bewusst kleiner als der Kulturgewinn:
+      // Er soll die Entscheidung würzen, nicht die Partie kippen.
+      if (isPrime(block) && s.start && (p.genre === 'erotik' || p.genre === 'horror')) {
+        ch.trashToday += p.genre === 'erotik' ? 0.34 : 0.22;
+      }
+
       // Film ab 18 vor 22 Uhr: der Gerichtsvollzieher merkt sich das
       const hour = slotHour(block);
       if (s.start && p.fsk >= 18 && hour < 22 && hour >= 6 && !ch.isAI) {

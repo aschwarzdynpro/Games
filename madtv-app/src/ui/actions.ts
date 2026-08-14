@@ -695,6 +695,15 @@ registerDrag('ware', {
   },
 });
 
+/* Bettys Schreibtisch nimmt Päckchen entgegen. */
+registerDrag('paket', {
+  accepts: (target) => target.dataset.drop === 'tisch',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'tisch') return;
+    runAction('gift', { i: card.dataset.i });
+  },
+});
+
 registerDrag('band', {
   accepts: (target) => target.dataset.drop === 'wagen',
   drop: (target, card) => {

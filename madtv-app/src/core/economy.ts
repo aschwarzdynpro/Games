@@ -46,11 +46,16 @@ export function updateBetty(g: Game): void {
         if (x) { c.money -= x.cost; gain += x.love * 0.55; }
       }
     }
+    // Gedeckelt, damit ein reißerischer Abend die Zuneigung dämpft, aber kein
+    // einzelner Tag alles Erarbeitete wegräumt.
+    if (!c.isAI) gain -= Math.min(0.8, c.trashToday);
+
     c.love = clamp(c.love + gain, 0, 100);
     // Originalregel: ihre Zuneigung überflügelt das eigene Image niemals
     if (c.love > c.image) c.love = c.image;
     c.love = Math.max(0, c.love - 0.35);
     c.cultureToday = 0;
+    c.trashToday = 0;
   });
 }
 
@@ -294,6 +299,9 @@ export function endOfDay(g: Game): void {
 
   // Marktanteil, gleitend
   g.ch.forEach((c, i) => {
+    // Vor der Neuberechnung merken: Daraus wird der Trend, auf den Herr Raffer
+    // seine Laune stützt.
+    c.lastImage = c.image;
     const share = (totals[i]! / sum) * 100;
     c.image = c.image * 0.72 + share * 0.28;
     c.audHist.push(totals[i]!);

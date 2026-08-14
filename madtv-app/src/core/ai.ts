@@ -10,7 +10,7 @@ import {
   SLOTS, MAX_CONTRACTS, MAX_TRANSMITTERS, POP, PRICE_SATELLITE, PRICE_TRANSMITTER,
   adSlotOf, BLOCKS, slotHour,
 } from './constants';
-import { buyLicence, getDay, placeProgramme, reachOf, trendOf } from './state';
+import { buyLicence, getDay, placeProgramme, reachOf, toast, trendOf } from './state';
 import type { Channel, Game, Licence } from './types';
 
 /** Grobe Selbsteinschätzung eines Senders für ein Halbstundenfeld. */
@@ -121,6 +121,22 @@ export function aiTurn(g: Game, ch: Channel): void {
     if (!buy) break;
     budget -= buy.price;
     buyLicence(g, ch, buy);
+
+    // Was drüben im Regal landet, soll der Spieler mitbekommen — sonst
+    // verschwinden die guten Titel für ihn ohne erkennbaren Grund.
+    if (buy.tier >= 4) {
+      g.snipes.push({
+        day: g.day, channel: ch.name, title: buy.title,
+        genre: buy.genre, price: buy.price, tier: buy.tier,
+      });
+      if (g.snipes.length > 24) g.snipes.shift();
+      // Nur der ganz große Fang unterbricht den Spieler — und erst ab Tag 2:
+      // Was beim Aufbau der Partie gekauft wurde, hat er nie im Regal gesehen.
+      if (buy.tier >= 5 && g.day > 1) {
+        toast(g, 'warn', 'Weggeschnappt',
+          `${ch.name} hat «${buy.title}» aus dem Verleih geholt.`);
+      }
+    }
   }
 
   // Ausbau

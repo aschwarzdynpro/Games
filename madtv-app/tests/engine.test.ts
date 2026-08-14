@@ -9,7 +9,7 @@ import {
   SLOTS, DIFFS, GENRES, GROUPS, NEWS_COST, POP, RESSORTS, slotHour,
   airBlock, airRemainingBlocks, buildCatalog, createGame, dailyCosts,
   deserialize, endOfDay, estimateBlock, getDay, newsAttraction, placeProgramme,
-  reachOf, serialize,
+  reachOf, serialize, speak,
 } from '../src/core';
 import { Rng, hash } from '../src/core';
 
@@ -328,6 +328,28 @@ describe('Spielstand', () => {
       return game.player.image.toFixed(9) + '|' + Math.round(game.player.money);
     };
     expect(weiter(deserialize(snapshot))).toBe(weiter(deserialize(snapshot)));
+  });
+
+  it('lädt einen Stand aus Fassung 4, der die Figurenfelder noch nicht kennt', () => {
+    // Der Zeichensatz der Figuren kam erst mit Fassung 5. Ein älterer Stand
+    // bringt weder snipes noch saidLast mit — laden muss er trotzdem.
+    const g = createGame({ seed: 45, diff: 'normal' });
+    const alt = JSON.parse(serialize(g));
+    alt.v = 4;
+    delete alt.snipes;
+    delete alt.saidLast;
+    alt.ch.forEach((c: Record<string, unknown>) => {
+      delete c.trashToday;
+      delete c.lastImage;
+    });
+
+    const geladen = deserialize(JSON.stringify(alt));
+    expect(geladen.snipes).toEqual([]);
+    expect(geladen.saidLast).toEqual({});
+    expect(geladen.player.trashToday).toBe(0);
+    expect(geladen.player.lastImage).toBe(0);
+    // Und die Figuren reden trotzdem
+    expect(speak(geladen, 'raffer').text.length).toBeGreaterThan(8);
   });
 
   it('lehnt Spielstände aus einer neueren Fassung ab', () => {

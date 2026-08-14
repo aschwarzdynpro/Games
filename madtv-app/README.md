@@ -3,14 +3,12 @@
 Umbau des Einzeldatei-Spiels aus `../madtv/` zu einem richtigen Projekt.
 Der Umbau ist abgeschlossen (Etappen 1–5); seitdem wächst der **Inhalt**.
 
-Stand: **Etappe 6, dritte Runde** — Vite + TypeScript, Spielkern herausgelöst und
+Stand: **Etappe 6, vierte Runde** — Vite + TypeScript, Spielkern herausgelöst und
 testbar, Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit
 laufender Figur, eigener Zeichensatz, installierbare und offline spielbare
-Ausgabe. **Neun von dreizehn Räumen** haben eine eigene Kulisse: Sendeplan als
-Steckwand, Filmagentur als Regalwand, Nachrichtenstudio als Redaktionstisch,
-Werbeagentur als Kundenkartei, Archiv als Regal mit Rollwagen,
-Produktionsstudio als Drehbühne, Technik als Schaltraum, Bank als Schalter,
-Kiosk als Verkaufstresen.
+Ausgabe. **Alle dreizehn Räume** haben eine eigene Kulisse, und Betty, Herr
+Raffer und die Konkurrenz reden mit — abhängig davon, was tatsächlich passiert
+ist.
 
 Die alte `../madtv/index.html` bleibt unangetastet, bis diese Fassung sie
 eingeholt hat.
@@ -34,12 +32,13 @@ sie klein genug dafür.
 ```
 src/
   core/           reines TypeScript, kein DOM, keine Timer — die Simulation
+    talk.ts       was Betty, Raffer und die Konkurrenz sagen
   world/          gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
   ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
   assets/icons/   95 Symbole, je eine SVG-Datei
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
-tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Balancing
+tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figuren, Balancing
 ```
 
 Die Trennung ist der eigentliche Zweck dieser Etappe. `core` lässt sich in
@@ -61,7 +60,7 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 82 automatische Prüfungen |
+| Tests | Handarbeit im Browser | 99 automatische Prüfungen |
 | Material | 107 Filme, 15 Serien, 50 Marken | 186 Filme, 25 Serien, 100 Marken, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -70,6 +69,7 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
 | Symbole | Emoji aus der Schriftart | 95 gezeichnete Vektorsymbole aus dem eigenen Satz |
 | Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
+| Figuren | je vier feste Sätze nach einer Zahl | Sätze mit Bedingung und Rang, abhängig vom Spielverlauf |
 
 Ein Fehler fiel beim Umzug auf: Nach der ersten KI-Runde fehlte das Auffrischen
 des Filmmarkts, sodass der Spieler an Tag 1 vor halb leeren Regalen stand. Auf
@@ -488,15 +488,81 @@ sieht beim Hinschauen, was sich heute lohnt und was nicht.
 zur Reise nach Venedig. Die Lücke zwischen Pralinenschachtel und Goldkette war
 vorher so groß, dass es im mittleren Spiel nichts Sinnvolles zu kaufen gab.
 
+### Vierte Runde: die Figuren
+
+Die letzten vier Räume sind Räume mit *Personen* darin. Eine Kulisse ohne die
+Figur dahinter wäre halb leer geblieben — deshalb entstanden beide zusammen.
+
+#### Sätze mit Bedingung und Rang
+
+Betty, Herr Raffer und die beiden Konkurrenten hatten je vier feste Sätze,
+ausgewählt nach einer einzigen Zahl. Beim zweiten Besuch las sich das wie eine
+Beschriftung, nicht wie eine Person.
+
+`core/talk.ts` hält jetzt jeden Satz mit einer **Bedingung** und einem **Rang**.
+Gesagt wird der ranghöchste Satz, dessen Bedingung zutrifft; bei Gleichstand
+entscheidet der Zufallsgenerator der Partie, und der zuletzt gesagte Satz wird
+übersprungen. Der Kern liefert dabei nur Text und **Stimmung** — die Oberfläche
+macht daraus Sprechblase, Lampenfarbe und Rahmen.
+
+Das hat zwei Folgen, die mir wichtiger sind als die Sätze selbst:
+
+- **Es ist prüfbar.** `tests/talk.test.ts` stellt einen Zustand her und schaut
+  nach, ob die richtige Figur das Richtige sagt — geprüft wird die Kennung des
+  Satzes, nicht der Wortlaut, damit Formulierungen sich ändern dürfen.
+- **Es reagiert auf den Verlauf, nicht auf einen Messwert.** Raffer bemerkt
+  einen Absturz um vier Punkte an einem Tag und wird bei zwei Tagen unter der
+  Feuergrenze konkret. Er lobt nie, solange die Entlassung im Raum steht — auch
+  das ist eine Prüfung.
+
+#### Betty schaut selbst zu
+
+Bisher zählte für Betty nur, wie viel Kultur lief. Jetzt zählt auch, was
+**stattdessen** lief: Erotik oder Horror zur besten Zeit gibt einen Abzug, und
+sie sagt es am nächsten Tag. Der Abzug ist gedeckelt (höchstens −0,8 je Tag) —
+er soll die Entscheidung würzen, nicht die Partie kippen.
+
+Diese Regel hätte der Balancing-Bot nie erwischt: Er plant nichts Reißerisches
+in die Primetime, die Simulationsläufe sind vor und nach der Änderung
+identisch. Sie wird deshalb direkt geprüft — ein Abend mit Dokumentation muss
+besser abschneiden als derselbe Abend mit einem Reißer.
+
+In ihrem Büro steht die Zuneigung als Messbahn mit einer zweiten Marke darauf:
+**dem Deckel**. Dass Bettys Zuneigung das eigene Image nie überflügelt, stand
+bisher in einem Hinweistext; jetzt sieht man, wo die Bahn endet und warum.
+Die Vase auf ihrem Schreibtisch füllt sich mit wachsender Zuneigung.
+
+#### Die Konkurrenz kauft sichtbar
+
+Gute Titel verschwanden bisher lautlos aus dem Verleih. Jeder Einkauf der
+Konkurrenz ab Güteklasse 4 wird jetzt festgehalten; einen Spitzentitel meldet
+eine Einblendung, und im Konkurrenzbüro steht, was sie zuletzt geholt haben —
+mitsamt der passenden Bemerkung dazu.
+
+Beim Schreiben der Prüfungen fiel auf, dass die Konkurrenz schon **vor dem
+ersten Sendetag** mit Einkäufen prahlte: Der Partieaufbau lässt sie einkaufen,
+bevor der Spieler das Regal je gesehen hat. Die Einblendung kommt jetzt erst ab
+Tag 2.
+
+#### Nebenbei repariert
+
+`table.tbl th.right` gab es nicht — die Regel `.right { text-align:right }`
+verlor gegen `table.tbl th`, weil die spezifischer ist. Spaltenköpfe standen
+deshalb seit jeher links über rechtsbündigen Zahlen, in **jeder** Tabelle des
+Spiels. Aufgefallen ist es erst am Aushang im Chefbüro, wo die Tabelle auf
+hellem Papier steht.
+
+Der Spielstand ist auf Fassung 5 gegangen. Ältere Stände laden weiter: Die
+neuen Felder fangen bei null an, und eine Prüfung lädt einen Stand der
+Fassung 4 ohne sie.
+
 ## Was als Nächstes läge
 
-Es fehlen noch vier Räume — und alle vier sind Räume mit *Personen* darin:
-Chefbüro, Bettys Büro und die beiden Konkurrenzbüros. Eine Kulisse ohne die
-Figuren dahinter bliebe dort halb leer. Deshalb kommt als Nächstes der dritte
-Strang: Betty, die auf dein Programm reagiert statt nur auf Geschenke; ein
-Herr Raffer, der bei drei schlechten Abenden in Folge persönlich wird; und eine
-Konkurrenz, die dir sichtbar Filme wegkauft, statt es still zu tun. Die Räume
-entstehen dann zusammen mit den Figuren, die darin sitzen.
+Damit ist die Liste aus Etappe 6 abgearbeitet: alle Räume gezeichnet, das
+Material aufgefüllt, die Figuren am Leben. Was jetzt käme, wäre etwas Neues
+statt etwas Fehlendes — Ton, mehrere Szenarien mit eigenen Startbedingungen,
+oder eine Konkurrenz, die nicht nur redet, sondern gezielt gegen dein Programm
+plant.
 
 Die alte `../madtv/index.html` bleibt weiterhin unangetastet.
 

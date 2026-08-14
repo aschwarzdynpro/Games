@@ -11,8 +11,9 @@ import {
   PRICE_TRANSMITTER, PRODUCTIONS, RESSORTS, STARS, STUDIO_RENT, WEEKDAYS,
   dailyCosts, esc, estimateBlock, getDay, lengthLabel, money, moneyShort,
   newsAttraction, pct, reachOf, slotLabel, trendOf, viewers,
+  speak,
 } from '../core';
-import type { Channel, Contract, GenreId, Licence, RoomId } from '../core';
+import type { Channel, Contract, GenreId, Licence, RoomId, Talk } from '../core';
 import { icon } from './icons';
 import { G, S } from './session';
 import { renderBoard } from './board';
@@ -767,33 +768,65 @@ function bank(): string {
 
 /* ─────────── Chefbüro ─────────── */
 
+/**
+ * Eine Figur hinter ihrem Schreibtisch, mit Sprechblase.
+ *
+ * Die Stimmung kommt aus dem Kern (`speak()`) und färbt hier Blase, Lampe und
+ * Rahmen. So sagt der Raum dasselbe wie der Satz — man sieht die Laune, bevor
+ * man gelesen hat.
+ */
+function figur(opts: {
+  name: string; rolle: string; ico: string; klasse: string;
+  talk: Talk; extra?: string;
+  /** Setzt den Schreibtisch als Ablageziel — bei Betty landen dort Geschenke. */
+  drop?: string;
+}): string {
+  return `<div class="szene ${opts.klasse} st-${opts.talk.mood}">` +
+    '<div class="sz-lampe"><i></i></div>' +
+    `<div class="sz-blase">${esc(opts.talk.text)}</div>` +
+    `<div class="sz-tisch"${opts.drop ? ` data-drop="${opts.drop}"` : ''}>` +
+    `<div class="sz-person">${icon(opts.ico, { cls: 'big' })}</div>` +
+    `<div class="sz-schild"><b>${esc(opts.name)}</b><span>${esc(opts.rolle)}</span></div>` +
+    (opts.extra ?? '') +
+    '</div><div class="sz-platte"></div></div>';
+}
+
 function chef(): string {
   const g = G();
   const p = g.player;
   const rank = [...g.ch].sort((a, b) => b.image - a.image);
-  let mood: string;
-  if (p.image >= 50) mood = 'Nicht schlecht. Für Ihre Verhältnisse. Machen Sie weiter so, dann rede ich beim Aufsichtsrat ein gutes Wort.';
-  else if (p.image >= 34) mood = 'Mittelmaß. Damit gewinnt man keine Sammy und schon gar nicht Frau Botterbloom.';
-  else if (p.image >= g.D.fireImage) mood = 'Das ist kein Fernsehen, das ist eine Bildstörung mit Ton. Ich beobachte Sie.';
-  else mood = 'Sie stehen mit einem Bein auf der Straße. Ich sage das nur einmal.';
+  const talk = speak(g, 'raffer');
+  const bisSammy = 7 - (g.day % 7 || 7) + (g.day % 7 === 0 ? 7 : 0);
 
   let h = '<div class="room">' + head('flr-chef', 'Chefbüro', 'Herr Raffer, Generalintendant');
-  h += `<div class="card"><div class="pers"><div class="avatar boss">${icon('flr-chef', { cls: 'big' })}</div>` +
-    '<div><div style="font-weight:800;font-size:15px">Herr Raffer</div>' +
-    `<div class="dim" style="font-size:12.5px;margin-top:4px">«${esc(mood)}»</div></div></div></div>`;
-  h += '<div class="card"><h3>Senderanking</h3><table class="tbl">' +
+
+  h += figur({
+    name: 'Herr Raffer', rolle: 'Generalintendant', ico: 'flr-chef', klasse: 'sz-chef', talk,
+    extra: p.lowImageDays > 0
+      ? `<div class="sz-frist">Tag ${p.lowImageDays} von 3 unter ${g.D.fireImage} %</div>`
+      : '',
+  });
+
+  // Das Ranking hängt als Aushang an der Wand, nicht in einer Tabellenkarte
+  h += '<div class="aushang"><div class="au-nadel"></div>' +
+    '<div class="au-titel">Senderanking · Aushang der Intendanz</div><table class="tbl">' +
     `<tr><th>#</th><th>Sender</th><th class="right">Marktanteil</th><th class="right">Betty ${icon('ui-herz')}</th><th class="right">Sammys</th></tr>` +
     rank.map((c, i) =>
-      `<tr><td>${i + 1}</td><td>${c === p ? '<b class="acc">' : ''}${esc(c.name)}${c === p ? '</b>' : ''}</td>` +
+      `<tr${c === p ? ' class="ich"' : ''}><td>${i + 1}</td>` +
+      `<td>${c === p ? '<b class="acc">' : ''}${esc(c.name)}${c === p ? '</b>' : ''}</td>` +
       `<td class="right num">${c.image.toFixed(1).replace('.', ',')}%</td>` +
       `<td class="right num">${Math.round(c.love)}</td>` +
       `<td class="right num">${c.awards}</td></tr>`).join('') +
-    `</table><div class="hint">Sieg: mindestens <b>${g.D.winImage}%</b> Marktanteil <b>und</b> ${g.D.winImage} ` +
-    `Zuneigungspunkte bei Betty. Unter ${g.D.fireImage}% wirst du nach drei Tagen entlassen.</div></div>`;
-  const bisSammy = 7 - (g.day % 7 || 7) + (g.day % 7 === 0 ? 7 : 0);
-  h += `<div class="card"><h3>Nächste Sammy-Verleihung</h3><p class="dim" style="font-size:12.5px">In ${bisSammy} ` +
-    'Tag(en). Kategorien: beste Nachrichtensendung, beste Kultursendung, beste Primetime-Quote.</p></div></div>';
-  return h;
+    '</table>' +
+    `<div class="au-fuss">Sieg: mindestens <b>${g.D.winImage} %</b> Marktanteil <b>und</b> ` +
+    `${g.D.winImage} Zuneigungspunkte. Unter ${g.D.fireImage} % ist nach drei Tagen Schluss.</div></div>`;
+
+  // Der Sammy-Termin als abgerissenes Kalenderblatt
+  h += '<div class="kalender"><div class="ka-tag">' + bisSammy + '</div>' +
+    `<div class="ka-text"><b>Tag${bisSammy === 1 ? '' : 'e'} bis zur Sammy-Verleihung</b>` +
+    '<span>Kategorien: beste Nachrichtensendung, beste Kultursendung, beste Primetime-Quote</span></div></div>';
+
+  return h + '</div>';
 }
 
 /* ─────────── Bettys Büro ─────────── */
@@ -801,33 +834,51 @@ function chef(): string {
 function betty(): string {
   const g = G();
   const p = g.player;
-  let mood: string;
-  if (p.love >= 78) mood = 'Sie sehen mich an, als hätte sie den Ring schon anprobiert.';
-  else if (p.love >= 50) mood = '«Ihr Kulturprogramm gestern… das war wirklich schön.»';
-  else if (p.love >= 25) mood = '«Ach, Sie sind das. Der mit den Filmen.»';
-  else if (p.love >= 8) mood = '«Ja bitte? Ich habe gleich Redaktionsschluss.»';
-  else mood = 'Sie blickt kaum auf.';
+  const talk = speak(g, 'betty');
+  // Die Vase füllt sich mit dem, was schon überreicht wurde — bis zu sieben Halme
+  const halme = Math.min(7, Math.round(p.love / 12));
 
-  let h = '<div class="room">' + head('flr-betty', 'Bettys Büro', 'Betty Botterbloom, Kulturredaktion');
-  h += `<div class="card"><div class="pers"><div class="avatar betty">${icon('ui-tanz', { cls: 'big' })}</div>` +
-    '<div style="flex:1"><div style="font-weight:800;font-size:15px">Betty Botterbloom</div>' +
-    `<div class="dim" style="font-size:12.5px;margin:3px 0 7px">${esc(mood)}</div>` +
-    `<div class="statline">Zuneigung ${bar(p.love, 100, 'var(--love)')} ` +
-    `<b class="heart">${Math.round(p.love)} / 100</b></div>` +
-    `<div class="hint">Ihre Zuneigung kann dein Image nie überflügeln — aktuell gedeckelt bei ` +
-    `${Math.round(p.image)}. Kultursendungen und Geschenke helfen.</div></div></div>` +
+  let h = '<div class="room">' + head('flr-betty', 'Bettys Büro',
+    'Betty Botterbloom, Kulturredaktion — Geschenk auf den Schreibtisch legen');
+
+  h += figur({
+    name: 'Betty Botterbloom', rolle: 'Kulturredaktion', ico: 'ui-tanz', klasse: 'sz-betty', talk,
+    drop: 'tisch',
+    extra: `<div class="vase">${'<i></i>'.repeat(halme)}<div class="va-glas"></div></div>`,
+  });
+
+  // Der Zuneigungsmesser samt Deckel: Warum es nicht weitergeht, gehört daneben
+  const deckel = Math.round(p.image);
+  h += '<div class="messer">' +
+    `<div class="me-kopf"><span>Zuneigung</span><b class="heart">${Math.round(p.love)} / 100</b></div>` +
+    '<div class="me-bahn">' +
+    `<i style="width:${p.love}%"></i>` +
+    `<u style="left:${Math.min(100, deckel)}%" title="Deckel: dein Marktanteil"></u></div>` +
+    `<div class="me-fuss">Ihre Zuneigung überflügelt dein Image nie — derzeit gedeckelt bei ` +
+    `<b>${deckel}</b>. Kultursendungen und Geschenke helfen, Reißerisches zur besten Zeit schadet.</div>` +
     '<div class="btnrow" style="margin-top:10px">' +
     '<button class="btn love" data-act="visit">Auf einen Kaffee bleiben (15 Min)</button></div></div>';
 
-  h += '<div class="card"><h3>Mitgebrachte Geschenke</h3>';
-  if (!g.gifts.length) h += '<div class="empty-note">Nichts dabei. Der Kiosk im Foyer hat geöffnet.</div>';
-  else h += '<div class="list">' + g.gifts.map((gift, i) =>
-    `<div class="item"><div style="flex:1"><div class="t">${icon(gift.ico)} ${esc(gift.name)}</div>` +
-    `<div class="m">+${gift.love} Zuneigung${p.love < gift.min ? ' · sie ist noch nicht so weit' : ''}</div></div>` +
-    `<button class="btn sm love" data-act="gift" data-i="${i}" ${p.love < gift.min ? 'disabled' : ''}>Überreichen</button></div>`).join('') + '</div>';
+  // Die Tasche mit den mitgebrachten Stücken, ziehbar auf den Schreibtisch
+  h += '<div class="mitbringsel"><div class="mi-kopf">Mitgebracht' +
+    `<span>${g.gifts.length ? 'auf den Schreibtisch ziehen' : 'der Kiosk im Foyer hat geöffnet'}</span></div>`;
+  h += g.gifts.length
+    ? '<div class="mi-reihe" data-scroll>' + g.gifts.map((gift, i) => {
+        const zuFrueh = p.love < gift.min;
+        return `<div class="paket${zuFrueh ? ' zufrueh' : ''}" ` +
+          (zuFrueh ? 'aria-disabled="true" ' : `data-drag="paket" data-i="${i}" data-act="gift" role="button" tabindex="0" `) +
+          `title="${esc(gift.name)}"><div class="pa-schleife"></div>` +
+          `<div class="pa-ico">${icon(gift.ico)}</div>` +
+          `<div class="pa-name">${esc(gift.name)}</div>` +
+          `<div class="pa-wert">+${gift.love} ${icon('ui-herz')}</div>` +
+          (zuFrueh ? `<div class="pa-warn">erst ab ${gift.min}</div>` : '') +
+          '</div>';
+      }).join('') + '</div>'
+    : '<div class="mi-leer">Nichts dabei.</div>';
   h += '</div>';
 
-  const rivalLove = g.ch.slice(1).map((c) => `${esc(c.name)}: ${Math.round(c.love)}`).join(' · ');
+  const rivalLove = g.ch.slice(1)
+    .map((c) => `${esc(c.name)} ${Math.round(c.love)}`).join(' · ');
   h += `<div class="hint">Die Konkurrenz schläft nicht — ${rivalLove}</div></div>`;
   return h;
 }
@@ -897,22 +948,42 @@ function foyer(): string {
 function rivalRoom(c: Channel): string {
   const g = G();
   const slots = getDay(c, g.day);
-  let h = '<div class="room">' + head('flr-rival', `Büro ${c.name}`, 'Ein kurzer Blick auf den Sendeplan der Konkurrenz');
-  h += '<div class="grid3" style="margin-bottom:10px">' +
-    `<div class="kpi"><div class="k">Marktanteil</div><div class="v">${c.image.toFixed(1).replace('.', ',')}%</div></div>` +
-    `<div class="kpi"><div class="k">Reichweite</div><div class="v">${Math.round(reachOf(c) * 100)}%</div>` +
-    `<div class="d">${c.transmitters} Masten${c.satellite ? ' + Satellit' : ''}</div></div>` +
-    `<div class="kpi"><div class="k">Betty ${icon('ui-herz')}</div><div class="v" style="color:var(--love)">${Math.round(c.love)}</div></div></div>`;
+  const talk = speak(g, 'rival', c);
+  const beute = g.snipes.filter((x) => x.channel === c.name).slice(-4).reverse();
+
+  let h = '<div class="room">' + head('flr-rival', `Büro ${c.name}`,
+    'Ein Blick durch den Türspalt — Programm, Einkäufe, große Töne');
+
+  h += figur({
+    name: c.name, rolle: 'Konkurrenz', ico: 'flr-rival', klasse: 'sz-rival', talk,
+    extra: `<div class="sz-werte">` +
+      `<span>${c.image.toFixed(1).replace('.', ',')} %</span>` +
+      `<span>${Math.round(reachOf(c) * 100)} % Reichweite</span>` +
+      `<span class="love">${Math.round(c.love)} ${icon('ui-herz')}</span></div>`,
+  });
+
+  if (beute.length) {
+    h += '<div class="card"><h3>Zuletzt eingekauft</h3><div class="list">' +
+      beute.map((b) =>
+        `<div class="item"><div style="flex:1;min-width:0"><div class="t">${esc(b.title)}` +
+        `${b.tier >= 5 ? ' <span class="tag w">Spitzentitel</span>' : ''}</div>` +
+        `<div class="m">${icon(GENRES[b.genre].ico)} ${GENRES[b.genre].name} · Tag ${b.day}</div></div>` +
+        `<div class="r"><div style="font-weight:700">${moneyShort(b.price)}</div></div></div>`).join('') +
+      '</div><div class="hint">Was drüben im Regal steht, fehlt dir im Verleih. ' +
+      'Wer zögert, sieht den Titel hier wieder.</div></div>';
+  }
+
   h += '<div class="card"><h3>Heutiges Programm</h3><table class="tbl">' +
     '<tr><th>Zeit</th><th>Sendung</th><th class="right">Länge</th><th class="right">Zuschauer</th></tr>' +
-    slots.map((s, b) => {
-      if (s.prog && !s.start) return '';       // Fortsetzung, steht schon oben
+    slots.map((s2, b) => {
+      if (s2.prog && !s2.start) return '';       // Fortsetzung, steht schon oben
       return `<tr><td class="num">${slotLabel(b)}</td>` +
-        `<td>${s.prog ? `${esc(s.prog.title)} <span class="dim">${GENRES[s.prog.genre].name}</span>` : '<span class="dim">—</span>'}</td>` +
-        `<td class="right num dim">${s.prog ? lengthLabel(s.len) : ''}</td>` +
-        `<td class="right num">${s.aired && s.res ? viewers(s.res.total) : '<span class="dim">…</span>'}</td></tr>`;
+        `<td>${s2.prog ? `${esc(s2.prog.title)} <span class="dim">${GENRES[s2.prog.genre].name}</span>` : '<span class="dim">—</span>'}</td>` +
+        `<td class="right num dim">${s2.prog ? lengthLabel(s2.len) : ''}</td>` +
+        `<td class="right num">${s2.aired && s2.res ? viewers(s2.res.total) : '<span class="dim">…</span>'}</td></tr>`;
     }).join('') +
     '</table></div>';
+
   h += '<div class="hint">Wer weiß, was drüben läuft, kann sein eigenes Programm daneben legen — ' +
     'gleiches Genre zur gleichen Zeit teilt die Zuschauer.</div></div>';
   return h;
