@@ -254,6 +254,9 @@ export function updateScene(s: Scene, st: WorldState): void {
 
   s.floorNum.textContent = String(st.floor + 1);
   s.signText.textContent = f.name;
+  // «Produktionsstudio» ist doppelt so lang wie «Bank» — ohne Anpassung ragt
+  // der Name über das Schild hinaus, besonders auf schmalen Bildschirmen.
+  s.signText.setAttribute('font-size', f.name.length > 15 ? '11' : f.name.length > 11 ? '12.5' : '13.5');
   if (s.signName !== f.ico) {
     s.signName = f.ico;
     s.signIcon.replaceChildren(iconUse(f.ico, 21));

@@ -638,6 +638,52 @@ machte die halbe Sendezeit unbeobachtbar. Jedes Feld geht jetzt zu seiner
 eigenen Zeit auf Sendung, und vier Prüfungen in `tests/length.test.ts` halten
 den Takt fest — darunter der gemeldete Fall: um 21:54 läuft das 21:30-Feld.
 
+### Auf dem Handy
+
+Gemessen auf 390 × 664: Von der Höhe gingen **246 px an Rahmen** verloren, die
+Kopfzeile brach zweizeilig um und wurde von der ersten Einblendung überdeckt,
+die Fußleiste zeigte drei von neun Räumen, der Genrefilter der Filmagentur
+belegte vier Zeilen, und Filmtitel standen als «Der Zir…» in einer 152 px
+schmalen Spalte.
+
+| | vorher | jetzt |
+|---|---|---|
+| Kopfzeile | 85 px, umgebrochen | 64 px, geordnet |
+| Flurgrafik | 113 px | 78 px |
+| Platz fürs Spiel | 419 px | 470 px |
+| Titelspalte | 152 px | 184 px |
+| Räume in der Fußleiste | 3 von 9 | alle 9 |
+
+Die Regeln stehen in einem eigenen Block ab 700 px Breite; darüber ändert sich
+nichts (geprüft bei 1280, 900, 760 und 701 px). Der Ansatz durchgehend: **Was
+nicht passt, wischt seitwärts statt umzubrechen** — Genrefilter, Ablagen und
+Regale sind Wischleisten. Und was nur schmückt, schrumpft: Markenschriftzug
+weg, Raumnamen in der Fußleiste weg (die Symbole sind gezeichnet und
+unterscheidbar, `aria-label` und `title` bleiben).
+
+Einblendungen liegen auf dem Handy **unten** statt oben. Oben verdeckten sie
+genau das, was während der Sendung wichtig ist.
+
+#### Tippziele nachgemessen
+
+Die Prüfung sucht Schaltflächen unter 30 px Höhe. Ergebnis vorher: Die
+**Abostufen im Nachrichtenstudio waren 20 × 19 px** — zwanzig Ziele, die mit
+dem Finger nicht sicher zu treffen sind. Dazu die Pfeile der Ablagen mit 22 px
+und `.btn.sm` mit 30 px. Alle drei sind jetzt mindestens 32 px hoch; die
+Prüfung läuft auf iPhone 12, iPhone SE und Pixel 5 durch alle zwölf Räume.
+
+Zwei Fehler in meinem eigenen Mobilblock fielen dabei auf: ein angehängtes
+Euro-Zeichen hinter einem Betrag, der schon eins hatte («8,1 Mio € €»), und ein
+langer Filmtitel, der den Menüknopf in die zweite Zeile drückte. Beide sind
+Teil der Messung geworden.
+
+Zuletzt zwei Kleinigkeiten, die erst auf 320 px auffielen: «Produktionsstudio»
+ragte über das Türschild im Flur hinaus (die Schriftgröße richtet sich jetzt
+nach der Länge), und «gezählt 2,54 Mio» brach in der 96 px schmalen
+Werbespalte mitten in der Zahl um.
+
+Der Fingerzug auf die Sendetafel ist auf dem kleinsten Gerät (320 px) geprüft.
+
 ## Was als Nächstes läge
 
 Damit ist die Liste aus Etappe 6 abgearbeitet: alle Räume gezeichnet, das

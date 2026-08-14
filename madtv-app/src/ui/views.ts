@@ -121,10 +121,14 @@ export function renderBottom(): void {
   el('bottom').innerHTML =
     QUICK.map((id) => {
       const i = FLOORS.findIndex((f) => f.id === id);
-      return `<button data-f="${i}" class="${s.floor === i && s.room ? 'on' : ''}">` +
-        `${icon(FLOORS[i]!.ico)} ${esc(FLOORS[i]!.name)}</button>`;
+      // Beschriftung als eigenes Element: Auf schmalen Geräten wird sie
+      // ausgeblendet, damit alle neun Räume ohne Wischen erreichbar bleiben.
+      return `<button data-f="${i}" class="${s.floor === i && s.room ? 'on' : ''}" ` +
+        `aria-label="${esc(FLOORS[i]!.name)}" title="${esc(FLOORS[i]!.name)}">` +
+        `${icon(FLOORS[i]!.ico)}<span class="lbl">${esc(FLOORS[i]!.name)}</span></button>`;
     }).join('') +
-    `<button data-f="-1">${icon('ui-hochhaus')} Hochhaus</button>`;
+    '<button data-f="-1" aria-label="Hochhaus" title="Hochhaus">' +
+    `${icon('ui-hochhaus')}<span class="lbl">Hochhaus</span></button>`;
 
   el('bottom').querySelectorAll<HTMLButtonElement>('[data-f]').forEach((b) => {
     b.onclick = () => {

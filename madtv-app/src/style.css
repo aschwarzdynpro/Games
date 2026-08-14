@@ -1430,3 +1430,112 @@ body.dragging .tresen-kante{pointer-events:auto;}
 .spot-foot.ok b{color:var(--ok);}
 .spot-foot.bad span{color:var(--bad);font-weight:700;}
 .spot-foot.bad b{color:var(--bad);}
+
+/* ═══════════ Handy ═══════════
+   Auf 390 × 664 gingen von der Höhe 246 px an Rahmen verloren, die Kopfzeile
+   brach zweizeilig um, die Fußleiste zeigte drei von neun Räumen, und der
+   Genrefilter der Filmagentur belegte vier Zeilen. Dieser Block räumt das auf:
+   Der Rahmen schrumpft, alles Wichtige bleibt eine Zeile, und was nicht passt,
+   wischt seitwärts statt umzubrechen. */
+@media (max-width: 700px){
+  /* Kopfzeile: eine schmale Zeile Uhr + Sendung, darunter die Kennzahlen */
+  #topbar{
+    gap:7px;padding:6px 10px;
+    padding-top:calc(6px + env(safe-area-inset-top,0px));
+  }
+  #topbar .brand{display:none;}
+  #topbar .spacer{display:none;}
+  #topbar .clock{font-size:15px;padding:3px 8px;order:1;}
+  /* Muss schrumpfen dürfen — sonst drückt ein langer Filmtitel den Menüknopf
+     in die zweite Zeile. */
+  #topbar .stat.live{order:2;flex:1 1 60px;min-width:0;overflow:hidden;}
+  #topbar .stat.live .k,#topbar .stat.live .v{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  #topbar .speedbtns{order:3;padding:2px;gap:2px;}
+  #topbar .speedbtns button{padding:3px 5px;font-size:12px;}
+  #topbar #menubtn{order:4;padding:4px 7px;font-size:13px;}
+  /* Die übrigen Kennzahlen liegen flach in einer zweiten, sehr flachen Zeile */
+  #topbar .stat:not(.live){
+    order:5;flex-direction:row;align-items:baseline;gap:4px;
+  }
+  #topbar .stat:not(.live) .k{font-size:8.5px;letter-spacing:.04em;}
+  #topbar .stat:not(.live) .v{font-size:12px;}
+  #topbar .stat.live .k{font-size:8.5px;max-width:none;}
+  #topbar .stat.live .v{font-size:13px;}
+
+  /* Der Flur darf schrumpfen — die Figur bleibt erkennbar */
+  #world{height:clamp(78px,11vh,104px);}
+
+  /* Einblendungen gehören nach unten: oben verdeckten sie die Kopfzeile */
+  #toasts{
+    right:8px;left:8px;top:auto;max-width:none;
+    bottom:calc(58px + env(safe-area-inset-bottom,0px));
+  }
+
+  /* Kennzahlenkarten bleiben nebeneinander, statt drei Bildschirme zu füllen */
+  .grid2,.grid3{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+  .grid2{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .kpi{padding:7px 8px;}
+  .kpi .k{font-size:8.5px;}
+  .kpi .v{font-size:16px;}
+  .kpi .d{font-size:8.5px;}
+
+  /* Knopfreihen wischen seitwärts, statt in drei Zeilen umzubrechen */
+  .btnrow.wisch{
+    flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;
+    scroll-snap-type:x proximity;
+  }
+  .btnrow.wisch > *{flex:0 0 auto;scroll-snap-align:start;}
+
+  /* Sendetafel: schmalere Randspalten, damit Filmtitel lesbar bleiben */
+  .board-grid{
+    grid-template-columns:28px minmax(0,1fr) 96px;
+    grid-auto-rows:36px;gap:3px;
+    max-height:min(50vh,460px);
+  }
+  .bhour{font-size:13px;}
+  .bhour small{display:none;}
+  .spot-brand{font-size:10px;}
+  .spot-need{font-size:8.5px;}
+  /* «gezählt 2,54 Mio» passt in einer Zeile nicht in 96 px und brach mitten in
+     der Zahl um — Wort und Wert bekommen je eine eigene Zeile. */
+  .spot-foot{font-size:8.5px;flex-direction:column;align-items:flex-start;gap:0;}
+  .spot-foot b{font-size:10px;}
+
+  /* Fußleiste: alle Räume ohne Wischen, Symbol genügt */
+  #bottom{
+    gap:4px;padding:6px 8px;overflow-x:visible;
+    padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
+    justify-content:space-between;
+  }
+  #bottom button{padding:7px 0;flex:1 1 0;justify-content:center;font-size:15px;}
+  #bottom button .lbl{display:none;}
+  #bottom button .ic{width:1.25em;height:1.25em;}
+
+  /* Ressortkörbe kompakt — fünf gestapelte Körbe waren 1400 px Scrollweg */
+  .tray{padding:8px 9px;}
+  .tray-head{font-size:11.5px;}
+  .tray .hint{font-size:9.5px;margin-top:3px;}
+  .ticker-item{padding:6px 7px;font-size:10.5px;}
+
+  /* Fingerfreundliche Ziele. Gemessen wurde vorher: die Abostufen im
+     Nachrichtenstudio waren 20 x 19 px, die Pfeile der Ablagen 22 px hoch —
+     mit dem Finger nicht sicher zu treffen. */
+  .btn{padding:9px 13px;}
+  .btn.sm{padding:9px 12px;}
+  .tray-head .lvl{gap:4px;}
+  .tray-head .lvl button{width:32px;height:32px;font-size:12px;}
+  .shelf-nav button{min-width:34px;min-height:34px;}
+  .board-days button,.filterrow button{min-height:34px;}
+  .roomhead h2{font-size:16px;}
+  .roomhead p{font-size:10.5px;}
+}
+
+/* Sehr schmal: die Kennzahlen dürfen ihre Beschriftung verlieren.
+   Ein Euro-Zeichen anzuhängen wäre falsch — moneyShort() bringt schon eins mit. */
+@media (max-width: 400px){
+  #topbar .stat:not(.live) .k{display:none;}
+  #topbar .stat:not(.live){gap:0;}
+  #topbar .stat.live .k{font-size:8px;}
+}

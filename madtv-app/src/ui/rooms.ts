@@ -263,7 +263,9 @@ function film(): string {
   }
 
   const present = ['alle', ...new Set(g.market.map((m) => m.genre))];
-  h += '<div class="card"><div class="btnrow" style="margin-bottom:10px">' +
+  // Bei über einem Dutzend Genres bricht die Reihe auf dem Handy in vier
+  // Zeilen um — als Wischleiste bleibt es eine.
+  h += '<div class="card"><div class="btnrow wisch" style="margin-bottom:10px">' +
     present.map((gen) =>
       `<button class="btn sm ${s.filmFilter === gen ? '' : 'ghost'}" data-act="filmfilter" data-g="${gen}">` +
       `${gen === 'alle' ? 'Alle' : `${icon(GENRES[gen as GenreId].ico)} ${GENRES[gen as GenreId].name}`}</button>`).join('') +
