@@ -8,6 +8,16 @@
 import { esc } from '../core';
 import type { ToastLevel } from '../core';
 import { el } from './dom';
+import { icon } from './icons';
+
+/**
+ * Der Spielkern schreibt für Dialoge HTML, kennt aber keinen Zeichensatz.
+ * Er hinterlässt deshalb Platzhalter der Form <i data-ic="name"></i>, die hier
+ * — und nur hier — zu Symbolen werden.
+ */
+function drawIcons(html: string): string {
+  return html.replace(/<i data-ic="([\w-]+)"><\/i>/g, (_, n: string) => icon(n));
+}
 
 export interface DialogButton {
   t: string;
@@ -57,9 +67,9 @@ function showNext(): void {
 
   const btns = next.buttons.length ? next.buttons : [{ t: 'OK', cls: 'btn' }];
   el('mbox').innerHTML =
-    `<div class="mh"><div class="ico" aria-hidden="true">${next.ico}</div>` +
+    `<div class="mh"><div class="ico">${icon(next.ico, { cls: 'big' })}</div>` +
     `<div><div class="who">${esc(next.who)}</div><h3>${esc(next.title)}</h3></div></div>` +
-    `<p>${next.html}</p>` +
+    `<p>${drawIcons(next.html)}</p>` +
     `<div class="mf">${btns
       .map((b, i) => `<button class="${b.cls ?? 'btn'}" data-i="${i}">${esc(b.t)}</button>`)
       .join('')}</div>`;

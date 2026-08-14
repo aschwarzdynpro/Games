@@ -12,6 +12,7 @@
  * Ziehen ist eine Zugabe, kein Ersatz: Ein Klick auf einen Sendeplatz öffnet
  * weiterhin die Auswahlliste, damit die Tafel mit der Tastatur bedienbar bleibt.
  */
+import { icon } from './icons';
 import {
   BLOCKS, GENRES, GROUPS, SLOTS, adSlotOf, clearProgramme, esc, estimateBlock,
   getDay, isPrime, lengthLabel, moneyShort, placeProgramme, slotHour, slotLabel, viewers,
@@ -58,7 +59,7 @@ export function progCard(l: Licence, opts: { grabbable?: boolean; span?: number 
   return `<div class="cass ${sz}" style="--h:${hue(l.genre)}"${grab} ${title}>` +
     (sz === 'sz3' ? '<div class="cass-reels" aria-hidden="true"><i></i><i></i></div>' : '') +
     `<div class="cass-label"><span class="cass-title">${esc(l.title)}</span>` +
-    `<span class="cass-meta">${gd.ico} ${gd.name}${l.isSerie ? ` · Folge ${l.ep}/${l.eps}` : ''}</span></div>` +
+    `<span class="cass-meta">${icon(gd.ico)} ${gd.name}${l.isSerie ? ` · Folge ${l.ep}/${l.eps}` : ''}</span></div>` +
     '<div class="cass-foot">' +
     `<span class="cass-fsk${l.fsk >= 18 ? ' hot' : ''}">${l.fsk === 0 ? 'o.A.' : l.fsk}</span>` +
     `<span class="cass-len">${lengthLabel(l.lenSlots)}</span>` +
@@ -72,7 +73,7 @@ function adCard(c: Contract, opts: { grabbable?: boolean } = {}): string {
     `<div class="spot"${opts.grabbable ? ` data-ad="${c.id}" tabindex="0" role="button"` : ''}` +
     ` title="${esc(c.brand)} — mindestens ${viewers(c.minAud)}">` +
     `<div class="spot-brand">${esc(c.brand)}</div>` +
-    `<div class="spot-need">${viewers(c.minAud)}${c.group ? ` · ${GROUPS[c.gi]!.ico}` : ''}</div>` +
+    `<div class="spot-need">${viewers(c.minAud)}${c.group ? ` · ${icon(GROUPS[c.gi]!.ico)}` : ''}</div>` +
     `<div class="spot-foot"><span>${left}× offen</span><b>${moneyShort(c.perSpot)}</b></div>` +
     '</div>'
   );
@@ -112,12 +113,12 @@ export function renderBoard(day: number): string {
       inner = progCard(s.prog, { grabbable: !aired, span }) +
         (span >= 2
           ? `<div class="pocket-note${tooEarly ? ' bad' : ''}">` +
-            (tooEarly ? '⚠ zu früh · ' : '') +
+            (tooEarly ? `${icon('ui-warnung')} zu früh · ` : '') +
             `bis ${endet} · <b>${viewers(est)}</b> ${aired ? 'gesehen' : 'erwartet'}</div>`
           : '');
       cls += aired ? ' aired' : ' filled';
     } else {
-      inner = `<div class="pocket-empty">＋ ${slotLabel(i)}</div>`;
+      inner = `<div class="pocket-empty">${icon('ui-plus')} ${slotLabel(i)}</div>`;
       if (aired) cls += ' aired';
     }
 
@@ -145,10 +146,10 @@ export function renderBoard(day: number): string {
           '<div class="spot-need">Vertrag beendet</div></div>';
       cls += aired ? ' aired' : ' filled';
     } else if (s.trailer) {
-      inner = `<div class="trailer">🎞️ Trailer<span>${esc(s.trailer.title)}</span></div>`;
+      inner = `<div class="trailer">${icon('ui-trailer')} Trailer<span>${esc(s.trailer.title)}</span></div>`;
       cls += aired ? ' aired' : ' filled';
     } else {
-      inner = '<div class="pocket-empty">＋ Werbung</div>';
+      inner = `<div class="pocket-empty">${icon('ui-plus')} Werbung</div>`;
       if (aired) cls += ' aired';
     }
 
@@ -181,9 +182,9 @@ export function renderBoard(day: number): string {
       ? `<b class="warn">${frei} × 30 Minuten Testbild</b>`
       : '<b class="ok">Abend vollständig belegt</b>') +
     ` · Archiv reicht für ${stunden.toFixed(1).replace('.', ',')} Sendestunden</div>` +
-    shelfBlock('📼 Programmordner', `${p.licences.length} Titel · zum Sendeplatz ziehen`,
+    shelfBlock(`${icon('ui-kassette')} Programmordner`, `${p.licences.length} Titel · zum Sendeplatz ziehen`,
       shelf || '<div class="shelf-none">Archiv leer.</div>') +
-    shelfBlock('📣 Werbekoffer', `${open.length} offen · auf den Werbeplatz ziehen`, koffer) +
+    shelfBlock(`${icon('flr-werbe')} Werbekoffer`, `${open.length} offen · auf den Werbeplatz ziehen`, koffer) +
     '</div>'
   );
 }
@@ -191,8 +192,8 @@ export function renderBoard(day: number): string {
 function shelfBlock(title: string, note: string, inner: string): string {
   return '<div class="shelf">' +
     `<div class="shelf-head">${title} <span>${note}</span>` +
-    '<span class="shelf-nav"><button data-rail="-1" aria-label="Ablage nach links">◀</button>' +
-    '<button data-rail="1" aria-label="Ablage nach rechts">▶</button></span></div>' +
+    `<span class="shelf-nav"><button data-rail="-1" aria-label="Ablage nach links">${icon('ui-links')}</button>` +
+    `<button data-rail="1" aria-label="Ablage nach rechts">${icon('ui-rechts')}</button></span></div>` +
     `<div class="shelf-rail" data-drop="shelf">${inner}</div></div>`;
 }
 

@@ -29,9 +29,21 @@ Teleprompter. Überall wird gezogen statt ausgewählt. Sendungen dauern jetzt
 30 Minuten bis 3 Stunden, Serien kauft man als Staffel mit 8 bis 24 Folgen —
 Sendezeit ist damit die eigentliche Ware.
 
-`npm run build:single` erzeugt weiterhin eine selbstständige HTML-Datei — die
-Einzeldatei bleibt also als Ausgabeformat erhalten, nur nicht mehr als
-Quellformat. Details in [`madtv-app/README.md`](madtv-app/README.md).
+Auch das letzte Stück Fremdgrafik ist weg: Wo vorher 78 Emoji standen, liegen
+jetzt 86 selbst gezeichnete Vektorsymbole in einem gemeinsamen Raster. Weil sie
+`currentColor` benutzen, erben sie die Farbe ihrer Umgebung — dasselbe Herz ist
+in der Kopfzeile rot und in der Tabelle grau.
+
+Es gibt zwei Ausgabeformen: `npm run build` erzeugt einen Ordner, der sich
+installieren lässt und nach dem ersten Besuch auch ohne Netz läuft;
+`npm run build:single` weiterhin eine einzige, selbstständige HTML-Datei zum
+Doppelklicken oder Verschicken. Die Einzeldatei bleibt also als Ausgabeformat
+erhalten, nur nicht mehr als Quellformat. Details in
+[`madtv-app/README.md`](madtv-app/README.md).
+
+Ein Arbeitsablauf unter [`.github/workflows/pages.yml`](.github/workflows/pages.yml)
+stellt die ganze Sammlung für GitHub Pages zusammen. Er ist bewusst nur von Hand
+auslösbar — ein Push soll nicht ungefragt eine Webseite veröffentlichen.
 
 ## Mad TV
 

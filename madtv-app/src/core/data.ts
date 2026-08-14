@@ -16,17 +16,17 @@ import type {
            Stunden liegen dazwischen, damit ein Film, der 20:30 beginnt,
            nicht dieselbe Ausgangslage hat wie einer um 20:00. */
 export const GROUPS: readonly Group[] = [
-  { id: 'kind', name: 'Kinder',      ico: '🧒', share: 0.11,
+  { id: 'kind', name: 'Kinder',      ico: 'grp-kind', share: 0.11,
     act: [0.58, 0.52, 0.46, 0.35, 0.24, 0.15, 0.07, 0.04, 0.02, 0.015, 0.01, 0.005, 0.00, 0.00] },
-  { id: 'teen', name: 'Jugendliche', ico: '🧑', share: 0.14,
+  { id: 'teen', name: 'Jugendliche', ico: 'grp-teen', share: 0.14,
     act: [0.30, 0.35, 0.40, 0.45, 0.50, 0.53, 0.56, 0.54, 0.52, 0.47, 0.42, 0.34, 0.26, 0.20] },
-  { id: 'haus', name: 'Hausfrauen',  ico: '🧺', share: 0.16,
+  { id: 'haus', name: 'Hausfrauen',  ico: 'grp-haus', share: 0.16,
     act: [0.46, 0.51, 0.56, 0.58, 0.60, 0.57, 0.54, 0.46, 0.38, 0.31, 0.24, 0.16, 0.09, 0.05] },
-  { id: 'ang',  name: 'Angestellte', ico: '💼', share: 0.30,
+  { id: 'ang',  name: 'Angestellte', ico: 'grp-ang', share: 0.30,
     act: [0.24, 0.32, 0.40, 0.50, 0.60, 0.62, 0.63, 0.57, 0.50, 0.42, 0.34, 0.25, 0.17, 0.11] },
-  { id: 'rent', name: 'Rentner',     ico: '👴', share: 0.19,
+  { id: 'rent', name: 'Rentner',     ico: 'grp-rent', share: 0.19,
     act: [0.52, 0.57, 0.61, 0.62, 0.62, 0.56, 0.49, 0.39, 0.29, 0.22, 0.14, 0.09, 0.05, 0.03] },
-  { id: 'arbl', name: 'Arbeitslose', ico: '🛋️', share: 0.10,
+  { id: 'arbl', name: 'Arbeitslose', ico: 'grp-arbl', share: 0.10,
     act: [0.40, 0.43, 0.46, 0.49, 0.51, 0.52, 0.53, 0.52, 0.51, 0.49, 0.46, 0.41, 0.36, 0.31] },
 ];
 
@@ -39,24 +39,24 @@ GROUPS.forEach((g, i) => { GIDX[g.id] = i; });
    krit = Neigung zu guter Kritikerwertung
    kult = zählt als Kultursendung (Betty, Sammy) */
 export const GENRES: Record<GenreId, Genre> = {
-  action:  { name: 'Action',          ico: '💥', aff: [0.5, 1.35, 0.50, 1.15, 0.50, 1.20], krit: -0.15, fsk: 16, kult: false },
-  komoed:  { name: 'Komödie',         ico: '😄', aff: [1.0, 1.15, 1.20, 1.15, 0.95, 1.15], krit:  0.00, fsk: 6,  kult: false },
-  drama:   { name: 'Drama',           ico: '🎭', aff: [0.2, 0.55, 1.25, 1.10, 1.15, 0.75], krit:  0.30, fsk: 12, kult: false },
-  horror:  { name: 'Horror',          ico: '🧟', aff: [0.1, 1.40, 0.35, 0.85, 0.20, 1.05], krit: -0.20, fsk: 18, kult: false },
-  scifi:   { name: 'Science Fiction', ico: '🚀', aff: [0.8, 1.35, 0.45, 1.05, 0.35, 1.10], krit:  0.05, fsk: 12, kult: false },
-  krimi:   { name: 'Krimi',           ico: '🔍', aff: [0.2, 0.85, 1.10, 1.25, 1.25, 0.95], krit:  0.15, fsk: 12, kult: false },
-  liebe:   { name: 'Liebesfilm',      ico: '💞', aff: [0.3, 0.70, 1.45, 0.80, 1.15, 0.85], krit:  0.00, fsk: 6,  kult: false },
-  western: { name: 'Western',         ico: '🤠', aff: [0.5, 0.60, 0.55, 0.95, 1.40, 0.90], krit:  0.05, fsk: 12, kult: false },
-  doku:    { name: 'Dokumentation',   ico: '🌍', aff: [0.5, 0.45, 0.80, 1.05, 1.20, 0.60], krit:  0.45, fsk: 0,  kult: true  },
-  trick:   { name: 'Trickfilm',       ico: '🐭', aff: [1.6, 0.75, 0.85, 0.55, 0.45, 0.65], krit:  0.10, fsk: 0,  kult: false },
-  erotik:  { name: 'Erotik',          ico: '🌶️', aff: [0.0, 1.10, 0.35, 1.00, 0.45, 1.15], krit: -0.35, fsk: 18, kult: false },
-  sport:   { name: 'Sport',           ico: '⚽', aff: [0.6, 1.15, 0.45, 1.20, 0.95, 1.05], krit:  0.00, fsk: 0,  kult: false },
-  musik:   { name: 'Musik',           ico: '🎵', aff: [0.6, 1.25, 0.90, 0.90, 0.70, 0.85], krit:  0.20, fsk: 6,  kult: false },
-  show:    { name: 'Show',            ico: '✨', aff: [0.9, 1.00, 1.30, 1.05, 1.10, 1.10], krit: -0.10, fsk: 6,  kult: false },
-  quiz:    { name: 'Quizshow',        ico: '❓', aff: [0.7, 0.75, 1.25, 1.10, 1.30, 1.00], krit:  0.00, fsk: 0,  kult: false },
-  talk:    { name: 'Talkshow',        ico: '🎙️', aff: [0.1, 0.60, 1.20, 1.05, 1.05, 1.05], krit:  0.15, fsk: 12, kult: false },
-  kultur:  { name: 'Kultur',          ico: '🏛️', aff: [0.1, 0.30, 0.70, 0.85, 1.15, 0.45], krit:  0.60, fsk: 0,  kult: true  },
-  serie:   { name: 'Serie',           ico: '📺', aff: [0.8, 1.00, 1.25, 1.10, 1.00, 1.10], krit:  0.00, fsk: 12, kult: false },
+  action:  { name: 'Action',          ico: 'gen-action', aff: [0.5, 1.35, 0.50, 1.15, 0.50, 1.20], krit: -0.15, fsk: 16, kult: false },
+  komoed:  { name: 'Komödie',         ico: 'gen-komoed', aff: [1.0, 1.15, 1.20, 1.15, 0.95, 1.15], krit:  0.00, fsk: 6,  kult: false },
+  drama:   { name: 'Drama',           ico: 'gen-drama', aff: [0.2, 0.55, 1.25, 1.10, 1.15, 0.75], krit:  0.30, fsk: 12, kult: false },
+  horror:  { name: 'Horror',          ico: 'gen-horror', aff: [0.1, 1.40, 0.35, 0.85, 0.20, 1.05], krit: -0.20, fsk: 18, kult: false },
+  scifi:   { name: 'Science Fiction', ico: 'gen-scifi', aff: [0.8, 1.35, 0.45, 1.05, 0.35, 1.10], krit:  0.05, fsk: 12, kult: false },
+  krimi:   { name: 'Krimi',           ico: 'gen-krimi', aff: [0.2, 0.85, 1.10, 1.25, 1.25, 0.95], krit:  0.15, fsk: 12, kult: false },
+  liebe:   { name: 'Liebesfilm',      ico: 'gen-liebe', aff: [0.3, 0.70, 1.45, 0.80, 1.15, 0.85], krit:  0.00, fsk: 6,  kult: false },
+  western: { name: 'Western',         ico: 'gen-western', aff: [0.5, 0.60, 0.55, 0.95, 1.40, 0.90], krit:  0.05, fsk: 12, kult: false },
+  doku:    { name: 'Dokumentation',   ico: 'gen-doku', aff: [0.5, 0.45, 0.80, 1.05, 1.20, 0.60], krit:  0.45, fsk: 0,  kult: true  },
+  trick:   { name: 'Trickfilm',       ico: 'gen-trick', aff: [1.6, 0.75, 0.85, 0.55, 0.45, 0.65], krit:  0.10, fsk: 0,  kult: false },
+  erotik:  { name: 'Erotik',          ico: 'gen-erotik', aff: [0.0, 1.10, 0.35, 1.00, 0.45, 1.15], krit: -0.35, fsk: 18, kult: false },
+  sport:   { name: 'Sport',           ico: 'gen-sport', aff: [0.6, 1.15, 0.45, 1.20, 0.95, 1.05], krit:  0.00, fsk: 0,  kult: false },
+  musik:   { name: 'Musik',           ico: 'gen-musik', aff: [0.6, 1.25, 0.90, 0.90, 0.70, 0.85], krit:  0.20, fsk: 6,  kult: false },
+  show:    { name: 'Show',            ico: 'gen-show', aff: [0.9, 1.00, 1.30, 1.05, 1.10, 1.10], krit: -0.10, fsk: 6,  kult: false },
+  quiz:    { name: 'Quizshow',        ico: 'gen-quiz', aff: [0.7, 0.75, 1.25, 1.10, 1.30, 1.00], krit:  0.00, fsk: 0,  kult: false },
+  talk:    { name: 'Talkshow',        ico: 'gen-talk', aff: [0.1, 0.60, 1.20, 1.05, 1.05, 1.05], krit:  0.15, fsk: 12, kult: false },
+  kultur:  { name: 'Kultur',          ico: 'gen-kultur', aff: [0.1, 0.30, 0.70, 0.85, 1.15, 0.45], krit:  0.60, fsk: 0,  kult: true  },
+  serie:   { name: 'Serie',           ico: 'gen-serie', aff: [0.8, 1.00, 1.25, 1.10, 1.00, 1.10], krit:  0.00, fsk: 12, kult: false },
 };
 
 /** Filmkatalog. Aufbau: Titel | Genre | Jahr | Güteklasse 1–5 */
@@ -245,11 +245,11 @@ Wunschlos Möbel|Möbelhaus|haus
 
 /* ─────────── Nachrichtenressorts ─────────── */
 export const RESSORTS: readonly Ressort[] = [
-  { id: 'pol', name: 'Politik & Wirtschaft', ico: '🏛️', aff: [0.1, 0.35, 0.75, 1.30, 1.35, 0.85] },
-  { id: 'spo', name: 'Sport',                ico: '⚽', aff: [0.6, 1.30, 0.45, 1.20, 1.00, 1.10] },
-  { id: 'sho', name: 'Show & Klatsch',       ico: '💅', aff: [0.5, 1.15, 1.45, 0.80, 0.95, 1.15] },
-  { id: 'sen', name: 'Sensationen',          ico: '🚨', aff: [0.7, 1.25, 1.05, 0.95, 1.05, 1.30] },
-  { id: 'tec', name: 'Technik & Kultur',     ico: '🔬', aff: [0.5, 0.70, 0.55, 1.20, 0.95, 0.60] },
+  { id: 'pol', name: 'Politik & Wirtschaft', ico: 'res-pol', aff: [0.1, 0.35, 0.75, 1.30, 1.35, 0.85] },
+  { id: 'spo', name: 'Sport',                ico: 'gen-sport', aff: [0.6, 1.30, 0.45, 1.20, 1.00, 1.10] },
+  { id: 'sho', name: 'Show & Klatsch',       ico: 'res-sho', aff: [0.5, 1.15, 1.45, 0.80, 0.95, 1.15] },
+  { id: 'sen', name: 'Sensationen',          ico: 'res-sen', aff: [0.7, 1.25, 1.05, 0.95, 1.05, 1.30] },
+  { id: 'tec', name: 'Technik & Kultur',     ico: 'res-tec', aff: [0.5, 0.70, 0.55, 1.20, 0.95, 0.60] },
 ];
 
 export const HEADLINES: Record<RessortId, readonly string[]> = {
@@ -317,67 +317,67 @@ export const HEADLINES: Record<RessortId, readonly string[]> = {
 
 /* ─────────── Eigenproduktionen ─────────── */
 export const PRODUCTIONS: readonly Production[] = [
-  { id: 'kultur_heute', name: 'Kultur heute',       genre: 'kultur', cost: 32_000,  days: 1, quality: 62, betty: 9, ico: '🏛️', lenSlots: 1,
+  { id: 'kultur_heute', name: 'Kultur heute',       genre: 'kultur', cost: 32_000,  days: 1, quality: 62, betty: 9, ico: 'gen-kultur', lenSlots: 1,
     desc: 'Bettys eigenes Kulturmagazin. Eine halbe Stunde, wenig Quote, viel Herz.' },
-  { id: 'talk_spaet',   name: 'Spätschicht-Talk',   genre: 'talk',   cost: 45_000,  days: 1, quality: 58, betty: 2, ico: '🎙️', lenSlots: 2,
+  { id: 'talk_spaet',   name: 'Spätschicht-Talk',   genre: 'talk',   cost: 45_000,  days: 1, quality: 58, betty: 2, ico: 'gen-talk', lenSlots: 2,
     desc: 'Billige Gäste, große Klappe. Eine Stunde, läuft spät gut.' },
-  { id: 'quiz_gross',   name: 'Die Millionenfalle', genre: 'quiz',   cost: 120_000, days: 2, quality: 74, betty: 1, ico: '❓', lenSlots: 2,
+  { id: 'quiz_gross',   name: 'Die Millionenfalle', genre: 'quiz',   cost: 120_000, days: 2, quality: 74, betty: 1, ico: 'gen-quiz', lenSlots: 2,
     desc: 'Teure Studioshow mit hohem Quotenpotenzial. Eine Stunde.' },
-  { id: 'show_samstag', name: 'Mad Samstagsshow',   genre: 'show',   cost: 180_000, days: 2, quality: 80, betty: 2, ico: '✨', lenSlots: 4,
+  { id: 'show_samstag', name: 'Mad Samstagsshow',   genre: 'show',   cost: 180_000, days: 2, quality: 80, betty: 2, ico: 'gen-show', lenSlots: 4,
     desc: 'Die große Gala über zwei Stunden. Frisst Geld, bringt Zuschauer.' },
-  { id: 'doku_eigen',   name: 'Report Spezial',     genre: 'doku',   cost: 70_000,  days: 2, quality: 66, betty: 6, ico: '🌍', lenSlots: 1,
+  { id: 'doku_eigen',   name: 'Report Spezial',     genre: 'doku',   cost: 70_000,  days: 2, quality: 66, betty: 6, ico: 'gen-doku', lenSlots: 1,
     desc: 'Seriöse Eigenrecherche, eine halbe Stunde. Kritiker mögen das.' },
-  { id: 'serie_soap',   name: 'Bergblick – Soap',   genre: 'serie',  cost: 95_000,  days: 2, quality: 64, betty: 0, ico: '📺', lenSlots: 1,
+  { id: 'serie_soap',   name: 'Bergblick – Soap',   genre: 'serie',  cost: 95_000,  days: 2, quality: 64, betty: 0, ico: 'gen-serie', lenSlots: 1,
     desc: 'Endlos-Soap, 12 Folgen zu je 30 Minuten am Stück produziert.', episodes: 12 },
 ];
 
 /* ─────────── Starmoderatoren (Geldsenke fürs Spätspiel) ─────────── */
 export const STARS: readonly Star[] = [
-  { id: 'kuno',  name: 'Kuno Kelch',        ico: '🕺', fee: 1_200_000, salary: 65_000,  boost: 0.14,
+  { id: 'kuno',  name: 'Kuno Kelch',        ico: 'mod-kuno', fee: 1_200_000, salary: 65_000,  boost: 0.14,
     genres: ['show', 'quiz', 'talk'],
     desc: 'Der Mann mit dem Lachen. Hebt Shows, Quiz und Talk.' },
-  { id: 'rita',  name: 'Rita Sonnenschein', ico: '💁', fee: 2_200_000, salary: 110_000, boost: 0.20,
+  { id: 'rita',  name: 'Rita Sonnenschein', ico: 'mod-rita', fee: 2_200_000, salary: 110_000, boost: 0.20,
     genres: ['show', 'quiz', 'talk', 'musik'],
     desc: 'Publikumsliebling. Teuer, aber jeder schaltet ein.' },
-  { id: 'harms', name: 'Dr. Harms',         ico: '🎓', fee: 1_600_000, salary: 80_000,  boost: 0.26,
+  { id: 'harms', name: 'Dr. Harms',         ico: 'mod-harms', fee: 1_600_000, salary: 80_000,  boost: 0.26,
     genres: ['doku', 'kultur', 'talk'],
     desc: 'Feuilleton-Legende. Kultur mit ihm wirkt doppelt auf Betty.' },
 ];
 
 /* ─────────── Geschenke für Betty ─────────── */
 export const GIFTS: readonly Gift[] = [
-  { id: 'blume',  name: 'Rosenstrauß',       cost: 2_500,     love: 2,  ico: '🌹', min: 0 },
-  { id: 'pralin', name: 'Pralinenschachtel', cost: 6_000,     love: 3,  ico: '🍫', min: 0 },
-  { id: 'parfum', name: 'Flakon «Diva»',     cost: 22_000,    love: 6,  ico: '🧴', min: 15 },
-  { id: 'kette',  name: 'Goldkette',         cost: 75_000,    love: 11, ico: '📿', min: 30 },
-  { id: 'pelz',   name: 'Pelzmantel',        cost: 210_000,   love: 18, ico: '🧥', min: 45 },
-  { id: 'sport',  name: 'Sportwagen',        cost: 600_000,   love: 26, ico: '🏎️', min: 60 },
-  { id: 'ring',   name: 'Diamantring',       cost: 1_400_000, love: 40, ico: '💍', min: 78 },
+  { id: 'blume',  name: 'Rosenstrauß',       cost: 2_500,     love: 2,  ico: 'gsh-blume', min: 0 },
+  { id: 'pralin', name: 'Pralinenschachtel', cost: 6_000,     love: 3,  ico: 'gsh-pralin', min: 0 },
+  { id: 'parfum', name: 'Flakon «Diva»',     cost: 22_000,    love: 6,  ico: 'gsh-parfum', min: 15 },
+  { id: 'kette',  name: 'Goldkette',         cost: 75_000,    love: 11, ico: 'gsh-kette', min: 30 },
+  { id: 'pelz',   name: 'Pelzmantel',        cost: 210_000,   love: 18, ico: 'gsh-pelz', min: 45 },
+  { id: 'sport',  name: 'Sportwagen',        cost: 600_000,   love: 26, ico: 'gsh-auto', min: 60 },
+  { id: 'ring',   name: 'Diamantring',       cost: 1_400_000, love: 40, ico: 'gsh-ring', min: 78 },
 ];
 
 /* ─────────── Etagen, Index 0 = unten ─────────── */
 export const FLOORS: readonly Floor[] = [
-  { id: 'foyer',   name: 'Foyer & Kiosk',     ico: '🛒', sub: 'Geschenke für Betty' },
-  { id: 'technik', name: 'Technik',           ico: '📡', sub: 'Sendemasten & Satellit' },
-  { id: 'rival2',  name: 'Büro Kanal 2',      ico: '🚪', sub: 'Konkurrenz' },
-  { id: 'rival1',  name: 'Büro Kanal 1',      ico: '🚪', sub: 'Konkurrenz' },
-  { id: 'film',    name: 'Filmagentur',       ico: '🎬', sub: 'Filme & Serien kaufen' },
-  { id: 'werbe',   name: 'Werbeagentur',      ico: '📣', sub: 'Werbeverträge' },
-  { id: 'office',  name: 'Dein Büro',         ico: '🖥️', sub: 'Sendeplan & Bilanz' },
-  { id: 'news',    name: 'Nachrichtenstudio', ico: '📰', sub: 'Abos & Sendung' },
-  { id: 'archiv',  name: 'Archiv',            ico: '🗄️', sub: 'Programmordner' },
-  { id: 'studio',  name: 'Produktionsstudio', ico: '🎥', sub: 'Eigenproduktionen' },
-  { id: 'bank',    name: 'Bank',              ico: '🏦', sub: 'Kredit & Zinsen' },
-  { id: 'chef',    name: 'Chefbüro',          ico: '🧔', sub: 'Herr Raffer' },
-  { id: 'betty',   name: 'Bettys Büro',       ico: '💗', sub: 'Betty Botterbloom' },
+  { id: 'foyer',   name: 'Foyer & Kiosk',     ico: 'flr-foyer', sub: 'Geschenke für Betty' },
+  { id: 'technik', name: 'Technik',           ico: 'flr-technik', sub: 'Sendemasten & Satellit' },
+  { id: 'rival2',  name: 'Büro Kanal 2',      ico: 'flr-rival', sub: 'Konkurrenz' },
+  { id: 'rival1',  name: 'Büro Kanal 1',      ico: 'flr-rival', sub: 'Konkurrenz' },
+  { id: 'film',    name: 'Filmagentur',       ico: 'flr-film', sub: 'Filme & Serien kaufen' },
+  { id: 'werbe',   name: 'Werbeagentur',      ico: 'flr-werbe', sub: 'Werbeverträge' },
+  { id: 'office',  name: 'Dein Büro',         ico: 'flr-office', sub: 'Sendeplan & Bilanz' },
+  { id: 'news',    name: 'Nachrichtenstudio', ico: 'flr-news', sub: 'Abos & Sendung' },
+  { id: 'archiv',  name: 'Archiv',            ico: 'flr-archiv', sub: 'Programmordner' },
+  { id: 'studio',  name: 'Produktionsstudio', ico: 'flr-studio', sub: 'Eigenproduktionen' },
+  { id: 'bank',    name: 'Bank',              ico: 'flr-bank', sub: 'Kredit & Zinsen' },
+  { id: 'chef',    name: 'Chefbüro',          ico: 'flr-chef', sub: 'Herr Raffer' },
+  { id: 'betty',   name: 'Bettys Büro',       ico: 'flr-betty', sub: 'Betty Botterbloom' },
 ];
 
 /* ─────────── Schwierigkeitsgrade ─────────── */
 export const DIFFS: Record<DifficultyId, Difficulty> = {
-  leicht: { name: 'Leicht', money: 1_200_000, aiSkill: 0.62, winImage: 55, fireImage: 8,  ico: '🌱',
+  leicht: { name: 'Leicht', money: 1_200_000, aiSkill: 0.62, winImage: 55, fireImage: 8,  ico: 'dif-leicht',
             desc: 'Viel Startkapital, gutmütige Konkurrenz.' },
-  normal: { name: 'Normal', money: 800_000,   aiSkill: 0.80, winImage: 65, fireImage: 12, ico: '⚖️',
+  normal: { name: 'Normal', money: 800_000,   aiSkill: 0.80, winImage: 65, fireImage: 12, ico: 'dif-normal',
             desc: 'So war es 1991 gedacht.' },
-  schwer: { name: 'Schwer', money: 520_000,   aiSkill: 0.95, winImage: 70, fireImage: 13, ico: '🔥',
+  schwer: { name: 'Schwer', money: 520_000,   aiSkill: 0.95, winImage: 70, fireImage: 13, ico: 'dif-schwer',
             desc: 'Zwei Haie im selben Hochhaus.' },
 };

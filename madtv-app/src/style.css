@@ -57,12 +57,13 @@ input,select{font:inherit;color:inherit;}
 .spacer{flex:1 1 auto;}
 .speedbtns{display:flex;gap:3px;background:var(--panel);border-radius:8px;padding:3px;}
 .speedbtns button{
-  padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--dim);
+  padding:4px 8px;border-radius:6px;font-size:13px;font-weight:700;color:var(--dim);
+  display:flex;align-items:center;
 }
 .speedbtns button.on{background:var(--acc);color:#04121f;}
 .iconbtn{
   padding:5px 9px;border-radius:8px;background:var(--panel);
-  border:1px solid var(--line);font-size:12px;color:var(--dim);
+  border:1px solid var(--line);font-size:15px;color:var(--dim);display:flex;align-items:center;
 }
 .iconbtn:hover{border-color:var(--line2);color:var(--txt);}
 
@@ -138,7 +139,8 @@ input,select{font:inherit;color:inherit;}
   font-size:10px;color:var(--dim2);width:20px;font-weight:700;
   font-variant-numeric:tabular-nums;
 }
-.floor .ico{font-size:17px;width:24px;text-align:center;}
+/* Etagenliste, Schnellwahl, Karten: die Symbole tragen dieselbe Optik */
+.floor .ico{font-size:17px;width:24px;display:flex;justify-content:center;color:var(--dim);}
 .floor .nm{font-weight:600;font-size:13px;}
 .floor .sub{font-size:10.5px;color:var(--dim2);margin-left:auto;text-align:right;}
 .floor .badge{
@@ -146,14 +148,37 @@ input,select{font:inherit;color:inherit;}
   border-radius:20px;padding:1px 6px;margin-left:6px;
 }
 
+/* ─────────── Zeichensatz ─────────── */
+/* Symbole erben Schriftgröße und Farbe ihrer Umgebung: ein Satz, jede Stelle. */
+.ic{
+  width:1em;height:1em;display:inline-block;vertical-align:-.14em;
+  flex-shrink:0;color:inherit;
+}
+.ic.big{width:1.35em;height:1.35em;vertical-align:-.24em;}
+.ic-missing{opacity:.4;stroke:currentColor;fill:none;stroke-width:1.8;}
+#sprite{position:absolute;width:0;height:0;overflow:hidden;}
+.buildinfo{margin-top:12px;font-size:10px;color:var(--dim2);text-align:right;}
+.bigico{font-size:44px;line-height:1;color:var(--dim);margin-bottom:6px;}
+.bigico .ic{width:1em;height:1em;vertical-align:0;}
+.endico{font-size:58px;color:var(--acc);}
+.avatar.small{width:44px;height:44px;font-size:22px;border-radius:10px;}
+
 /* ─────────── Room screens ─────────── */
-.room{animation:fade .16s ease;}
-@keyframes fade{from{opacity:0;transform:translateY(4px);}}
+/* Übergänge hängen am Szenenwechsel, nicht am Neubau des Panels — sonst
+   flackerte der Raum bei jeder Auffrischung der Zahlen. */
+#view.v-in{animation:vIn .24s cubic-bezier(.22,.9,.3,1);}
+#view.v-out{animation:vOut .2s cubic-bezier(.3,.7,.4,1);}
+#view.v-ride{animation:vRide .22s ease-out;}
+#view.v-arrive{animation:vArrive .26s cubic-bezier(.2,.85,.3,1);}
+@keyframes vIn{from{opacity:0;transform:translateY(14px) scale(.985);}}
+@keyframes vOut{from{opacity:0;transform:translateY(-10px);}}
+@keyframes vRide{from{opacity:0;}}
+@keyframes vArrive{from{opacity:0;transform:translateY(20px);}}
 .roomhead{
   display:flex;align-items:center;gap:10px;margin-bottom:12px;
   padding-bottom:10px;border-bottom:1px solid var(--line);
 }
-.roomhead .ico{font-size:26px;}
+.roomhead .ico{font-size:22px;color:var(--acc);display:flex;}
 .roomhead h2{font-size:18px;font-weight:800;letter-spacing:-.01em;}
 .roomhead p{font-size:11.5px;color:var(--dim2);}
 .backbtn{
@@ -263,6 +288,7 @@ table.tbl tr:last-child td{border-bottom:none;}
   background:var(--bg2);border-top:1px solid var(--line);
   overflow-x:auto;
 }
+#bottom button .ic{width:1.1em;height:1.1em;}
 #bottom button{
   flex:0 0 auto;padding:6px 11px;border-radius:8px;font-size:11.5px;font-weight:600;
   background:var(--panel);border:1px solid var(--line);color:var(--dim);white-space:nowrap;
@@ -285,7 +311,7 @@ table.tbl tr:last-child td{border-bottom:none;}
 }
 @keyframes pop{from{transform:scale(.95);opacity:0;}}
 .mbox .mh{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.mbox .mh .ico{font-size:28px;}
+.mbox .mh .ico{font-size:22px;color:var(--acc);display:flex;}
 .mbox h3{font-size:16px;font-weight:800;}
 .mbox .who{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.06em;}
 .mbox p{font-size:13px;color:var(--dim);margin-bottom:10px;}
@@ -320,6 +346,9 @@ table.tbl tr:last-child td{border-bottom:none;}
   border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--dim);
 }
 .opt.on{border-color:var(--acc);color:var(--acc);background:#182231;}
+/* Auf dem Startbildschirm steht das Symbol allein neben einem kurzen Wort —
+   in Textgröße verschwindet es dort, also darf es größer sein. */
+.opt .ic{width:1.35em;height:1.35em;vertical-align:-.28em;margin-right:2px;}
 .opt small{display:block;font-size:10px;color:var(--dim2);font-weight:400;margin-top:1px;}
 #start .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim2);margin-bottom:6px;}
 #start input[type=text]{
@@ -348,10 +377,12 @@ table.tbl tr:last-child td{border-bottom:none;}
 .pers{display:flex;gap:12px;align-items:center;}
 .avatar{
   width:64px;height:64px;border-radius:14px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:34px;
+  display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--dim);
   background:var(--panel2);border:1px solid var(--line2);
 }
 .avatar.betty{background:linear-gradient(160deg,#3a1830,#241426);border-color:#5c2e4a;}
+.avatar.betty .ic{color:#e78ac0;}
+.avatar.boss .ic{color:#d8bb72;}
 .avatar.boss{background:linear-gradient(160deg,#2c2418,#1d1a12);border-color:#4d4128;}
 .heart{color:var(--love);}
 

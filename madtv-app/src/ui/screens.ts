@@ -2,6 +2,9 @@
  * Vollbildschirme und Menüs: Start, Ende, Pause, Regeln, Einstellungen,
  * Speichern und Laden.
  */
+import { icon } from './icons';
+import { resetScene, resetTop } from './views';
+import { buildInfo } from './install';
 import { DIFFS, createGame, esc, hhmm, moneyShort, WEEKDAYS } from '../core';
 import type { DifficultyId, Options } from '../core';
 import { el } from './dom';
@@ -39,19 +42,19 @@ export function showStart(): void {
     '<div class="optrow" id="diffrow">' +
     (Object.keys(DIFFS) as DifficultyId[]).map((k) =>
       `<button class="opt ${startDiff === k ? 'on' : ''}" data-d="${k}" aria-pressed="${startDiff === k}">` +
-      `${DIFFS[k].ico} ${DIFFS[k].name}<small>${DIFFS[k].desc} Sieg ab ${DIFFS[k].winImage}%</small></button>`).join('') +
+      `${icon(DIFFS[k].ico)} ${DIFFS[k].name}<small>${DIFFS[k].desc} Sieg ab ${DIFFS[k].winImage}%</small></button>`).join('') +
     '</div>' +
     '<div class="lbl" style="margin-top:14px">Einstellungen</div>' +
     '<div class="optrow" id="optrow">' +
     `<button class="opt ${startOpt.timePressure ? 'on' : ''}" data-o="timePressure" aria-pressed="${startOpt.timePressure}">` +
-    `⏱️ Echtzeitdruck<small>${startOpt.timePressure ? 'Uhr läuft auch im Menü weiter' : 'Auswahl hält die Uhr an'}</small></button>` +
+    `${icon('ui-uhr')} Echtzeitdruck<small>${startOpt.timePressure ? 'Uhr läuft auch im Menü weiter' : 'Auswahl hält die Uhr an'}</small></button>` +
     `<button class="opt ${startOpt.sound ? 'on' : ''}" data-o="sound" aria-pressed="${startOpt.sound}">` +
-    `🔊 Ton<small>${startOpt.sound ? 'an' : 'aus'}</small></button>` +
+    `${icon(startOpt.sound ? 'ui-ton' : 'ui-tonaus')} Ton<small>${startOpt.sound ? 'an' : 'aus'}</small></button>` +
     `<button class="opt ${startOpt.world ? 'on' : ''}" data-o="world" aria-pressed="${startOpt.world}">` +
-    `🏢 Flurgrafik<small>${startOpt.world ? 'an' : 'aus'}</small></button>` +
+    `${icon('ui-hochhaus')} Flurgrafik<small>${startOpt.world ? 'an' : 'aus'}</small></button>` +
     '</div>' +
     '<button class="go" id="gobtn">Sendebetrieb aufnehmen</button>' +
-    (anySave() ? '<div style="margin-top:12px"><button class="opt" id="loadbtn">💾 Spielstand laden</button></div>' : '') +
+    (anySave() ? `<div style="margin-top:12px"><button class="opt" id="loadbtn">${icon('ui-diskette')} Spielstand laden</button></div>` : '') +
     '<div class="foot">Du bist neuer Programmdirektor. Fülle den Sendeplan, verkaufe Werbung, halte die Quote oben —<br>' +
     'und gewinne das Herz von Betty Botterbloom, ehe die Konkurrenz es tut.<br><br>' +
     'Eigenständige Nachbildung. Alle Titel, Marken und Personen sind frei erfunden.</div>' +
@@ -96,7 +99,7 @@ export function showStart(): void {
 
 function intro(): void {
   const g = G();
-  dialog('🧔', 'Willkommen im Haus', 'Herr Raffer',
+  dialog('flr-chef', 'Willkommen im Haus', 'Herr Raffer',
     'Sie sind der neue Programmdirektor. Ich sage es nur einmal: Ich will Quote. ' +
     `Unten steht Ihr Startkapital von ${moneyShort(g.D.money)} — davon kaufen Sie Filme, davon bezahlen ` +
     'Sie Nachrichten, und davon leben Sie, bis die Werbung Geld bringt.<br><br>' +
@@ -104,7 +107,7 @@ function intro(): void {
     'Und lassen Sie die Finger von Frau Botterbloom — die ist zu schade für Sie.',
     [{
       t: 'Ans Werk', cls: 'btn',
-      fn: () => dialog('📖', 'Der erste Abend', 'Kurzanleitung',
+      fn: () => dialog('ui-buch', 'Der erste Abend', 'Kurzanleitung',
         '1. <b>Filmagentur</b> (Etage 5): Lizenzen kaufen.<br>' +
         '2. <b>Werbeagentur</b> (Etage 6): Verträge holen — nur so kommt Geld herein.<br>' +
         '3. <b>Nachrichtenstudio</b> (Etage 8): Abos abschließen, Meldungen wählen.<br>' +
@@ -125,7 +128,7 @@ export function showEnd(): void {
   start.style.display = 'flex';
   start.innerHTML =
     '<div class="sbox">' +
-    `<div style="font-size:62px" aria-hidden="true">${e.ico}</div>` +
+    `<div class="bigico endico">${icon(e.ico)}</div>` +
     `<h1 style="font-size:32px;margin-top:6px">${esc(e.title)}</h1>` +
     `<p class="sub" style="max-width:440px;margin:10px auto 20px">${e.text}</p>` +
     '<div class="grid3" style="max-width:460px;margin:0 auto 18px">' +
@@ -166,13 +169,13 @@ function slotLabel(slot: number): string {
 
 function saveMenu(): void {
   const items = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map((i) => ({
-    label: `💾 ${slotLabel(i)}`,
+    label: `${icon('ui-diskette')} ${slotLabel(i)}`,
     sub: listSlots().some((x) => x.slot === i) ? 'wird überschrieben' : 'freier Platz',
     value: i,
   }));
-  chooser('Spielstand speichern', 'Menü', '💾', items, (i) => {
+  chooser('Spielstand speichern', 'Menü', 'ui-diskette', items, (i) => {
     const ok = writeSlot(i, G(), S());
-    dialog(ok ? '💾' : '⚠️', ok ? 'Gespeichert' : 'Nicht gespeichert', 'Menü',
+    dialog(ok ? 'ui-diskette' : 'ui-warnung', ok ? 'Gespeichert' : 'Nicht gespeichert', 'Menü',
       ok ? `Spielstand ${i} geschrieben.` : 'Der Browser lässt keinen Speicherplatz zu.',
       [{ t: 'Weiter', cls: 'btn', fn: () => togglePause(false) }]);
   }, { pause: true });
@@ -180,11 +183,11 @@ function saveMenu(): void {
 
 function loadMenu(): void {
   const items = listSlots().map((info) => ({
-    label: `${info.slot === 0 ? '⏱️' : '💾'} ${slotLabel(info.slot)}`,
+      label: `${icon(info.slot === 0 ? 'ui-uhr' : 'ui-diskette')} ${slotLabel(info.slot)}`,
     sub: 'laden',
     value: info.slot,
   }));
-  chooser('Spielstand laden', 'Menü', '📂', items, applyLoad, {
+  chooser('Spielstand laden', 'Menü', 'ui-ordner', items, applyLoad, {
     emptyText: 'Es ist noch kein Spielstand vorhanden.',
     pause: true,
   });
@@ -193,7 +196,7 @@ function loadMenu(): void {
 function applyLoad(slot: number): void {
   const loaded = loadSlot(slot);
   if (!loaded) {
-    dialog('⚠️', 'Spielstand beschädigt', 'Menü', 'Dieser Slot lässt sich nicht laden.');
+    dialog('ui-warnung', 'Spielstand beschädigt', 'Menü', 'Dieser Slot lässt sich nicht laden.');
     return;
   }
   const s = startSession(loaded.g);
@@ -201,6 +204,10 @@ function applyLoad(slot: number): void {
   s.room = loaded.ui.room;
   s.speed = loaded.ui.speed;
   setSoundEnabled(loaded.g.opt.sound);
+  // Ein geladener Stand hat keine Vorgeschichte: Kopfzeile neu bauen, und der
+  // Raum soll nicht so tun, als sei man gerade hineingegangen.
+  resetTop();
+  resetScene();
   el('start').style.display = 'none';
   startLoop();
   onGameStarted();
@@ -214,13 +221,14 @@ function optionsMenu(): void {
     `aria-checked="${g.opt[k]}" aria-label="${esc(title)}"><i></i></button></div>`;
 
   customDialog({
-    ico: '⚙️', title: 'Einstellungen', who: 'Menü',
+    ico: 'ui-zahnrad', title: 'Einstellungen', who: 'Menü',
     html:
       row('timePressure', 'Echtzeitdruck',
         'Auswahldialoge halten die Uhr nicht an, der Fahrstuhl kostet volle Fahrzeit.') +
       row('sound', 'Ton', 'Kurze Signale bei Sendestart, Werbeerlös und Quotenalarm.') +
       row('world', 'Flurgrafik',
-        'Der gezeichnete Flur über den Panels — Fahrstuhl, Türschild und laufende Figur.'),
+        'Der gezeichnete Flur über den Panels — Fahrstuhl, Türschild und laufende Figur.') +
+      `<div class="buildinfo">${esc(buildInfo())}</div>`,
     buttons: [{ t: 'Fertig', cls: 'btn', fn: () => { saveOptions(g.opt); togglePause(false); } }],
     onShow: (box) => {
       box.querySelectorAll<HTMLButtonElement>('[data-opt]').forEach((n) => {
@@ -241,7 +249,7 @@ function optionsMenu(): void {
 
 function showRules(): void {
   const g = G();
-  dialog('📖', 'Spielregeln', 'Handbuch',
+  dialog('ui-buch', 'Spielregeln', 'Handbuch',
     `<b>Ziel:</b> ${g.D.winImage}% Marktanteil <i>und</i> ${g.D.winImage} Zuneigungspunkte bei Betty Botterbloom.<br><br>` +
     '<b>Der Tag:</b> 17:00 bis 01:00. Ab 18:00 laufen sieben Sendeblöcke — je 4 Minuten Nachrichten, dann die ' +
     'Sendung, dann 5 Minuten Werbung. Was zur vollen Stunde nicht im Plan steht, wird zum Testbild.<br><br>' +

@@ -1,7 +1,7 @@
 {
   "name": "madtv-app",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "Mad TV — Der Sendermanager. Eigenständige Nachbildung des Rainbow-Arts-Klassikers von 1991.",
   "scripts": {
@@ -15,6 +15,7 @@
     "sim": "vitest run tests/balance.test.ts --reporter=verbose"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
     "vite-plugin-singlefile": "^2.1.0",

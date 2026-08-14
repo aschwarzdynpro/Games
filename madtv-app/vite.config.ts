@@ -2,6 +2,9 @@
 // damit Build- und Testkonfiguration in einer Datei bleiben.
 import { defineConfig } from 'vitest/config';
 import { viteSingleFile } from 'vite-plugin-singlefile';
+import { readFileSync } from 'node:fs';
+
+const { version } = JSON.parse(readFileSync(new URL('package.json', import.meta.url), 'utf8'));
 
 /**
  * Zwei Ausgabeformen aus derselben Quelle:
@@ -17,6 +20,10 @@ export default defineConfig(({ mode }) => {
   return {
     base: './',
     plugins: single ? [viteSingleFile()] : [],
+    // Manifest, Sinnbild und Dienstarbeiter gehören zum Ordner-Build. Die
+    // Einzeldatei muss eine Datei bleiben, sonst verliert sie ihren Zweck.
+    publicDir: single ? false : 'public',
+    define: { __APP_VERSION__: JSON.stringify(version) },
     build: {
       outDir: single ? 'dist-single' : 'dist',
       emptyOutDir: true,

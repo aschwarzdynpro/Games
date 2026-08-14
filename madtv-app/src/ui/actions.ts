@@ -4,6 +4,7 @@
  * Alles, was der Spieler anklickt, landet hier. Der Kern wird nur über seine
  * Funktionen verändert — kein Rendering, keine Timer.
  */
+import { icon } from './icons';
 import {
   SLOTS, GENRES, GIFTS, GROUPS, MAX_CONTRACTS, MAX_CREDIT, MAX_TRANSMITTERS,
   PACKAGE_COST, PRICE_SATELLITE, PRICE_TRANSMITTER, PRODUCTIONS, STARS, STUDIO_RENT,
@@ -71,7 +72,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
           ? ' <span class="tag w">läuft heute schon</span>' : '';
         items.push({
           label: `${esc(l.title)} ${fskTag(l.fsk)}${warn}${zuLang}${used}`,
-          sub: `${gd.ico} ${gd.name} · ${lengthLabel(l.lenSlots)} · ` +
+          sub: `${icon(gd.ico)} ${gd.name} · ${lengthLabel(l.lenSlots)} · ` +
             `Frische ${Math.round(l.fresh * 100)}% · Zuschauerwert ${l.qual}`,
           right: `<b>${viewers(est.total)}</b>`,
           value: { lic: l },
@@ -79,7 +80,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
       });
 
     chooser(
-      `${slotLabel(b)} — Sendung wählen`, 'Sendeplan', '📺',
+      `${slotLabel(b)} — Sendung wählen`, 'Sendeplan', 'gen-serie',
       items,
       (v) => {
         if (!slotEditable(day, b)) return;
@@ -119,7 +120,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
       const reached = c.group ? est.groups[c.gi]! : est.total;
       const ok = reached >= c.minAud;
       items.push({
-        label: `📣 ${esc(c.brand)} ` +
+        label: `${icon('flr-werbe')} ${esc(c.brand)} ` +
           (ok ? '<span class="tag g">Quote reicht</span>' : '<span class="tag b">zu wenig</span>'),
         sub: `Braucht ${viewers(c.minAud)}${c.group ? ` ${GROUPS[c.gi]!.name}` : ''} · ` +
           `Prognose ${viewers(reached)} · ${c.done}/${c.spots} Spots`,
@@ -131,14 +132,14 @@ const ACTIONS: Record<string, (d: Data) => void> = {
       if (i <= b || !s.prog || !s.start) return;
       if (items.some((x) => x.value.trail?.uid === s.prog!.uid)) return;
       items.push({
-        label: `🎞️ Trailer: ${esc(s.prog.title)}`,
+        label: `${icon('ui-trailer')} Trailer: ${esc(s.prog.title)}`,
         sub: `Bewirbt die Sendung um ${slotLabel(i)} (+13% Zuschauer)`,
         value: { trail: s.prog },
       });
     });
 
     chooser(
-      `${slotLabel(b)} — Werbeblock`, 'Sendeplan', '📣',
+      `${slotLabel(b)} — Werbeblock`, 'Sendeplan', 'flr-werbe',
       items,
       (v) => {
         if (!slotEditable(day, b)) return;
@@ -164,12 +165,12 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     const all = s.res.total + rivals.reduce((a, r) => a + r.aud, 0);
     const gmax = Math.max(...s.res.groups);
 
-    dialog('📊', `${slotLabel(b)} — ${s.prog ? s.prog.title : 'Testbild'}`,
+    dialog('ui-diagramm', `${slotLabel(b)} — ${s.prog ? s.prog.title : 'Testbild'}`,
       'Zuschauerforschung',
       `<b>${viewers(s.res.total)}</b> Zuschauer · Marktanteil ` +
       `${((s.res.total / (all || 1)) * 100).toFixed(1).replace('.', ',')}%<br><br>` +
       GROUPS.map((grp, i) =>
-        `<div class="grouprow"><div class="gn">${grp.ico} ${esc(grp.name)}</div>` +
+        `<div class="grouprow"><div class="gn">${icon(grp.ico)} ${esc(grp.name)}</div>` +
         `<div class="gb">${bar(s.res!.groups[i]!, gmax)}</div>` +
         `<div class="gv">${viewers(s.res!.groups[i]!)}</div></div>`).join('') +
       '<div style="margin-top:10px;font-size:11.5px;color:var(--dim2)">Gleichzeitig: ' +
@@ -353,7 +354,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     g.stats.filmsBought += 5;
     addTime(12);
     playSfx('award');
-    dialog('📦', 'Paket im Haus', 'Filmagentur',
+    dialog('ui-karton', 'Paket im Haus', 'Filmagentur',
       `Fünf Titel exklusiv für dich:<br><br>${took.map((t) => `«${esc(t)}»`).join('<br>')}`,
       [{ t: 'Ausgezeichnet', cls: 'btn' }]);
   },
@@ -408,7 +409,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     const l = p.licences.find((x) => x.uid === Number(d.u));
     if (!l) return;
     const sum = sellPrice(l);
-    dialog('🗄️', 'Lizenz verkaufen', 'Archiv',
+    dialog('flr-archiv', 'Lizenz verkaufen', 'Archiv',
       `«${esc(l.title)}» für ${money(sum)} abgeben?`,
       [
         {
@@ -471,7 +472,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     const p = g.player;
     if (!p.star) return;
     const abfind = Math.round(p.star.salary * 8);
-    dialog('📄', 'Vertrag lösen', 'Produktionsstudio',
+    dialog('ui-blatt', 'Vertrag lösen', 'Produktionsstudio',
       `${esc(p.star.name)} gehen lassen? Die Abfindung beträgt ${money(abfind)}.`,
       [
         {
@@ -548,7 +549,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
       '«Sie sind hartnäckig. Das gefällt mir fast.»',
       '«Bringen Sie mir mehr Kultur. Dann reden wir weiter.»',
     ];
-    dialog('💗', 'Betty Botterbloom', 'Kulturredaktion',
+    dialog('flr-betty', 'Betty Botterbloom', 'Kulturredaktion',
       `${esc(g.rng.pick(lines))}<br><br><span class="dim">Zuneigung +${gain.toFixed(1).replace('.', ',')}</span>`,
       [{ t: 'Bis morgen', cls: 'btn love' }]);
   },

@@ -14,6 +14,7 @@
  * von #view, damit das Neuzeichnen der Panels sie nicht jedes Mal zerstört.
  */
 import { FLOORS } from '../core';
+import { iconUse } from '../ui/icons';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -82,7 +83,9 @@ export interface Scene {
   liftGlow: SVGRectElement;
   signPlate: SVGRectElement;
   signText: SVGTextElement;
-  signIcon: SVGTextElement;
+  signIcon: SVGGElement;
+  /** Welches Symbol gerade am Schild hängt — spart das Neubauen je Bild. */
+  signName: string;
   floorNum: SVGTextElement;
   charLayer: SVGGElement;
 }
@@ -193,7 +196,10 @@ export function createScene(): Scene {
     fill: '#1b2431', stroke: '#3f4c60', 'stroke-width': 2,
   });
   doorGroup.appendChild(signPlate);
-  const signIcon = svg('text', { x: -64, y: 46, 'font-size': 16, 'text-anchor': 'start' }, '🖥️');
+  // Das Türschild trägt dasselbe Symbol wie die Etagenliste — als <use> aus dem
+  // Sprite, damit im gezeichneten Flur keine Emoji-Bitmap sitzt.
+  const signIcon = svg('g', { transform: 'translate(-70,29)', color: '#9fb2c9' });
+  signIcon.appendChild(iconUse('flr-office', 21));
   const signText = svg('text', {
     x: 10, y: 45, 'font-size': 13.5, 'font-weight': 700, fill: '#dfe7f1',
     'text-anchor': 'middle', 'font-family': 'Inter, system-ui, sans-serif',
@@ -224,7 +230,8 @@ export function createScene(): Scene {
 
   const scene: Scene = {
     root, geo, slide, corridors, doorGroup, liftGroup, doorLeaf, doorLight,
-    liftLeft, liftRight, liftGlow, signPlate, signText, signIcon, floorNum, charLayer,
+    liftLeft, liftRight, liftGlow, signPlate, signText, signIcon, signName: 'flr-office',
+    floorNum, charLayer,
   };
   resizeScene(scene, geo.w);
   return scene;
@@ -247,7 +254,10 @@ export function updateScene(s: Scene, st: WorldState): void {
 
   s.floorNum.textContent = String(st.floor + 1);
   s.signText.textContent = f.name;
-  s.signIcon.textContent = f.ico;
+  if (s.signName !== f.ico) {
+    s.signName = f.ico;
+    s.signIcon.replaceChildren(iconUse(f.ico, 21));
+  }
 
   s.slide.setAttribute('transform', `translate(0,${(st.floorOffset * SCENE_H).toFixed(1)})`);
 

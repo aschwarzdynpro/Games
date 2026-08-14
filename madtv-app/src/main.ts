@@ -16,6 +16,8 @@ import { closeDialog, modalOpen } from './ui/overlay';
 import { showEnd, showStart, wireScreens } from './ui/screens';
 import { mountWorld, setWorldVisible } from './world/world';
 import { el } from './ui/dom';
+import { mountSprite } from './ui/icons';
+import { setupInstall } from './ui/install';
 
 wireLoop({
   render: () => { renderView(); renderTop(); },
@@ -79,4 +81,6 @@ declare global {
 import * as core from './core';
 window.madtv = { session: S, core };
 
+mountSprite();
+setupInstall();
 showStart();

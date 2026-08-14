@@ -13,13 +13,14 @@ import {
   newsAttraction, pct, reachOf, slotLabel, trendOf, viewers,
 } from '../core';
 import type { Channel, GenreId, Licence, RoomId } from '../core';
+import { icon } from './icons';
 import { G, S } from './session';
 import { renderBoard } from './board';
 
 /* ─────────── Bausteine ─────────── */
 
 export function head(ico: string, title: string, sub: string): string {
-  return `<div class="roomhead"><div class="ico" aria-hidden="true">${ico}</div>` +
+  return `<div class="roomhead"><div class="ico">${icon(ico, { cls: 'big' })}</div>` +
     `<div><h2>${esc(title)}</h2><p>${esc(sub)}</p></div>` +
     '<button class="backbtn" data-act="back">← Flur</button></div>';
 }
@@ -39,7 +40,7 @@ export function fskTag(f: number): string {
 
 export function licMeta(l: Licence): string {
   const g = GENRES[l.genre];
-  return `${g.ico} ${g.name} · ${l.year} · ${lengthLabel(l.lenSlots)}` +
+  return `${icon(g.ico)} ${g.name} · ${l.year} · ${lengthLabel(l.lenSlots)}` +
     (l.isSerie ? ` je Folge · Staffel mit ${l.eps} Folgen (aktuell ${l.ep})` : '');
 }
 
@@ -56,7 +57,7 @@ function office(): string {
   const day = g.day + s.viewDay;
   const slots = getDay(p, day);
 
-  let h = '<div class="room">' + head('🖥️', 'Dein Büro', 'Sendeplan, Werbekoffer und die nackte Bilanz');
+  let h = '<div class="room">' + head('flr-office', 'Dein Büro', 'Sendeplan, Werbekoffer und die nackte Bilanz');
 
   const todaySum = p.todayAud.reduce((a, b) => a + b, 0);
   const yesterSum = p.lastAud.reduce((a, b) => a + b, 0);
@@ -90,7 +91,7 @@ function office(): string {
 
   const na = newsAttraction(g, p);
   const naSum = na.reduce((a, b) => a + b, 0) / GROUPS.length;
-  h += '<div class="newsband" style="margin-bottom:7px">📰 <b>Nachrichten</b> ' +
+  h += `<div class="newsband" style="margin-bottom:7px">${icon('flr-news')} <b>Nachrichten</b> ` +
     (p.newsShow.length
       ? p.newsShow.map((n) => `${esc(n.text.slice(0, 34))}…`).join(' · ')
       : '<span class="bad">keine Sendung zusammengestellt</span>') +
@@ -139,7 +140,7 @@ function office(): string {
     const gmax = Math.max(...gsum);
     h += `<div class="card"><h3>Wer hat zugesehen · ${gday === g.day ? 'heute' : 'gestern'}</h3>`;
     GROUPS.forEach((grp, i) => {
-      h += `<div class="grouprow"><div class="gn">${grp.ico} ${esc(grp.name)}</div>` +
+      h += `<div class="grouprow"><div class="gn">${icon(grp.ico)} ${esc(grp.name)}</div>` +
         `<div class="gb">${bar(gsum[i], gmax)}</div>` +
         `<div class="gv">${viewers(gsum[i])}</div>` +
         `<div class="gv dim">${pct(gsum[i] / gtotal, 0)}</div></div>`;
@@ -154,10 +155,10 @@ function office(): string {
     .sort((a, b) => b.v - a.v);
   h += '<div class="card"><h3>Genre-Konjunktur</h3><div class="btnrow">' +
     trends.slice(0, 4).map((t) =>
-      `<span class="tag g">${GENRES[t.g].ico} ${GENRES[t.g].name} ` +
+      `<span class="tag g">${icon(GENRES[t.g].ico)} ${GENRES[t.g].name} ` +
       `<span class="trend up">▲${Math.round((t.v - 1) * 100)}</span></span>`).join('') +
     trends.slice(-3).map((t) =>
-      `<span class="tag b">${GENRES[t.g].ico} ${GENRES[t.g].name} ` +
+      `<span class="tag b">${icon(GENRES[t.g].ico)} ${GENRES[t.g].name} ` +
       `<span class="trend dn">▼${Math.round((1 - t.v) * 100)}</span></span>`).join('') +
     '</div><div class="hint">Der Publikumsgeschmack verschiebt sich täglich. Ein Genre im Aufwind bringt ' +
     'bis zu einem Drittel mehr Zuschauer — günstig einkaufen, wenn es unten ist.</div></div>';
@@ -217,7 +218,7 @@ function filmBox(g: ReturnType<typeof G>, m: Licence, owned: boolean): string {
   const body = wide
     ? '<div class="box-wide">' +
       `<span class="box-title">${esc(m.title)}</span>` +
-      `<span class="box-sub">${gd.ico} ${gd.name} · ${m.year}${trend}</span></div>`
+      `<span class="box-sub">${icon(gd.ico)} ${gd.name} · ${m.year}${trend}</span></div>`
     : `<div class="box-spine">${esc(m.title)}</div>`;
 
   return `<div class="boxcase${owned ? ' owned' : ''}${afford && !owned ? ' cheap' : ''}" ` +
@@ -236,11 +237,11 @@ function film(): string {
   const s = S();
   const p = g.player;
   const owned = new Set(p.licences.map((l) => l.title));
-  let h = '<div class="room">' + head('🎬', 'Filmagentur', 'Regalwand — die Breite einer Schachtel ist ihre Sendelänge');
+  let h = '<div class="room">' + head('flr-film', 'Filmagentur', 'Regalwand — die Breite einer Schachtel ist ihre Sendelänge');
 
   if (g.auction && !g.auction.closed) {
     const a = g.auction;
-    h += '<div class="card" style="border-color:var(--gold)"><h3>🔨 Auktion läuft</h3>' +
+    h += `<div class="card" style="border-color:var(--gold)"><h3>${icon('ui-hammer')} Auktion läuft</h3>` +
       '<div class="item" style="background:transparent;border:none;padding:0">' +
       `<div style="flex:1"><div class="t" style="font-size:14px">${esc(a.title)}</div>` +
       `<div class="m">${licMeta(a)} · ${fskTag(a.fsk)}</div>` +
@@ -256,7 +257,7 @@ function film(): string {
   }
 
   if (!g.packageTaken) {
-    h += '<div class="card" style="border-color:var(--acc2)"><h3>📦 Exklusivpaket</h3>' +
+    h += `<div class="card" style="border-color:var(--acc2)"><h3>${icon('ui-karton')} Exklusivpaket</h3>` +
       '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Fünf Spitzentitel aus dem Verleihkatalog, ' +
       'gebündelt und ohne Auktion. Der Preis ist unverschämt — aber die Konkurrenz kommt an keinen davon heran.</p>' +
       `<div class="btnrow"><button class="btn" data-act="package" ${p.money < PACKAGE_COST ? 'disabled' : ''}>` +
@@ -268,7 +269,7 @@ function film(): string {
   h += '<div class="card"><div class="btnrow" style="margin-bottom:10px">' +
     present.map((gen) =>
       `<button class="btn sm ${s.filmFilter === gen ? '' : 'ghost'}" data-act="filmfilter" data-g="${gen}">` +
-      `${gen === 'alle' ? 'Alle' : `${GENRES[gen as GenreId].ico} ${GENRES[gen as GenreId].name}`}</button>`).join('') +
+      `${gen === 'alle' ? 'Alle' : `${icon(GENRES[gen as GenreId].ico)} ${GENRES[gen as GenreId].name}`}</button>`).join('') +
     '</div>';
 
   const list = g.market.filter((m) => s.filmFilter === 'alle' || m.genre === s.filmFilter);
@@ -304,7 +305,7 @@ function werbe(): string {
   const g = G();
   const p = g.player;
   const full = p.contracts.length >= MAX_CONTRACTS;
-  let h = '<div class="room">' + head('📣', 'Werbeagentur', 'Verträge mit Mindestquote, Frist und Konventionalstrafe');
+  let h = '<div class="room">' + head('flr-werbe', 'Werbeagentur', 'Verträge mit Mindestquote, Frist und Konventionalstrafe');
 
   h += `<div class="card"><h3>Dein Koffer (${p.contracts.length}/${MAX_CONTRACTS})</h3>`;
   if (!p.contracts.length) h += '<div class="empty-note">Leer.</div>';
@@ -323,7 +324,7 @@ function werbe(): string {
     const risky = reachable < c.minAud;
     h += '<div class="item"><div style="flex:1;min-width:0">' +
       `<div class="t">${esc(c.brand)} <span class="tag">${esc(c.product)}</span>` +
-      (c.group ? ` <span class="tag p">${GROUPS[c.gi]!.ico} ${GROUPS[c.gi]!.name}</span>` : '') + '</div>' +
+      (c.group ? ` <span class="tag p">${icon(GROUPS[c.gi]!.ico)} ${GROUPS[c.gi]!.name}</span>` : '') + '</div>' +
       `<div class="m">Mindestens <b class="${risky ? 'warn' : 'ok'}">${viewers(c.minAud)}</b> ` +
       `${c.group ? GROUPS[c.gi]!.name : 'Zuschauer'} · ${c.spots} Spots in ${c.days} Tagen</div></div>` +
       `<div class="r"><div class="ok" style="font-weight:800">${moneyShort(c.perSpot)}<span class="dim">/Spot</span></div>` +
@@ -342,7 +343,7 @@ function werbe(): string {
 function news(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('📰', 'Nachrichtenstudio', 'Redaktionstisch — Meldungen auf den Teleprompter ziehen');
+  let h = '<div class="room">' + head('flr-news', 'Nachrichtenstudio', 'Redaktionstisch — Meldungen auf den Teleprompter ziehen');
 
   h += '<div class="desk">';
 
@@ -357,7 +358,7 @@ function news(): string {
       const age = g.day - n.day;
       h += `<div class="newsslot filled" data-drop="news" data-i="${i}">` +
         `<div class="no">${i + 1}</div>` +
-        `<div class="txt">${r.ico} ${esc(n.text)}` +
+        `<div class="txt">${icon(r.ico)} ${esc(n.text)}` +
         `<small>${esc(r.name)} · ${age === 0 ? 'heute' : `${age} Tage alt`} · ` +
         `Nachrichtenwert ${Math.round(n.weight * 100)}</small></div>` +
         `<button class="btn sm ghost" data-act="unnews" data-i="${n.id}" aria-label="Meldung entfernen">✕</button>` +
@@ -378,7 +379,7 @@ function news(): string {
   RESSORTS.forEach((r) => {
     const lvl = p.newsSub[r.id] ?? 0;
     h += '<div class="tray"><div class="tray-head">' +
-      `<span>${r.ico}</span><span>${esc(r.name)}</span>` +
+      `<span>${icon(r.ico)}</span><span>${esc(r.name)}</span>` +
       '<span class="lvl">' +
       [0, 1, 2, 3].map((l) =>
         `<button class="${lvl === l ? 'on' : ''}" data-act="sub" data-r="${r.id}" data-l="${l}" ` +
@@ -419,7 +420,7 @@ function news(): string {
 
 function archiv(): string {
   const p = G().player;
-  let h = '<div class="room">' + head('🗄️', 'Archiv', 'Dein Programmordner — hier steht alles, was du senden darfst');
+  let h = '<div class="room">' + head('flr-archiv', 'Archiv', 'Dein Programmordner — hier steht alles, was du senden darfst');
   h += `<div class="card"><h3>${p.licences.length} Lizenzen</h3><div class="list">`;
   if (!p.licences.length) h += '<div class="empty-note">Leer. Ohne Filme kein Programm.</div>';
   [...p.licences].sort((a, b) => b.qual - a.qual).forEach((l) => {
@@ -444,7 +445,7 @@ function archiv(): string {
 function studio(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('🎥', 'Produktionsstudio', 'Eigenproduktionen — teuer, aber ganz allein deins');
+  let h = '<div class="room">' + head('flr-studio', 'Produktionsstudio', 'Eigenproduktionen — teuer, aber ganz allein deins');
 
   if (!p.studio) {
     h += '<div class="card"><h3>Studio nicht angemietet</h3>' +
@@ -456,7 +457,7 @@ function studio(): string {
   } else if (g.production) {
     const pr = g.production;
     h += '<div class="card"><h3>Dreharbeiten laufen</h3>' +
-      `<div class="item"><div style="flex:1"><div class="t">${pr.def.ico} ${esc(pr.def.name)}</div>` +
+      `<div class="item"><div style="flex:1"><div class="t">${icon(pr.def.ico)} ${esc(pr.def.name)}</div>` +
       `<div class="m">Noch ${pr.left} Tag(e) bis zur Fertigstellung</div>` +
       `<div class="statline" style="margin-top:5px">${bar(((pr.def.days - pr.left) / pr.def.days) * 100)}</div>` +
       '</div></div></div>';
@@ -464,8 +465,8 @@ function studio(): string {
     h += '<div class="card"><h3>Was soll gedreht werden?</h3><div class="list">';
     PRODUCTIONS.forEach((pr) => {
       h += '<div class="item"><div style="flex:1;min-width:0">' +
-        `<div class="t">${pr.ico} ${esc(pr.name)} <span class="tag">${GENRES[pr.genre].name}</span>` +
-        (pr.betty >= 6 ? ' <span class="tag p">♥ Betty</span>' : '') + '</div>' +
+        `<div class="t">${icon(pr.ico)} ${esc(pr.name)} <span class="tag">${GENRES[pr.genre].name}</span>` +
+        (pr.betty >= 6 ? ` <span class="tag p">${icon('ui-herz')} Betty</span>` : '') + '</div>' +
         `<div class="m">${esc(pr.desc)}</div>` +
         `<div class="statline" style="margin-top:4px">Qualität ~${pr.quality} · ${pr.days} Drehtag(e)` +
         (pr.episodes ? ` · ${pr.episodes} Folgen` : '') + '</div></div>' +
@@ -478,7 +479,7 @@ function studio(): string {
 
   h += '<div class="card"><h3>Starmoderatoren</h3>';
   if (p.star) {
-    h += `<div class="item"><div class="avatar" style="width:44px;height:44px;font-size:24px">${p.star.ico}</div>` +
+    h += `<div class="item"><div class="avatar small">${icon(p.star.ico)}</div>` +
       `<div style="flex:1"><div class="t">${esc(p.star.name)} <span class="tag g">unter Vertrag</span></div>` +
       `<div class="m">${esc(p.star.desc)}</div>` +
       `<div class="statline" style="margin-top:4px">+${Math.round(p.star.boost * 100)}% Zuschauer auf ` +
@@ -488,7 +489,7 @@ function studio(): string {
     h += '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Ein bekanntes Gesicht hebt ganze Genres — ' +
       'kostet aber eine Ablöse und jeden Tag eine Gage. Nur ein Star gleichzeitig.</p><div class="list">';
     STARS.forEach((st) => {
-      h += `<div class="item"><div style="flex:1;min-width:0"><div class="t">${st.ico} ${esc(st.name)}</div>` +
+      h += `<div class="item"><div style="flex:1;min-width:0"><div class="t">${icon(st.ico)} ${esc(st.name)}</div>` +
         `<div class="m">${esc(st.desc)}</div>` +
         `<div class="statline" style="margin-top:4px">+${Math.round(st.boost * 100)}% auf ` +
         `${st.genres.map((x) => GENRES[x].name).join(', ')}</div></div>` +
@@ -509,7 +510,7 @@ function studio(): string {
 function technik(): string {
   const p = G().player;
   const r = reachOf(p);
-  let h = '<div class="room">' + head('📡', 'Technik', 'Sendemasten und Satellit — mehr Reichweite, mehr Zuschauer');
+  let h = '<div class="room">' + head('flr-technik', 'Technik', 'Sendemasten und Satellit — mehr Reichweite, mehr Zuschauer');
   h += '<div class="grid3" style="margin-bottom:10px">' +
     `<div class="kpi"><div class="k">Reichweite</div><div class="v acc">${Math.round(r * 100)}%</div>` +
     `<div class="d">von ${viewers(POP)} Haushalten</div></div>` +
@@ -518,12 +519,12 @@ function technik(): string {
     `<div class="kpi"><div class="k">Satellit</div><div class="v">${p.satellite ? 'aktiv' : '—'}</div>` +
     '<div class="d">55.000 €/Tag</div></div></div>';
   h += '<div class="card"><div class="list">' +
-    '<div class="item"><div style="flex:1"><div class="t">📶 Zusätzlicher Sendemast</div>' +
+    `<div class="item"><div style="flex:1"><div class="t">${icon('ui-antenne')} Zusätzlicher Sendemast</div>` +
     '<div class="m">+11 Prozentpunkte Reichweite · 18.000 € Betriebskosten pro Tag</div></div>' +
     `<div class="r"><div style="font-weight:700">${money(PRICE_TRANSMITTER)}</div>` +
     `<button class="btn sm" style="margin-top:4px" data-act="mast" ` +
     `${p.transmitters >= MAX_TRANSMITTERS || p.money < PRICE_TRANSMITTER ? 'disabled' : ''}>Bauen</button></div></div>` +
-    '<div class="item"><div style="flex:1"><div class="t">🛰️ Satellitenaufschaltung</div>' +
+    `<div class="item"><div style="flex:1"><div class="t">${icon('ui-satellit')} Satellitenaufschaltung</div>` +
     '<div class="m">+22 Prozentpunkte Reichweite · 55.000 € pro Tag</div></div>' +
     `<div class="r"><div style="font-weight:700">${money(PRICE_SATELLITE)}</div>` +
     `<button class="btn sm" style="margin-top:4px" data-act="sat" ` +
@@ -539,7 +540,7 @@ function technik(): string {
 function bank(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('🏦', 'Nordsee-Bank', 'Kredit, Zinsen und ernste Blicke');
+  let h = '<div class="room">' + head('flr-bank', 'Nordsee-Bank', 'Kredit, Zinsen und ernste Blicke');
   h += '<div class="grid3" style="margin-bottom:10px">' +
     `<div class="kpi"><div class="k">Konto</div><div class="v ${p.money < 0 ? 'bad' : 'ok'}">${moneyShort(p.money)}</div></div>` +
     `<div class="kpi"><div class="k">Kredit</div><div class="v">${moneyShort(p.credit)}</div><div class="d">0,6% Tageszins</div></div>` +
@@ -576,12 +577,12 @@ function chef(): string {
   else if (p.image >= g.D.fireImage) mood = 'Das ist kein Fernsehen, das ist eine Bildstörung mit Ton. Ich beobachte Sie.';
   else mood = 'Sie stehen mit einem Bein auf der Straße. Ich sage das nur einmal.';
 
-  let h = '<div class="room">' + head('🧔', 'Chefbüro', 'Herr Raffer, Generalintendant');
-  h += '<div class="card"><div class="pers"><div class="avatar boss" aria-hidden="true">🧔</div>' +
+  let h = '<div class="room">' + head('flr-chef', 'Chefbüro', 'Herr Raffer, Generalintendant');
+  h += `<div class="card"><div class="pers"><div class="avatar boss">${icon('flr-chef', { cls: 'big' })}</div>` +
     '<div><div style="font-weight:800;font-size:15px">Herr Raffer</div>' +
     `<div class="dim" style="font-size:12.5px;margin-top:4px">«${esc(mood)}»</div></div></div></div>`;
   h += '<div class="card"><h3>Senderanking</h3><table class="tbl">' +
-    '<tr><th>#</th><th>Sender</th><th class="right">Marktanteil</th><th class="right">Betty ♥</th><th class="right">Sammys</th></tr>' +
+    `<tr><th>#</th><th>Sender</th><th class="right">Marktanteil</th><th class="right">Betty ${icon('ui-herz')}</th><th class="right">Sammys</th></tr>` +
     rank.map((c, i) =>
       `<tr><td>${i + 1}</td><td>${c === p ? '<b class="acc">' : ''}${esc(c.name)}${c === p ? '</b>' : ''}</td>` +
       `<td class="right num">${c.image.toFixed(1).replace('.', ',')}%</td>` +
@@ -607,8 +608,8 @@ function betty(): string {
   else if (p.love >= 8) mood = '«Ja bitte? Ich habe gleich Redaktionsschluss.»';
   else mood = 'Sie blickt kaum auf.';
 
-  let h = '<div class="room">' + head('💗', 'Bettys Büro', 'Betty Botterbloom, Kulturredaktion');
-  h += '<div class="card"><div class="pers"><div class="avatar betty" aria-hidden="true">💃</div>' +
+  let h = '<div class="room">' + head('flr-betty', 'Bettys Büro', 'Betty Botterbloom, Kulturredaktion');
+  h += `<div class="card"><div class="pers"><div class="avatar betty">${icon('ui-tanz', { cls: 'big' })}</div>` +
     '<div style="flex:1"><div style="font-weight:800;font-size:15px">Betty Botterbloom</div>' +
     `<div class="dim" style="font-size:12.5px;margin:3px 0 7px">${esc(mood)}</div>` +
     `<div class="statline">Zuneigung ${bar(p.love, 100, 'var(--love)')} ` +
@@ -621,7 +622,7 @@ function betty(): string {
   h += '<div class="card"><h3>Mitgebrachte Geschenke</h3>';
   if (!g.gifts.length) h += '<div class="empty-note">Nichts dabei. Der Kiosk im Foyer hat geöffnet.</div>';
   else h += '<div class="list">' + g.gifts.map((gift, i) =>
-    `<div class="item"><div style="flex:1"><div class="t">${gift.ico} ${esc(gift.name)}</div>` +
+    `<div class="item"><div style="flex:1"><div class="t">${icon(gift.ico)} ${esc(gift.name)}</div>` +
     `<div class="m">+${gift.love} Zuneigung${p.love < gift.min ? ' · sie ist noch nicht so weit' : ''}</div></div>` +
     `<button class="btn sm love" data-act="gift" data-i="${i}" ${p.love < gift.min ? 'disabled' : ''}>Überreichen</button></div>`).join('') + '</div>';
   h += '</div>';
@@ -636,11 +637,11 @@ function betty(): string {
 function foyer(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('🛒', 'Foyer & Kiosk', 'Geschenke, Klatsch und das Türschild-Verzeichnis');
+  let h = '<div class="room">' + head('flr-foyer', 'Foyer & Kiosk', 'Geschenke, Klatsch und das Türschild-Verzeichnis');
 
   if (g.pendingTerror) {
     const cur = g.terrorSign;
-    h += '<div class="card" style="border-color:var(--bad)"><h3>💣 Türschild-Verzeichnis</h3>' +
+    h += `<div class="card" style="border-color:var(--bad)"><h3>${icon('ui-bombe')} Türschild-Verzeichnis</h3>` +
       '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Für morgen ist ein Anschlag angekündigt. ' +
       'Wer im Verzeichnis die Etagenbeschriftung vertauscht, schickt die Herrschaften woandershin. ' +
       'Unsportlich? Aber sicher.</p><div class="btnrow">' +
@@ -652,8 +653,8 @@ function foyer(): string {
 
   h += '<div class="card"><h3>Kiosk — Geschenke für Betty</h3><div class="list">';
   GIFTS.forEach((gift) => {
-    h += `<div class="item"><div style="flex:1"><div class="t">${gift.ico} ${esc(gift.name)}</div>` +
-      `<div class="m">+${gift.love} Zuneigung${gift.min ? ` · erst ab ${gift.min} ♥ sinnvoll` : ''}</div></div>` +
+    h += `<div class="item"><div style="flex:1"><div class="t">${icon(gift.ico)} ${esc(gift.name)}</div>` +
+      `<div class="m">+${gift.love} Zuneigung${gift.min ? ` · erst ab ${gift.min} ${icon('ui-herz')} sinnvoll` : ''}</div></div>` +
       `<div class="r"><div style="font-weight:700">${moneyShort(gift.cost)}</div>` +
       `<button class="btn sm" style="margin-top:4px" data-act="buygift" data-g="${gift.id}" ` +
       `${p.money < gift.cost ? 'disabled' : ''}>Kaufen</button></div></div>`;
@@ -667,12 +668,12 @@ function foyer(): string {
 function rivalRoom(c: Channel): string {
   const g = G();
   const slots = getDay(c, g.day);
-  let h = '<div class="room">' + head('🚪', `Büro ${c.name}`, 'Ein kurzer Blick auf den Sendeplan der Konkurrenz');
+  let h = '<div class="room">' + head('flr-rival', `Büro ${c.name}`, 'Ein kurzer Blick auf den Sendeplan der Konkurrenz');
   h += '<div class="grid3" style="margin-bottom:10px">' +
     `<div class="kpi"><div class="k">Marktanteil</div><div class="v">${c.image.toFixed(1).replace('.', ',')}%</div></div>` +
     `<div class="kpi"><div class="k">Reichweite</div><div class="v">${Math.round(reachOf(c) * 100)}%</div>` +
     `<div class="d">${c.transmitters} Masten${c.satellite ? ' + Satellit' : ''}</div></div>` +
-    `<div class="kpi"><div class="k">Betty ♥</div><div class="v" style="color:var(--love)">${Math.round(c.love)}</div></div></div>`;
+    `<div class="kpi"><div class="k">Betty ${icon('ui-herz')}</div><div class="v" style="color:var(--love)">${Math.round(c.love)}</div></div></div>`;
   h += '<div class="card"><h3>Heutiges Programm</h3><table class="tbl">' +
     '<tr><th>Zeit</th><th>Sendung</th><th class="right">Länge</th><th class="right">Zuschauer</th></tr>' +
     slots.map((s, b) => {

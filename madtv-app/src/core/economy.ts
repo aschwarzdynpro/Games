@@ -72,7 +72,7 @@ export function sammyAwards(g: Game): void {
     w.money += cat.prize;
     w.awards++;
     w.image += cat.img;
-    lines.push(`<b>${cat.n}</b> → ${esc(w.name)}${bi === 0 ? ' 🏆' : ''}`);
+    lines.push(`<b>${cat.n}</b> → ${esc(w.name)}${bi === 0 ? ' <i data-ic="ui-pokal"></i>' : ''}`);
   });
 
   const isum = g.ch.reduce((a, c) => a + c.image, 0);
@@ -84,7 +84,7 @@ export function sammyAwards(g: Game): void {
   });
 
   sfx(g, 'award');
-  dialog(g, '🏆', 'Die Sammy-Verleihung', 'Sammy Awards',
+  dialog(g, 'ui-pokal', 'Die Sammy-Verleihung', 'Sammy Awards',
     `Woche ${g.week} — die Jury hat entschieden:<br><br>${lines.join('<br>')}`,
     [{ t: 'Weiter', cls: 'btn' }]);
 }
@@ -96,7 +96,7 @@ export function bossCheck(g: Game): void {
   if (p.image < g.D.fireImage) {
     p.lowImageDays++;
     if (p.lowImageDays === 1 || p.lowImageDays === 2) {
-      dialog(g, '🧔', 'Herr Raffer', 'Chefbüro',
+      dialog(g, 'flr-chef', 'Herr Raffer', 'Chefbüro',
         `Ihre Quoten sind eine Zumutung! ${pct(p.image / 100, 1)} Marktanteil — meine Großmutter ` +
         `macht besseres Fernsehen. Sie haben noch ${3 - p.lowImageDays} Tag(e), das zu ändern.`,
         [{ t: 'Jawohl, Herr Raffer.', cls: 'btn' }]);
@@ -164,7 +164,7 @@ export function closeAuction(g: Game): void {
 
   if (!w.isAI) {
     g.stats.costs += a.bid;
-    dialog(g, '🔨', 'Zuschlag!', 'Auktion',
+    dialog(g, 'ui-hammer', 'Zuschlag!', 'Auktion',
       `«${esc(a.title)}» gehört für ${money(a.bid)} dir.`, [{ t: 'Sehr gut', cls: 'btn' }]);
   } else {
     toast(g, 'bad', 'Auktion verloren', `${a.leader} erhält «${a.title}».`);
@@ -180,7 +180,7 @@ export function randomEvent(g: Game): void {
   if (r < 0.1 && g.day > 3) {
     g.pendingTerror = true;
     g.terrorDay = g.day + 1;
-    dialog(g, '💣', 'Bombendrohung', 'Nachrichtenagentur',
+    dialog(g, 'ui-bombe', 'Bombendrohung', 'Nachrichtenagentur',
       'Eine anonyme Drohung ist eingegangen: Morgen soll im Sendehochhaus ein Sprengsatz hochgehen. ' +
       'Im Foyer hängt das Türschild-Verzeichnis — wer es umhängt, schickt die Herrschaften in eine andere Etage.',
       [{ t: 'Verstanden', cls: 'btn' }]);
@@ -221,7 +221,7 @@ export function randomEvent(g: Game): void {
       if (lost.length) txt += ` Verbrannt sind: ${lost.map((l) => `«${esc(l.title)}»`).join(', ')}.`;
       p.money -= 80_000;
       sfx(g, 'bad');
-      dialog(g, '💥', 'Es hat gekracht', 'Schadensmeldung',
+      dialog(g, 'gen-action', 'Es hat gekracht', 'Schadensmeldung',
         `${txt} Aufräumkosten: ${money(80_000)}.`, [{ t: 'Na großartig.', cls: 'btn' }]);
     } else {
       const victim = g.terrorSign === 'rival1' ? g.ch[1]! : g.ch[2]!;
@@ -231,7 +231,7 @@ export function randomEvent(g: Game): void {
         removeFromSchedules(victim, l);
       }
       victim.money -= 80_000;
-      dialog(g, '💥', 'Es hat gekracht', 'Schadensmeldung',
+      dialog(g, 'gen-action', 'Es hat gekracht', 'Schadensmeldung',
         `Der Sprengsatz ging in der Etage von ${esc(victim.name)} hoch. Deren Archiv ist ein Aschehaufen. ` +
         'Wie bedauerlich.', [{ t: 'Wie bedauerlich.', cls: 'btn' }]);
       g.terrorSign = 'self';
@@ -248,7 +248,7 @@ export function checkEnd(g: Game): void {
   if (p.image >= W && p.love >= W) {
     g.over = true;
     g.end = {
-      win: true, title: 'Hochzeit!', ico: '💒',
+      win: true, title: 'Hochzeit!', ico: 'ui-hochzeit',
       text: `Bei ${pct(p.image / 100, 1)} Marktanteil und einer Zuneigung von ${Math.round(p.love)} ` +
         `Punkten sagt Betty Botterbloom Ja. Herr Raffer weint in sein Taschentuch, die Konkurrenz ` +
         `sendet Testbild. Sie haben es geschafft — nach ${g.day} Tagen.`,
@@ -260,7 +260,7 @@ export function checkEnd(g: Game): void {
     if (c.image >= W && c.love >= W) {
       g.over = true;
       g.end = {
-        win: false, title: 'Zu spät', ico: '💔',
+        win: false, title: 'Zu spät', ico: 'ui-herzbruch',
         text: `${esc(c.name)} hat Betty vor Ihrer Nase weggeheiratet. Sie stehen mit ` +
           `${pct(p.image / 100, 1)} Marktanteil und einem Blumenstrauß im Flur.`,
       };
@@ -270,7 +270,7 @@ export function checkEnd(g: Game): void {
   if (p.lowImageDays >= 3) {
     g.over = true;
     g.end = {
-      win: false, title: 'Gefeuert', ico: '📦',
+      win: false, title: 'Gefeuert', ico: 'ui-karton',
       text: `Herr Raffer hat Ihren Schreibtisch bereits ausgeräumt. Drei Tage unter ` +
         `${g.D.fireImage}% Marktanteil sind zwei Tage zu viel.`,
     };
@@ -279,7 +279,7 @@ export function checkEnd(g: Game): void {
   if (p.money < BANKRUPT_AT) {
     g.over = true;
     g.end = {
-      win: false, title: 'Insolvenz', ico: '🏦',
+      win: false, title: 'Insolvenz', ico: 'flr-bank',
       text: 'Die Nordsee-Bank hat den Kredit fällig gestellt. Der Sender gehört jetzt den Gläubigern.',
     };
   }
@@ -375,7 +375,7 @@ export function endOfDay(g: Game): void {
       g.player.licences.splice(g.player.licences.indexOf(l), 1);
       removeFromSchedules(g.player, l);
       sfx(g, 'bad');
-      dialog(g, '⚖️', 'Der Gerichtsvollzieher', 'Gerichtsvollzieher',
+      dialog(g, 'ui-waage', 'Der Gerichtsvollzieher', 'Gerichtsvollzieher',
         `Sie haben einen Film ab 18 Jahren vor 22 Uhr gesendet. Die Lizenz «${esc(l.title)}» wird ` +
         'hiermit beschlagnahmt. Einen schönen Tag noch.', [{ t: 'Verdammt.', cls: 'btn' }]);
     }

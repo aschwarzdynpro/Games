@@ -1,10 +1,12 @@
 # Mad TV — Sendermanager (App-Fassung)
 
 Umbau des Einzeldatei-Spiels aus `../madtv/` zu einem richtigen Projekt.
-Stand: **Etappe 4** — Vite + TypeScript, Spielkern herausgelöst und testbar,
-Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit laufender Figur,
-Sendeplan als Steckwand im Halbstundenraster (Sendungen dauern 30 Minuten bis
-3 Stunden), Filmagentur als Regalwand und Nachrichtenstudio als Redaktionstisch.
+Stand: **Etappe 5 — fertig** — Vite + TypeScript, Spielkern herausgelöst und
+testbar, Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit
+laufender Figur, Sendeplan als Steckwand im Halbstundenraster, Filmagentur als
+Regalwand, Nachrichtenstudio als Redaktionstisch — und seit Etappe 5 ein
+eigener gezeichneter Zeichensatz, Übergänge zwischen den Ansichten sowie eine
+installierbare, offline spielbare Ausgabe.
 
 Die alte `../madtv/index.html` bleibt unangetastet, bis diese Fassung sie
 eingeholt hat.
@@ -27,11 +29,13 @@ sie klein genug dafür.
 
 ```
 src/
-  core/     reines TypeScript, kein DOM, keine Timer — die Simulation
-  world/    gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
-  ui/       Panels: Räume, Aktionen, Dialoge, Spieluhr
+  core/           reines TypeScript, kein DOM, keine Timer — die Simulation
+  world/          gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
+  ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
+  assets/icons/   86 Symbole, je eine SVG-Datei
   style.css
-tests/      Vitest: Engine, Wegplanung, Balancing-Läufe
+public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
+tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Balancing
 ```
 
 Die Trennung ist der eigentliche Zweck dieser Etappe. `core` lässt sich in
@@ -53,12 +57,14 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 65 automatische Prüfungen |
+| Tests | Handarbeit im Browser | 71 automatische Prüfungen |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
 | Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
+| Symbole | Emoji aus der Schriftart | 86 gezeichnete Vektorsymbole aus dem eigenen Satz |
+| Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
 
 Ein Fehler fiel beim Umzug auf: Nach der ersten KI-Runde fehlte das Auffrischen
 des Filmmarkts, sodass der Spieler an Tag 1 vor halb leeren Regalen stand. Auf
@@ -224,9 +230,110 @@ Beim Bauen fiel auf, dass drei gleiche Schlagzeilen nebeneinander im Korb wie
 Kulisse aussehen. Der Meldungswurf zieht jetzt ohne Zurücklegen, gegen den
 gesamten Korbinhalt der letzten drei Tage.
 
-## Nächste Etappe
+## Zeichensatz, Übergänge, Verteilung (Etappe 5)
 
-5. Asset-Pipeline, Übergänge, Feinschliff, Verteilung.
+### Der letzte Rest Fremdgrafik
+
+Bis hierher war jedes Symbol im Spiel ein Emoji — 78 Stück, verstreut über acht
+Dateien. Neben einer gezeichneten Vektorwelt fiel das zunehmend auf, und zwar
+aus drei Gründen: Emoji sehen auf jedem Betriebssystem anders aus, sie lassen
+sich nicht einfärben, und im SVG-Flur saß am Türschild eine bunte Farbbitmap
+mitten in einer Strichzeichnung.
+
+Jetzt liegen **86 Symbole** als einzelne Dateien unter `src/assets/icons/`,
+alle im selben Raster: 24 × 24, Strichstärke 1,8, `currentColor`, keine feste
+Farbe. Der Build liest sie mit `?raw` ein, schneidet das Innenleben heraus und
+hängt es als `<symbol>` in einen versteckten Sprite; gezeichnet wird nur noch
+mit `<use>`. Es gibt also **keine Anfrage zur Laufzeit** — die Einzeldatei
+bleibt eine Datei.
+
+Drei Dinge daran sind mehr als Kosmetik:
+
+- **Der Kern benennt, die Oberfläche zeichnet.** Aus `ico: '🎬'` wurde
+  `ico: 'flr-film'`. Das ist kein Bild mehr, sondern ein Schlüssel — und damit
+  ist der Spielkern endlich frei von Darstellung. Wo der Kern doch HTML
+  schreibt (die Sammy-Verleihung), hinterlässt er einen Platzhalter
+  `<i data-ic="ui-pokal"></i>`, den allein `overlay.ts` auflöst.
+- **Ein Symbol, jede Farbe.** Weil alles `currentColor` benutzt, erbt jedes
+  Symbol die Farbe seiner Umgebung: dasselbe Herz ist in der Kopfzeile rot, in
+  der Tabelle grau und auf der Karte violett — ohne eine zweite Datei.
+- **Tippfehler fallen jetzt auf.** `icon('flr-buero')` würde zur Laufzeit nur
+  einen blassen Kreis zeigen, kein Fehler weit und breit. Deshalb prüft
+  `tests/icons.test.ts` beide Richtungen: kein Verweis ohne Datei, keine Datei
+  ohne Verweis. Möglich macht das die Namenskonvention — eine Zeichenkette der
+  Form `flr-film` kann im Quelltext nichts anderes sein als ein Symbolname, und
+  deshalb muss die Prüfung keine einzige Aufrufform kennen.
+
+Eine Falle steckte im `<use>`: Ein Verweis auf ein `<symbol>` **ohne
+Maßangabe füllt 100 % des umgebenden Zeichenbereichs**. Das Türschild-Symbol
+wuchs damit über den kompletten Flur, sichtbar war davon nichts — es lag
+außerhalb des Bildausschnitts. Seitdem trägt `iconUse()` seine Größe selbst.
+
+### Übergänge — und zwei Fehler, die dabei auffielen
+
+Die Panels werden bei jeder Änderung neu aus HTML gebaut, auch alle zwölf
+Spielminuten zur Auffrischung der Zahlen. Eine Einblendung am Element selbst
+(`.room{animation:fade}`) lief deshalb ständig wieder an: Der Raum flackerte
+im Zwölf-Minuten-Takt, ohne dass etwas passiert wäre.
+
+Die Bewegung hängt jetzt nicht mehr am Neubau, sondern am **Szenenwechsel**.
+`renderView()` bildet einen Schlüssel (`tower`, `lift`, `room:film`) und
+vergleicht ihn mit dem vorherigen. Nur wenn er sich ändert, wird animiert — und
+die Richtung erzählt mit, was passiert ist:
+
+| Wechsel | Bewegung |
+|---|---|
+| Flur → Raum | steigt von unten auf, wie durch die Tür |
+| Raum → Flur | sinkt nach oben weg |
+| irgendwohin → Fahrstuhl | blendet weich |
+| Fahrstuhl → Raum | kommt aus der Tiefe herauf |
+
+Der zweite Fund war ärgerlicher: Die Kopfzeile setzte **jede Spielminute ein
+neues `innerHTML`** — und riss damit den Tastaturfokus aus den
+Geschwindigkeitsknöpfen. Wer mit der Tastatur spielt, verlor sechzig Mal je
+Sendetag seine Stelle. Sie wird jetzt einmal gebaut und danach nur noch
+fortgeschrieben; ein Prüflauf hält den Fokus über einen Minutenwechsel fest.
+
+### Verteilung
+
+Beide Ausgabeformen bleiben, und die Trennung ist schärfer geworden:
+
+| | `npm run build` → `dist/` | `npm run build:single` → `dist-single/` |
+|---|---|---|
+| Form | Ordner mit Nebendateien | eine einzige HTML-Datei |
+| Zweck | Webseite, Installation | Doppelklick, Verschicken |
+| Manifest, Dienstarbeiter | ja | nein |
+| Offline nach dem ersten Besuch | ja | ohnehin |
+
+Manifest und Dienstarbeiter werden **erst zur Laufzeit angehängt** und nur im
+Ordner-Build (`publicDir` ist für die Einzeldatei abgeschaltet). Sonst läge
+neben der einen Datei plötzlich wieder ein Ordner — und genau das ist der Zweck
+dieser Ausgabeform. Über `file://` unterbleibt beides ohnehin: Dienstarbeiter
+setzen einen Ursprung voraus, den eine lokale Datei nicht hat.
+
+Der Dienstarbeiter geht **Netz zuerst, Speicher als Rückfall**. Andersherum
+wäre der Start schneller, aber ein neu veröffentlichter Stand käme erst beim
+zweiten Besuch an. Geprüft mit gekappter Verbindung: Titel, Stil, Startknopf
+und alle 86 Symbole sind da.
+
+Das Sinnbild für den Reiter steckt als Datenadresse in der Seite selbst — auch
+das, damit die Einzeldatei ohne Nebendatei auskommt.
+
+`.github/workflows/pages.yml` stellt die ganze Sammlung zusammen (die alten
+Einzeldateien, die App-Fassung unter `madtv-app/`, die Einzeldatei daneben zum
+Herunterladen) und veröffentlicht sie auf GitHub Pages. **Der Lauf ist bewusst
+nur von Hand auslösbar** — ein Push soll nicht ungefragt eine Webseite ins Netz
+stellen. Wer das anders will, nimmt die drei auskommentierten Zeilen unter
+`on:` dazu; Voraussetzung ist außerdem, dass in den Repository-Einstellungen
+unter Pages «GitHub Actions» als Quelle steht.
+
+## Was als Nächstes läge
+
+Der Umbau ist damit abgeschlossen: Der Kern ist getrennt und geprüft, alle
+Räume sind gezeichnet, beide Ausgabeformen stehen. Was sich jetzt anböte, ist
+kein Umbau mehr, sondern Inhalt — mehr Räume mit eigener Kulisse, Ton, eine
+Kampagne über mehrere Sender. Die alte `../madtv/index.html` bleibt weiterhin
+unangetastet.
 
 ## Hinweis
 

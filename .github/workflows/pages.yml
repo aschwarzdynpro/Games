@@ -1,0 +1,107 @@
+# Veröffentlichung der Spielesammlung auf GitHub Pages.
+#
+# Bewusst nur von Hand auslösbar: Ein Push soll nicht ungefragt eine Webseite
+# ins Netz stellen. Wer den Ablauf automatisch bei jeder Änderung an main
+# haben will, nimmt die drei auskommentierten Zeilen unter `on:` dazu.
+#
+# Voraussetzung: In den Repository-Einstellungen unter Pages muss als Quelle
+# «GitHub Actions» eingestellt sein. Ohne das schlägt der Schritt `deploy` fehl.
+
+name: Seite veröffentlichen
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Zwei gleichzeitige Veröffentlichungen würden sich gegenseitig überholen.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: madtv-app/package-lock.json
+
+      - name: Abhängigkeiten holen
+        working-directory: madtv-app
+        run: npm ci
+
+      - name: Prüfen
+        working-directory: madtv-app
+        run: npm test
+
+      - name: Bauen
+        working-directory: madtv-app
+        run: |
+          npm run build
+          npm run build:single
+
+      # Die Sammlung besteht aus einzelnen HTML-Dateien; die App-Fassung kommt
+      # als eigener Ordner dazu, die Einzeldatei daneben zum Herunterladen.
+      - name: Seite zusammenstellen
+        run: |
+          mkdir -p _site/madtv-app
+          cp README.md memory.html _site/
+          cp -r madtv poker _site/
+          cp -r madtv-app/dist/. _site/madtv-app/
+          cp madtv-app/dist-single/index.html _site/madtv-app/einzeldatei.html
+          cat > _site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="de"><head><meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1">
+          <meta name="color-scheme" content="dark">
+          <title>Games</title>
+          <style>
+            :root{color-scheme:dark}
+            body{margin:0;padding:48px 20px;background:#0e1116;color:#e6edf5;
+                 font:15px/1.6 Inter,system-ui,sans-serif;display:flex;justify-content:center}
+            main{width:100%;max-width:640px}
+            h1{font-size:26px;margin:0 0 6px}
+            p.sub{color:#8b96a5;margin:0 0 28px}
+            a.card{display:block;padding:14px 16px;margin-bottom:10px;border-radius:12px;
+                   background:#161b23;border:1px solid #232b36;color:inherit;text-decoration:none}
+            a.card:hover{border-color:#3a4757}
+            b{display:block;font-size:15px}
+            span{color:#8b96a5;font-size:12.5px}
+          </style></head><body><main>
+            <h1>Games</h1>
+            <p class="sub">Kleine, eigenständige Browserspiele.</p>
+            <a class="card" href="madtv-app/"><b>Mad TV — Der Sendermanager</b>
+              <span>Wirtschaftssimulation im Sendehochhaus. App-Fassung mit gezeichneter Grafik.</span></a>
+            <a class="card" href="madtv/"><b>Mad TV — Einzeldatei</b>
+              <span>Die ältere Fassung, eine einzige HTML-Datei.</span></a>
+            <a class="card" href="poker/"><b>Texas Hold'em Poker</b>
+              <span>No-Limit Hold'em gegen Computergegner.</span></a>
+            <a class="card" href="memory.html"><b>Memory</b>
+              <span>Klassisches Kartenpaar-Suchspiel.</span></a>
+          </main></body></html>
+          HTML
+          ls -R _site | head -40
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  veroeffentlichen:
+    needs: bauen
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
