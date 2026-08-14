@@ -530,94 +530,166 @@ function archiv(): string {
 
 /* ─────────── Produktionsstudio ─────────── */
 
+/**
+ * Ein Drehbuch im Regal. Die Dicke steht für die Drehdauer — drei Drehtage
+ * sind sichtbar mehr Papier als einer.
+ */
+function drehbuch(g: ReturnType<typeof G>, pr: typeof PRODUCTIONS[number]): string {
+  const bezahlbar = g.player.money >= pr.cost;
+  const gd = GENRES[pr.genre];
+  return `<div class="skript${bezahlbar ? '' : ' teuer'}" data-drag="skript" data-p="${pr.id}" ` +
+    `data-act="produce" role="button" tabindex="0" style="--tage:${pr.days}" ` +
+    `title="${esc(pr.name)} — ${esc(pr.desc)}">` +
+    `<div class="sk-kopf">${icon(pr.ico)} ${gd.name}</div>` +
+    `<div class="sk-titel">${esc(pr.name)}</div>` +
+    `<div class="sk-text">${esc(pr.desc)}</div>` +
+    '<div class="sk-fuss">' +
+    `<span>${lengthLabel(pr.lenSlots)}${pr.episodes ? ` · ${pr.episodes} Folgen` : ''}</span>` +
+    `<span class="sk-preis${bezahlbar ? '' : ' bad'}">${moneyShort(pr.cost)}</span></div>` +
+    `<div class="sk-tage">${pr.days} Drehtag${pr.days === 1 ? '' : 'e'}</div>` +
+    (pr.betty >= 6 ? `<div class="sk-herz">${icon('ui-herz')}</div>` : '') +
+    '</div>';
+}
+
+/** Die Garderobentür eines Moderators. Offen und beleuchtet heißt: unter Vertrag. */
+function garderobe(g: ReturnType<typeof G>, st: typeof STARS[number], hier: boolean): string {
+  const bezahlbar = g.player.money >= st.fee;
+  return `<div class="tuer${hier ? ' offen' : ''}${bezahlbar || hier ? '' : ' teuer'}" ` +
+    (hier ? '' : `data-act="hirestar" data-s="${st.id}" role="button" tabindex="0" `) +
+    `title="${esc(st.name)} — ${esc(st.desc)}">` +
+    `<div class="t-lampe"></div>` +
+    `<div class="t-schild"><span class="t-ico">${icon(st.ico)}</span>${esc(st.name)}</div>` +
+    `<div class="t-boost">+${Math.round(st.boost * 100)}% · ` +
+    `${st.genres.map((x) => GENRES[x].name).join(', ')}</div>` +
+    (hier
+      ? `<div class="t-gage">Gage ${moneyShort(st.salary)}/Tag</div>` +
+        '<button class="btn sm ghost" data-act="firestar">Vertrag lösen</button>'
+      : `<div class="t-gage">${moneyShort(st.fee)} Ablöse · ${moneyShort(st.salary)}/Tag</div>`) +
+    '</div>';
+}
+
 function studio(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('flr-studio', 'Produktionsstudio', 'Eigenproduktionen — teuer, aber ganz allein deins');
+  let h = '<div class="room">' + head('flr-studio', 'Produktionsstudio',
+    'Drehbühne — Drehbuch auf die Bühne ziehen, dann wird gedreht');
 
-  if (!p.studio) {
-    h += '<div class="card"><h3>Studio nicht angemietet</h3>' +
-      `<p class="dim" style="font-size:12.5px;margin-bottom:9px">Für ${money(STUDIO_RENT)} Anzahlung und ` +
-      '40.000 € Tagesmiete gehört das Studio dir. Nur damit lassen sich eigene Sendungen drehen — ' +
-      'inklusive «Kultur heute», Bettys Lieblingssendung.</p>' +
+  /* Die Bühne. Sie ist immer da: dunkel, wenn nichts läuft. */
+  const laeuft = g.production;
+  const gemietet = !!p.studio;
+  h += `<div class="buehne${gemietet ? '' : ' dunkel'}${laeuft ? ' aufnahme' : ''}" ` +
+    (gemietet && !laeuft ? 'data-drop="buehne"' : '') + '>' +
+    '<div class="traverse">' + '<i></i>'.repeat(5) + '</div>' +
+    '<div class="kegel"></div>';
+
+  if (!gemietet) {
+    h += '<div class="b-inhalt"><div class="b-titel">Studio nicht angemietet</div>' +
+      `<div class="b-text">${money(STUDIO_RENT)} Anzahlung, danach 40.000 € Tagesmiete. ` +
+      'Nur damit lassen sich eigene Sendungen drehen — auch «Kultur heute», Bettys Lieblingssendung.</div>' +
       `<button class="btn" data-act="rentstudio" ${p.money < STUDIO_RENT ? 'disabled' : ''}>` +
-      `Studio anmieten (${money(STUDIO_RENT)})</button></div>`;
-  } else if (g.production) {
-    const pr = g.production;
-    h += '<div class="card"><h3>Dreharbeiten laufen</h3>' +
-      `<div class="item"><div style="flex:1"><div class="t">${icon(pr.def.ico)} ${esc(pr.def.name)}</div>` +
-      `<div class="m">Noch ${pr.left} Tag(e) bis zur Fertigstellung</div>` +
-      `<div class="statline" style="margin-top:5px">${bar(((pr.def.days - pr.left) / pr.def.days) * 100)}</div>` +
-      '</div></div></div>';
+      `Licht an · ${money(STUDIO_RENT)}</button></div>`;
+  } else if (laeuft) {
+    const anteil = ((laeuft.def.days - laeuft.left) / laeuft.def.days) * 100;
+    h += '<div class="b-inhalt"><div class="klappe"><span>AUFNAHME</span>' +
+      `<b>${esc(laeuft.def.name)}</b></div>` +
+      `<div class="b-text">Noch ${laeuft.left} Drehtag${laeuft.left === 1 ? '' : 'e'} bis zur ` +
+      'Fertigstellung. Solange bleibt die Bühne belegt.</div>' +
+      `<div class="b-fort">${bar(anteil, 100, 'var(--gold)')}</div></div>`;
   } else {
-    h += '<div class="card"><h3>Was soll gedreht werden?</h3><div class="list">';
-    PRODUCTIONS.forEach((pr) => {
-      h += '<div class="item"><div style="flex:1;min-width:0">' +
-        `<div class="t">${icon(pr.ico)} ${esc(pr.name)} <span class="tag">${GENRES[pr.genre].name}</span>` +
-        (pr.betty >= 6 ? ` <span class="tag p">${icon('ui-herz')} Betty</span>` : '') + '</div>' +
-        `<div class="m">${esc(pr.desc)}</div>` +
-        `<div class="statline" style="margin-top:4px">Qualität ~${pr.quality} · ${pr.days} Drehtag(e)` +
-        (pr.episodes ? ` · ${pr.episodes} Folgen` : '') + '</div></div>' +
-        `<div class="r"><div style="font-weight:700">${moneyShort(pr.cost)}</div>` +
-        `<button class="btn sm" style="margin-top:4px" data-act="produce" data-p="${pr.id}" ` +
-        `${p.money < pr.cost ? 'disabled' : ''}>Drehen</button></div></div>`;
-    });
-    h += '</div></div>';
+    h += '<div class="b-inhalt leer"><div class="b-titel">Bühne frei</div>' +
+      '<div class="b-text">Zieh ein Drehbuch aus dem Regal hierher — oder klick es an.</div></div>';
+  }
+  h += '<div class="b-boden"></div></div>';
+
+  /* Das Drehbuchregal */
+  if (gemietet && !laeuft) {
+    h += '<div class="regal"><div class="regal-kopf">Drehbücher' +
+      '<span>die Dicke zeigt die Drehdauer</span></div>' +
+      '<div class="regal-reihe" data-scroll>' +
+      PRODUCTIONS.map((pr) => drehbuch(g, pr)).join('') + '</div></div>';
   }
 
-  h += '<div class="card"><h3>Starmoderatoren</h3>';
-  if (p.star) {
-    h += `<div class="item"><div class="avatar small">${icon(p.star.ico)}</div>` +
-      `<div style="flex:1"><div class="t">${esc(p.star.name)} <span class="tag g">unter Vertrag</span></div>` +
-      `<div class="m">${esc(p.star.desc)}</div>` +
-      `<div class="statline" style="margin-top:4px">+${Math.round(p.star.boost * 100)}% Zuschauer auf ` +
-      `${p.star.genres.map((x) => GENRES[x].name).join(', ')} · Gage ${moneyShort(p.star.salary)}/Tag</div></div>` +
-      '<button class="btn sm ghost" data-act="firestar">Vertrag lösen</button></div>';
-  } else {
-    h += '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Ein bekanntes Gesicht hebt ganze Genres — ' +
-      'kostet aber eine Ablöse und jeden Tag eine Gage. Nur ein Star gleichzeitig.</p><div class="list">';
-    STARS.forEach((st) => {
-      h += `<div class="item"><div style="flex:1;min-width:0"><div class="t">${icon(st.ico)} ${esc(st.name)}</div>` +
-        `<div class="m">${esc(st.desc)}</div>` +
-        `<div class="statline" style="margin-top:4px">+${Math.round(st.boost * 100)}% auf ` +
-        `${st.genres.map((x) => GENRES[x].name).join(', ')}</div></div>` +
-        `<div class="r"><div style="font-weight:700">${moneyShort(st.fee)}</div>` +
-        `<div class="m bad">${moneyShort(st.salary)}/Tag</div>` +
-        `<button class="btn sm" style="margin-top:4px" data-act="hirestar" data-s="${st.id}" ` +
-        `${p.money < st.fee ? 'disabled' : ''}>Verpflichten</button></div></div>`;
-    });
-    h += '</div>';
-  }
-  h += '</div>';
-  h += '<div class="hint">Kultursendungen bringen wenig Quote, aber Kritikerlob, Sammy-Chancen — und Bettys Herz.</div></div>';
+  /* Die Garderoben */
+  h += '<div class="gang"><div class="gang-kopf">Garderoben' +
+    `<span>${p.star ? 'ein Star unter Vertrag' : 'nur einer gleichzeitig'}</span></div>` +
+    '<div class="gang-reihe" data-scroll>' +
+    STARS.map((st) => garderobe(g, st, p.star?.id === st.id)).join('') +
+    '</div></div>';
+
+  h += '<div class="hint">Kultursendungen bringen wenig Quote, aber Kritikerlob, Sammy-Chancen — ' +
+    'und Bettys Herz. Ein Star hebt ganze Genres, kostet aber jeden Tag Gage, ob er sendet oder nicht.</div></div>';
   return h;
 }
 
 /* ─────────── Technik ─────────── */
 
+/**
+ * Rundinstrument für die Reichweite. Ein Zeiger sagt schneller als eine Zahl,
+ * ob noch Luft nach oben ist — und genau darum geht es in diesem Raum.
+ */
+function zeigerwerk(anteil: number): string {
+  // Halbkreis von -90° (0 %) bis +90° (100 %)
+  const winkel = -90 + Math.max(0, Math.min(1, anteil)) * 180;
+  const striche = Array.from({ length: 11 }, (_, i) =>
+    `<line x1="50" y1="8" x2="50" y2="${i % 5 === 0 ? 15 : 12}" ` +
+    `transform="rotate(${-90 + i * 18} 50 46)" stroke="#5d6b80" stroke-width="${i % 5 === 0 ? 2 : 1.2}"/>`).join('');
+  return '<svg class="skala" viewBox="0 0 100 56" aria-hidden="true">' +
+    '<path d="M8 46a42 42 0 0 1 84 0" fill="none" stroke="#232c3a" stroke-width="9"/>' +
+    `<path d="M8 46a42 42 0 0 1 84 0" fill="none" stroke="url(#skalaFarbe)" stroke-width="9" ` +
+    `stroke-dasharray="${(anteil * 132).toFixed(1)} 999" stroke-linecap="round"/>` +
+    '<defs><linearGradient id="skalaFarbe" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#e0a34a"/><stop offset="1" stop-color="#4aa3ff"/>' +
+    '</linearGradient></defs>' +
+    striche +
+    `<line x1="50" y1="46" x2="50" y2="14" stroke="#e8eef7" stroke-width="2.4" stroke-linecap="round" ` +
+    `transform="rotate(${winkel.toFixed(1)} 50 46)"/>` +
+    '<circle cx="50" cy="46" r="4" fill="#8b98a9"/></svg>';
+}
+
 function technik(): string {
   const p = G().player;
   const r = reachOf(p);
-  let h = '<div class="room">' + head('flr-technik', 'Technik', 'Sendemasten und Satellit — mehr Reichweite, mehr Zuschauer');
-  h += '<div class="grid3" style="margin-bottom:10px">' +
-    `<div class="kpi"><div class="k">Reichweite</div><div class="v acc">${Math.round(r * 100)}%</div>` +
-    `<div class="d">von ${viewers(POP)} Haushalten</div></div>` +
-    `<div class="kpi"><div class="k">Sendemasten</div><div class="v">${p.transmitters} / ${MAX_TRANSMITTERS}</div>` +
-    '<div class="d">je 18.000 €/Tag</div></div>' +
-    `<div class="kpi"><div class="k">Satellit</div><div class="v">${p.satellite ? 'aktiv' : '—'}</div>` +
-    '<div class="d">55.000 €/Tag</div></div></div>';
-  h += '<div class="card"><div class="list">' +
-    `<div class="item"><div style="flex:1"><div class="t">${icon('ui-antenne')} Zusätzlicher Sendemast</div>` +
-    '<div class="m">+11 Prozentpunkte Reichweite · 18.000 € Betriebskosten pro Tag</div></div>' +
-    `<div class="r"><div style="font-weight:700">${money(PRICE_TRANSMITTER)}</div>` +
-    `<button class="btn sm" style="margin-top:4px" data-act="mast" ` +
-    `${p.transmitters >= MAX_TRANSMITTERS || p.money < PRICE_TRANSMITTER ? 'disabled' : ''}>Bauen</button></div></div>` +
-    `<div class="item"><div style="flex:1"><div class="t">${icon('ui-satellit')} Satellitenaufschaltung</div>` +
-    '<div class="m">+22 Prozentpunkte Reichweite · 55.000 € pro Tag</div></div>' +
-    `<div class="r"><div style="font-weight:700">${money(PRICE_SATELLITE)}</div>` +
-    `<button class="btn sm" style="margin-top:4px" data-act="sat" ` +
-    `${p.satellite || p.money < PRICE_SATELLITE ? 'disabled' : ''}>Aufschalten</button></div></div>` +
-    '</div></div>';
+  const laufend = p.transmitters * 18_000 + (p.satellite ? 55_000 : 0);
+
+  let h = '<div class="room">' + head('flr-technik', 'Technik',
+    'Schaltraum — jeder Schalter kostet, jeder Schalter bringt Zuschauer');
+
+  h += '<div class="schaltschrank">';
+
+  /* Linke Seite: das Instrument */
+  h += '<div class="messfeld">' + zeigerwerk(r) +
+    `<div class="mess-wert">${Math.round(r * 100)}<span>%</span></div>` +
+    `<div class="mess-text">Reichweite · ${viewers(POP * r)} von ${viewers(POP)} Haushalten</div>` +
+    `<div class="zaehlwerk" title="laufende Betriebskosten je Sendetag">` +
+    String(laufend).padStart(6, '0').split('').map((z) => `<i>${z}</i>`).join('') +
+    '<span>€/Tag</span></div></div>';
+
+  /* Rechte Seite: die Schalter */
+  h += '<div class="schaltfeld">';
+  h += `<div class="sf-titel">${icon('ui-antenne')} Sendemasten</div><div class="masten">`;
+  for (let i = 0; i < MAX_TRANSMITTERS; i++) {
+    const steht = i < p.transmitters;
+    const dran = i === p.transmitters;
+    const geht = dran && p.money >= PRICE_TRANSMITTER;
+    h += `<div class="mast${steht ? ' an' : ''}${dran ? ' naechster' : ''}" ` +
+      (dran ? `data-act="mast" role="button" tabindex="0" ${geht ? '' : 'aria-disabled="true"'} ` : '') +
+      `title="${steht ? 'in Betrieb' : dran ? `bauen für ${money(PRICE_TRANSMITTER)}` : 'noch nicht freigeschaltet'}">` +
+      `<div class="m-lampe"></div><div class="m-kipp"><i></i></div>` +
+      `<div class="m-nr">${i + 1}</div></div>`;
+  }
+  h += '</div>';
+  h += `<div class="sf-note">+11 Prozentpunkte je Mast · ${money(PRICE_TRANSMITTER)} Bau, 18.000 €/Tag Betrieb` +
+    (p.transmitters >= MAX_TRANSMITTERS ? ' · alle gebaut' : '') + '</div>';
+
+  const satGeht = !p.satellite && p.money >= PRICE_SATELLITE;
+  h += `<div class="sf-titel" style="margin-top:14px">${icon('ui-satellit')} Satellitenaufschaltung</div>` +
+    `<div class="hebel${p.satellite ? ' an' : ''}" ` +
+    (p.satellite ? '' : `data-act="sat" role="button" tabindex="0" ${satGeht ? '' : 'aria-disabled="true"'}`) +
+    '><div class="h-bahn"><div class="h-griff"></div></div>' +
+    `<div class="h-text"><b>${p.satellite ? 'aufgeschaltet' : 'abgeschaltet'}</b>` +
+    `<span>+22 Prozentpunkte · ${money(PRICE_SATELLITE)} einmalig, 55.000 €/Tag</span></div></div>`;
+  h += '</div></div>';
+
   h += '<div class="hint">Große Werbeverträge verlangen Millionenquoten. Ohne Reichweite bleiben sie ' +
     'unerreichbar — die laufenden Kosten fressen dich aber auf, wenn das Programm nicht mithält.</div></div>';
   return h;

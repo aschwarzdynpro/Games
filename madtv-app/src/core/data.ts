@@ -468,6 +468,22 @@ export const PRODUCTIONS: readonly Production[] = [
     desc: 'Seriöse Eigenrecherche, eine halbe Stunde. Kritiker mögen das.' },
   { id: 'serie_soap',   name: 'Bergblick – Soap',   genre: 'serie',  cost: 95_000,  days: 2, quality: 64, betty: 0, ico: 'gen-serie', lenSlots: 1,
     desc: 'Endlos-Soap, 12 Folgen zu je 30 Minuten am Stück produziert.', episodes: 12 },
+  { id: 'magazin_mo',   name: 'Montagsmagazin',     genre: 'doku',   cost: 26_000,  days: 1, quality: 54, betty: 4, ico: 'gen-doku', lenSlots: 1,
+    desc: 'Was die Woche bringt, in dreißig Minuten. Billig und solide.' },
+  { id: 'kochshow',     name: 'Töpfe & Tratsch',    genre: 'show',   cost: 58_000,  days: 1, quality: 61, betty: 3, ico: 'gen-show', lenSlots: 2,
+    desc: 'Gekocht wird nebenbei, geredet wird viel. Hausfrauen lieben es.' },
+  { id: 'krimi_reihe',  name: 'Tatort Hafenstraße', genre: 'krimi',  cost: 210_000, days: 3, quality: 79, betty: 3, ico: 'gen-krimi', lenSlots: 3,
+    desc: 'Eigener Fernsehkrimi, anderthalb Stunden. Teuer, aber sehr stark.' },
+  { id: 'kinder_club',  name: 'Der Knopfclub',      genre: 'trick',  cost: 40_000,  days: 1, quality: 59, betty: 2, ico: 'gen-trick', lenSlots: 1,
+    desc: 'Kinderstunde mit Puppen und Bastelecke. Läuft nur früh.' },
+  { id: 'sport_studio', name: 'Das Sportstudio',    genre: 'sport',  cost: 88_000,  days: 1, quality: 68, betty: 1, ico: 'gen-sport', lenSlots: 2,
+    desc: 'Ergebnisse, Torwand, Studiogäste. Eine Stunde, sichere Quote.' },
+  { id: 'musik_parade', name: 'Hitparade live',     genre: 'musik',  cost: 135_000, days: 2, quality: 71, betty: 4, ico: 'gen-musik', lenSlots: 3,
+    desc: 'Playback, Blumen und Konfetti — anderthalb Stunden Samstagabend.' },
+  { id: 'oper_abend',   name: 'Opernabend',         genre: 'kultur', cost: 165_000, days: 2, quality: 52, betty: 16, ico: 'gen-kultur', lenSlots: 4,
+    desc: 'Zwei Stunden Hochkultur. Kaum Zuschauer — aber Betty schmilzt dahin.' },
+  { id: 'serie_klinik', name: 'Notaufnahme Nord',   genre: 'serie',  cost: 175_000, days: 3, quality: 73, betty: 2, ico: 'gen-serie', lenSlots: 2,
+    desc: 'Eigene Krankenhausserie, 10 Folgen zu je einer Stunde.', episodes: 10 },
 ];
 
 /* ─────────── Starmoderatoren (Geldsenke fürs Spätspiel) ─────────── */
@@ -481,6 +497,18 @@ export const STARS: readonly Star[] = [
   { id: 'harms', name: 'Dr. Harms',         ico: 'mod-harms', fee: 1_600_000, salary: 80_000,  boost: 0.26,
     genres: ['doku', 'kultur', 'talk'],
     desc: 'Feuilleton-Legende. Kultur mit ihm wirkt doppelt auf Betty.' },
+  { id: 'bodo',  name: 'Bodo Brenner',      ico: 'mod-bodo', fee: 900_000,   salary: 48_000,  boost: 0.12,
+    genres: ['sport', 'action'],
+    desc: 'Schreit sich durch jede Übertragung. Günstig, laut, wirksam.' },
+  { id: 'vera',  name: 'Vera Vogt',         ico: 'mod-vera', fee: 1_400_000, salary: 72_000,  boost: 0.17,
+    genres: ['krimi', 'drama', 'doku'],
+    desc: 'Die ernste Stimme des Hauses. Hebt alles, was Haltung hat.' },
+  { id: 'pepe',  name: 'Pepe Prantl',       ico: 'mod-pepe', fee: 1_050_000, salary: 55_000,  boost: 0.15,
+    genres: ['komoed', 'show', 'musik'],
+    desc: 'Kalauer am Fließband. Das Publikum lacht trotzdem jedes Mal.' },
+  { id: 'gloria', name: 'Gloria Grahn',     ico: 'mod-gloria', fee: 2_600_000, salary: 130_000, boost: 0.22,
+    genres: ['show', 'liebe', 'serie', 'talk'],
+    desc: 'Der ganz große Name. Ruinös teuer und jeden Pfennig wert.' },
 ];
 
 /* ─────────── Geschenke für Betty ─────────── */

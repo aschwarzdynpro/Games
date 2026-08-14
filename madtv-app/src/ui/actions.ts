@@ -662,6 +662,14 @@ registerDrag('kunde', {
   },
 });
 
+registerDrag('skript', {
+  accepts: (target) => target.dataset.drop === 'buehne',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'buehne') return;
+    runAction('produce', { p: card.dataset.p });
+  },
+});
+
 registerDrag('band', {
   accepts: (target) => target.dataset.drop === 'wagen',
   drop: (target, card) => {

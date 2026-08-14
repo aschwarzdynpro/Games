@@ -3,12 +3,13 @@
 Umbau des Einzeldatei-Spiels aus `../madtv/` zu einem richtigen Projekt.
 Der Umbau ist abgeschlossen (Etappen 1–5); seitdem wächst der **Inhalt**.
 
-Stand: **Etappe 6, erste Runde** — Vite + TypeScript, Spielkern herausgelöst und
+Stand: **Etappe 6, zweite Runde** — Vite + TypeScript, Spielkern herausgelöst und
 testbar, Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit
 laufender Figur, eigener Zeichensatz, installierbare und offline spielbare
-Ausgabe. Fünf Räume haben eine eigene Kulisse: Sendeplan als Steckwand,
+Ausgabe. Sieben Räume haben eine eigene Kulisse: Sendeplan als Steckwand,
 Filmagentur als Regalwand, Nachrichtenstudio als Redaktionstisch, Werbeagentur
-als Kundenkartei, Archiv als Regal mit Rollwagen.
+als Kundenkartei, Archiv als Regal mit Rollwagen, Produktionsstudio als
+Drehbühne, Technik als Schaltraum.
 
 Die alte `../madtv/index.html` bleibt unangetastet, bis diese Fassung sie
 eingeholt hat.
@@ -34,7 +35,7 @@ src/
   core/           reines TypeScript, kein DOM, keine Timer — die Simulation
   world/          gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
   ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
-  assets/icons/   86 Symbole, je eine SVG-Datei
+  assets/icons/   90 Symbole, je eine SVG-Datei
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Balancing
@@ -60,13 +61,13 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
 | Tests | Handarbeit im Browser | 82 automatische Prüfungen |
-| Material | 107 Filme, 15 Serien, 50 Marken | 186 Filme, 25 Serien, 100 Marken |
+| Material | 107 Filme, 15 Serien, 50 Marken | 186 Filme, 25 Serien, 100 Marken, 14 Eigenproduktionen, 7 Moderatoren |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
 | Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
-| Symbole | Emoji aus der Schriftart | 86 gezeichnete Vektorsymbole aus dem eigenen Satz |
+| Symbole | Emoji aus der Schriftart | 90 gezeichnete Vektorsymbole aus dem eigenen Satz |
 | Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
 
 Ein Fehler fiel beim Umzug auf: Nach der ersten KI-Runde fehlte das Auffrischen
@@ -420,13 +421,50 @@ Doppelungen, mindestens sechs Titel je Genre, mindestens acht Marken je
 Zielgruppe — und dass die Spitzenklasse knapp bleibt, sonst ist sie nichts
 wert.
 
+### Zweite Runde: Drehbühne und Schaltraum
+
+**Produktionsstudio als Drehbühne.** Über allem hängt eine Traverse mit
+Scheinwerfern; ist das Studio nicht angemietet, bleibt die Bühne dunkel und der
+Anmietknopf heißt «Licht an». Läuft ein Dreh, springen die Scheinwerfer auf Rot
+und auf der Bühne steht eine Filmklappe mit dem Titel.
+
+Die Drehbücher stehen daneben im Regal, und **die Dicke des Papierstapels ist
+die Drehdauer** — ein Dreitäger ist sichtbar mehr Papier als ein Eintäger.
+Gezogen wird auf die Bühne, geklickt geht weiter.
+
+Die Moderatoren sind Garderobentüren mit Namensschild geworden. Wer unter
+Vertrag steht, hat die Lampe an und die Tür offen; die anderen bleiben zu. Das
+ist mehr als Schmuck — man sieht auf einen Blick, dass nur einer gleichzeitig
+geht.
+
+**Technik als Schaltraum.** Links ein Rundinstrument mit Zeiger für die
+Reichweite, darunter ein mechanisches Zählwerk für die Tageskosten. Rechts vier
+Kippschalter für die Sendemasten — gebaute stehen oben und leuchten grün, der
+nächste ist gestrichelt und wartet — und ein Hebel für den Satelliten.
+
+Ein Zeiger sagt schneller als eine Zahl, ob noch Luft nach oben ist, und genau
+darum geht es in diesem Raum. Das Zählwerk daneben sagt, was das kostet: Nach
+einem Mast und dem Satelliten stehen dort 073000 €/Tag, und das läuft weiter,
+ob das Programm mithält oder nicht.
+
+**Material:** 6 → 14 Eigenproduktionen (Krimireihe, Sportstudio, Hitparade,
+Opernabend als reine Betty-Sendung), 3 → 7 Moderatoren.
+
+Beim Umbau der Technik sind mir zwei Symbole aus dem Raum gefallen — Antenne
+und Satellit standen vorher in Listenzeilen, die es nicht mehr gibt. Aufgefallen
+ist das nicht beim Ansehen, sondern durch `tests/icons.test.ts`: «lässt keine
+Datei ungenutzt liegen». Beide stehen jetzt in den Überschriften des
+Schaltfelds, wo sie hingehören.
+
 ## Was als Nächstes läge
 
-Im selben Muster weiter: Produktionsstudio als Drehbühne, Technik als
-Schaltraum, Chefbüro und Bettys Büro als Orte mit Figuren statt Karten — und
-dazu jeweils das Material, das sie braucht. Danach die Figuren selbst: Betty,
-die auf dein Programm reagiert, ein Herr Raffer, der bei Misserfolg persönlich
-wird, und eine Konkurrenz, die dir sichtbar Filme wegkauft.
+Es fehlen noch sechs Räume: Bank, Chefbüro, Bettys Büro, Kiosk und die beiden
+Konkurrenzbüros. Die vier letzten sind Räume mit *Personen* darin — dort wird
+die Kulisse ohne die Figuren dahinter halb leer bleiben. Deshalb läuft es
+danach auf das Dritte hinaus: Betty, die auf dein Programm reagiert statt nur
+auf Geschenke; ein Herr Raffer, der bei drei schlechten Abenden persönlich
+wird; und eine Konkurrenz, die dir sichtbar Filme wegkauft, statt es still zu
+tun.
 
 Die alte `../madtv/index.html` bleibt weiterhin unangetastet.
 

@@ -856,3 +856,192 @@ body.dragging .pocket{transition:none;}
 .kk-zeile .ok{color:#1f6b3e;}
 .kk-zeile .bad{color:#9c2f2f;}
 .kk-zeile .warn{color:#8a5a12;}
+
+/* ─────────── Produktionsstudio: Drehbühne ─────────── */
+.buehne{
+  position:relative;overflow:hidden;
+  border:1px solid #2b3444;border-radius:12px;
+  background:radial-gradient(120% 80% at 50% 0%,#243044,#12171f 70%);
+  padding:34px 16px 26px;margin-bottom:14px;min-height:186px;
+  display:flex;align-items:center;justify-content:center;
+}
+.buehne.dunkel{background:radial-gradient(120% 80% at 50% 0%,#1a1f28,#0e1116 70%);}
+.buehne.drop-ok{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok);}
+/* Traverse mit Scheinwerfern — bei angemietetem Studio brennt Licht */
+.traverse{
+  position:absolute;top:0;left:0;right:0;height:12px;
+  background:linear-gradient(180deg,#3a4557,#222b38);
+  display:flex;justify-content:space-around;align-items:flex-end;
+}
+.traverse i{
+  width:16px;height:7px;border-radius:0 0 4px 4px;margin-bottom:-6px;
+  background:#4a5668;
+}
+.buehne:not(.dunkel) .traverse i{background:#ffe9b8;box-shadow:0 0 9px rgba(255,233,184,.6);}
+.kegel{
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  width:86%;height:100%;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,233,184,.13),rgba(255,233,184,0) 72%);
+  clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);
+}
+.buehne.dunkel .kegel{opacity:.15;}
+.b-boden{
+  position:absolute;left:0;right:0;bottom:0;height:22px;
+  background:linear-gradient(180deg,#2a3444,#161d28);
+  border-top:1px solid #3b475a;
+}
+.b-inhalt{position:relative;text-align:center;max-width:46ch;}
+.b-titel{font-size:15px;font-weight:800;margin-bottom:4px;}
+.b-text{font-size:11.5px;color:var(--dim2);margin-bottom:10px;}
+.b-inhalt.leer .b-titel{color:var(--dim);}
+.b-fort{max-width:260px;margin:0 auto;}
+/* Filmklappe für den laufenden Dreh */
+.klappe{
+  display:inline-flex;flex-direction:column;gap:2px;align-items:center;
+  background:#11161d;border:2px solid #46536a;border-radius:5px;
+  padding:8px 16px 9px;margin-bottom:9px;position:relative;
+}
+.klappe::before{
+  content:'';position:absolute;top:-9px;left:-2px;right:-2px;height:9px;border-radius:3px 3px 0 0;
+  background:repeating-linear-gradient(115deg,#e8eef7 0 9px,#11161d 9px 18px);
+}
+.klappe span{font-size:8.5px;font-weight:800;letter-spacing:.18em;color:var(--bad);}
+.klappe b{font-size:13px;}
+.buehne.aufnahme .traverse i{background:#ff6b6b;box-shadow:0 0 10px rgba(255,107,107,.6);}
+
+.regal, .gang{
+  background:linear-gradient(180deg,#1a212c,#141a23);
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;margin-bottom:12px;
+}
+.regal-kopf, .gang-kopf{
+  font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;
+}
+.regal-kopf span, .gang-kopf span{text-transform:none;letter-spacing:0;color:var(--dim2);font-weight:400;}
+.regal-reihe, .gang-reihe{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 8px;}
+
+/* Drehbuch: die Dicke des Papierstapels ist die Drehdauer */
+.skript{
+  flex:0 0 auto;width:184px;position:relative;
+  background:linear-gradient(180deg,#eee9dc,#d9d2c2);color:#2a2418;
+  border-radius:2px 5px 5px 2px;padding:9px 11px 8px 13px;
+  border-left:3px solid #8d7d5e;
+  box-shadow:0 3px 9px rgba(0,0,0,.45);
+  cursor:grab;transition:transform .13s, box-shadow .13s;touch-action:none;
+}
+/* Jeder Drehtag legt ein Blatt mehr unter den Stapel */
+.skript::after{
+  content:'';position:absolute;right:-3px;top:3px;bottom:3px;
+  width:calc(var(--tage) * 2px);border-radius:0 3px 3px 0;
+  background:repeating-linear-gradient(90deg,#cfc7b4 0 1px,#efeade 1px 3px);
+}
+.skript:hover{transform:translateY(-4px);box-shadow:0 9px 18px rgba(0,0,0,.5);}
+.skript.teuer{filter:saturate(.4);opacity:.75;}
+.sk-kopf{font-size:8.5px;font-weight:800;color:#6b6151;text-transform:uppercase;letter-spacing:.06em;
+  display:flex;align-items:center;gap:4px;}
+.sk-titel{font-size:12.5px;font-weight:800;margin:1px 0 3px;}
+.sk-text{font-size:9.5px;color:#6b6151;line-height:1.35;min-height:38px;}
+.sk-fuss{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:#6b6151;
+  border-top:1px solid #c6bda8;padding-top:4px;margin-top:4px;}
+.sk-preis{font-weight:800;color:#2a2418;}
+.sk-preis.bad{color:#9c2f2f;}
+.sk-tage{position:absolute;top:8px;right:12px;font-size:8.5px;font-weight:700;color:#8d7d5e;}
+.sk-herz{position:absolute;bottom:7px;right:12px;color:#b4487a;font-size:11px;}
+
+/* Garderobentür */
+.tuer{
+  flex:0 0 auto;width:172px;position:relative;
+  background:linear-gradient(160deg,#3a2c1c,#241a10);
+  border:1px solid #56412a;border-left:4px solid #6b5236;border-radius:3px 6px 6px 3px;
+  padding:10px 11px 11px;cursor:pointer;transition:transform .13s, box-shadow .13s;
+}
+.tuer:hover{transform:translateY(-3px);box-shadow:0 8px 16px rgba(0,0,0,.5);}
+.tuer.teuer{filter:saturate(.35);opacity:.7;}
+.tuer.offen{background:linear-gradient(160deg,#3f3520,#2a2313);border-color:var(--gold);cursor:default;}
+.tuer.offen:hover{transform:none;}
+.t-lampe{
+  position:absolute;top:8px;right:10px;width:8px;height:8px;border-radius:50%;
+  background:#3a3428;border:1px solid #56412a;
+}
+.tuer.offen .t-lampe{background:#ffd873;box-shadow:0 0 8px rgba(255,216,115,.8);border-color:#ffd873;}
+.t-schild{
+  display:flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#f0e6d2;
+  background:#1b1409;border:1px solid #6b5236;border-radius:3px;padding:4px 7px;margin-bottom:6px;
+  padding-right:16px;
+}
+.t-ico{display:flex;color:#c8a97f;}
+.t-boost{font-size:9.5px;color:#c8a97f;line-height:1.35;}
+.t-gage{font-size:9.5px;color:#8a7358;margin-top:4px;}
+.tuer .btn.sm{margin-top:6px;}
+
+/* ─────────── Technik: Schaltraum ─────────── */
+.schaltschrank{
+  display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:14px;
+  background:linear-gradient(180deg,#1c232e,#141a23);
+  border:1px solid #2f3a4a;border-radius:12px;padding:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+@media (max-width:640px){ .schaltschrank{grid-template-columns:1fr;} }
+.messfeld{
+  background:#10151d;border:1px solid #2b3444;border-radius:10px;
+  padding:12px;text-align:center;
+}
+.skala{width:100%;max-width:200px;display:block;margin:0 auto;}
+.mess-wert{font-size:30px;font-weight:800;line-height:1;margin-top:-6px;color:var(--acc);}
+.mess-wert span{font-size:15px;color:var(--dim);}
+.mess-text{font-size:10px;color:var(--dim2);margin-top:4px;}
+/* Zählwerk für die Tageskosten — mechanische Ziffernrollen */
+.zaehlwerk{display:flex;gap:2px;justify-content:center;align-items:center;margin-top:9px;}
+.zaehlwerk i{
+  font-style:normal;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#2a3242,#151b24);border:1px solid #3b475a;border-radius:2px;
+  padding:2px 4px;color:#e8eef7;min-width:14px;
+}
+.zaehlwerk span{font-size:9.5px;color:var(--dim2);margin-left:4px;}
+
+.schaltfeld{background:#10151d;border:1px solid #2b3444;border-radius:10px;padding:12px;}
+.sf-titel{font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.sf-titel .ic{width:1.3em;height:1.3em;}
+.sf-note{font-size:10px;color:var(--dim2);margin-top:8px;}
+.masten{display:flex;gap:9px;flex-wrap:wrap;}
+.mast{
+  width:62px;padding:8px 0 6px;border-radius:8px;text-align:center;
+  background:#171d27;border:1px solid #2f3a4a;
+}
+.mast.naechster{cursor:pointer;border-style:dashed;border-color:#46536a;}
+.mast.naechster:hover{border-color:var(--acc);}
+.mast[aria-disabled="true"]{opacity:.45;cursor:not-allowed;}
+.m-lampe{
+  width:9px;height:9px;border-radius:50%;margin:0 auto 6px;
+  background:#2b3444;border:1px solid #3b475a;
+}
+.mast.an .m-lampe{background:var(--ok);box-shadow:0 0 8px var(--ok);border-color:var(--ok);}
+/* Kippschalter: oben = in Betrieb */
+.m-kipp{
+  width:18px;height:30px;margin:0 auto;border-radius:9px;
+  background:#0d1219;border:1px solid #3b475a;position:relative;
+}
+.m-kipp i{
+  position:absolute;left:2px;right:2px;height:13px;border-radius:7px;
+  background:linear-gradient(180deg,#6d7c92,#3f4b5e);
+  bottom:2px;transition:bottom .18s;
+}
+.mast.an .m-kipp i{bottom:13px;background:linear-gradient(180deg,#9fe6b8,#3f8a5c);}
+.m-nr{font-size:9px;color:var(--dim2);margin-top:5px;}
+
+.hebel{display:flex;align-items:center;gap:12px;}
+.hebel[role=button]{cursor:pointer;}
+.hebel[aria-disabled="true"]{opacity:.45;cursor:not-allowed;}
+.h-bahn{
+  width:46px;height:24px;border-radius:14px;flex-shrink:0;
+  background:#0d1219;border:1px solid #3b475a;position:relative;
+}
+.h-griff{
+  position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+  background:linear-gradient(180deg,#6d7c92,#3f4b5e);transition:left .2s, background .2s;
+}
+.hebel.an .h-bahn{border-color:var(--acc);}
+.hebel.an .h-griff{left:24px;background:linear-gradient(180deg,#8ecbff,#2f7fd0);}
+.h-text b{display:block;font-size:12px;}
+.h-text span{font-size:10px;color:var(--dim2);}
