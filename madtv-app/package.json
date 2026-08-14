@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "vitest run tests/balance.test.ts --reporter=verbose",
-    "sim:breit": "MADTV_BREIT=1 vitest run tests/breit.test.ts --reporter=verbose"
+    "sim:breit": "MADTV_BREIT=1 vitest run tests/breit.test.ts --reporter=verbose",
+    "test:ui": "node tests/browser/ui.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

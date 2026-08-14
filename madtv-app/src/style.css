@@ -10,7 +10,7 @@
   --line2:#3b4757;
   --txt:#e6ebf2;
   --dim:#93a1b3;
-  --dim2:#6b7a8d;
+  --dim2:#8493a6;   /* AA-tauglich auf allen Flächen; #6b7a8d lag bei 3,3:1 */
   --acc:#5aa9ff;
   --acc2:#7c5cff;
   --ok:#3ddc97;
@@ -458,7 +458,7 @@ table.tbl tr:last-child td{border-bottom:none;}
 }
 .board-kopf i{
   font-style:normal;text-transform:none;letter-spacing:0;font-weight:400;
-  color:var(--line2);display:block;font-size:9px;
+  color:var(--dim2);display:block;font-size:9px;
 }
 .board-grid{
   display:grid;

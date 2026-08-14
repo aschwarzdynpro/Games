@@ -11,6 +11,7 @@ import {
   adSlotOf, BLOCKS, slotHour,
 } from './constants';
 import { buyLicence, getDay, placeProgramme, reachOf, toast, trendOf } from './state';
+import { pct } from './format';
 import type { Channel, Game, Licence } from './types';
 
 /**
@@ -152,18 +153,29 @@ export function aiTurn(g: Game, ch: Channel): void {
     }
   }
 
-  // Ausbau
+  // Ausbau. Reichweite ist der stärkste Imagehebel im Spiel — wenn die
+  // Konkurrenz daran dreht, muss der Spieler es erfahren. Sonst wächst der
+  // Nachbar in einer Zahl, die nur sein eigenes Büro anzeigt. Am Aufbautag
+  // (g.day === 0) bleibt es still: Was vor Spielbeginn gekauft wurde, hat
+  // niemand vorher anders gesehen.
+  const melden = (text: string): void => {
+    if (g.day > 1) toast(g, 'warn', 'Die Konkurrenz rüstet auf', text);
+  };
+
   if (ch.money > 900_000 && ch.transmitters < MAX_TRANSMITTERS && g.rng.chance(sk * 0.4)) {
     ch.money -= PRICE_TRANSMITTER;
     ch.transmitters++;
+    melden(`${ch.name} hat einen Sendemasten gebaut — ${pct(reachOf(ch), 0)} Reichweite.`);
   } else if (ch.money > 1_600_000 && !ch.satellite && g.rng.chance(sk * 0.35)) {
     ch.money -= PRICE_SATELLITE;
     ch.satellite = true;
+    melden(`${ch.name} sendet jetzt über Satellit — ${pct(reachOf(ch), 0)} Reichweite.`);
   }
   if (!ch.star && ch.money > 4_000_000 && g.rng.chance(sk * 0.5)) {
     const s = g.rng.pick(STARS);
     ch.money -= s.fee;
     ch.star = s;
+    melden(`${s.name} moderiert ab sofort bei ${ch.name}.`);
   }
 
   // Sendepläne der kommenden Tage

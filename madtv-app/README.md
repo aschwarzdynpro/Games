@@ -19,6 +19,7 @@ eingeholt hat.
 npm install
 npm run dev            # Entwicklungsserver mit Hot Reload
 npm test               # Simulationstests
+npm run test:ui        # Prüfungen im echten Browser (braucht Playwright)
 npm run sim            # Schwierigkeitskurve, drei Startwerte
 npm run sim:breit      # dieselbe Messung mit zehn — dauert, aber sagt etwas
 npm run build          # dist/         — Ordner-Build (z. B. GitHub Pages)
@@ -41,7 +42,15 @@ src/
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figuren, Balancing
+  browser/ui.mjs  was nur ein echter Browser beantworten kann
 ```
+
+`tests/browser/ui.mjs` prüft, was ohne DOM nicht messbar ist: ob ein Symbol in
+seiner Schachtel bleibt, ob jede überlaufende Regalwand ihre Pfeile hat, ob eine
+Seite auf 390 Pixeln seitlich überläuft, ob jeder Text den Kontrastwert AA
+erreicht und jede Tabulatorstation sichtbar umrandet ist. Jede einzelne Prüfung
+dort steht für einen Fehler, der schon einmal da war. Der Ordner wird vor jedem
+Lauf frisch gebaut, damit nie ein alter Stand geprüft wird.
 
 Die Trennung ist der eigentliche Zweck dieser Etappe. `core` lässt sich in
 Millisekunden über hundert Spieltage laufen lassen, ohne dass ein Browser
@@ -62,7 +71,7 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 104 automatische Prüfungen |
+| Tests | Handarbeit im Browser | 104 Prüfungen ohne DOM, 56 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -92,6 +101,27 @@ Laufabschnitte einen gedeckelten Anteil am Weg, und die Fahrt schluckt den Rest
 — man sieht ja die Etagen vorbeiziehen. **Die Gesamtkosten in Spielminuten
 bleiben dabei exakt erhalten**; das ist die Ressource, um die gespielt wird, und
 `tests/travel.test.ts` prüft genau diese Invariante.
+
+## Bedienbarkeit
+
+Fokusrahmen, `prefers-reduced-motion` und eine Klasse für nur vorgelesenen Text
+standen von Anfang an. Was beim ersten systematischen Durchgang fehlte:
+
+- **Kontrast.** `--dim2` — die leise Farbe für Beschriftungen und Nebenangaben —
+  lag bei 3,3:1 auf den Panelflächen und damit unter den 4,5:1, die WCAG AA für
+  kleine Schrift verlangt. Angehoben auf `#8493a6` (4,8:1), immer noch klar
+  dunkler als `--dim`. Betroffen waren zwölf Textsorten auf einer einzigen
+  Ansicht.
+- **Meldungen.** Einblendungen erschienen und verschwanden von selbst, ohne dass
+  ein Vorleseprogramm je davon erfuhr. `#toasts` ist jetzt `role="status"` mit
+  `aria-live="polite"`.
+- **Landmarken.** Die ganze Anwendung bestand aus `div`. Kopfzeile, Inhalt und
+  Etagenleiste sind jetzt `header`, `main` und `nav`.
+
+Geprüft wird das ab jetzt mit — die Kontrastmessung überspringt Flächen mit
+Farbverlauf, weil deren Grundfarbe nirgends als einzelner Wert steht und Raten
+schlechter wäre als Nichtprüfen. Der Tabulator erreicht 20 Stationen, alle
+sichtbar umrandet.
 
 ## Schwierigkeitskurve
 
@@ -148,6 +178,11 @@ sechs Millionen, ihr Marktanteil liegt bei 20–28 statt 15 Prozent — und
 „Weggeschnappt" kommt an **13 %** der Tage vor. Weil ein funktionierender
 Gegner den erreichbaren Marktanteil deckelt, sind die Siegschwellen
 entsprechend nachgezogen worden: 50 / 58 / 63 statt 55 / 65 / 70 Prozent.
+
+Weil die Konkurrenz nun wieder Geld hat, baut sie auch wieder aus — gemessen
+über 6 × 45 Tage 29 Mal, also etwa alle neun Tage einmal. Reichweite ist der
+stärkste Imagehebel im Spiel, und diese Zahl steht sonst nur im Nachbarbüro:
+Sendemast, Satellit und Starmoderator werden deshalb gemeldet.
 
 Der Fund hatte eine Folge für die Oberfläche. Im Rivalenbüro stand seit jeher
 der Hinweis, gleiches Genre zur gleichen Zeit teile die Zuschauer — beim Planen

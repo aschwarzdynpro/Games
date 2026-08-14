@@ -18,13 +18,15 @@
   <div id="start"></div>
 
   <div id="app">
-    <div id="topbar"></div>
+    <header id="topbar"></header>
     <div id="world" aria-hidden="false"></div>
-    <div id="main"><div class="wrap" id="view"></div></div>
-    <div id="bottom"></div>
+    <main id="main"><div class="wrap" id="view"></div></main>
+    <nav id="bottom" aria-label="Etagen"></nav>
   </div>
 
-  <div id="toasts"></div>
+  <!-- Meldungen erscheinen und verschwinden von selbst; ohne aria-live
+       bekommt sie ein Vorleseprogramm nie zu hören. -->
+  <div id="toasts" role="status" aria-live="polite"></div>
   <div id="modal"><div class="mbox" id="mbox"></div></div>
 
   <script type="module" src="/src/main.ts"></script>
