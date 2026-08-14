@@ -3,13 +3,14 @@
 Umbau des Einzeldatei-Spiels aus `../madtv/` zu einem richtigen Projekt.
 Der Umbau ist abgeschlossen (Etappen 1–5); seitdem wächst der **Inhalt**.
 
-Stand: **Etappe 6, zweite Runde** — Vite + TypeScript, Spielkern herausgelöst und
+Stand: **Etappe 6, dritte Runde** — Vite + TypeScript, Spielkern herausgelöst und
 testbar, Zeitschleife mit festem Zeitschritt, gezeichnete Flurszene mit
 laufender Figur, eigener Zeichensatz, installierbare und offline spielbare
-Ausgabe. Sieben Räume haben eine eigene Kulisse: Sendeplan als Steckwand,
-Filmagentur als Regalwand, Nachrichtenstudio als Redaktionstisch, Werbeagentur
-als Kundenkartei, Archiv als Regal mit Rollwagen, Produktionsstudio als
-Drehbühne, Technik als Schaltraum.
+Ausgabe. **Neun von dreizehn Räumen** haben eine eigene Kulisse: Sendeplan als
+Steckwand, Filmagentur als Regalwand, Nachrichtenstudio als Redaktionstisch,
+Werbeagentur als Kundenkartei, Archiv als Regal mit Rollwagen,
+Produktionsstudio als Drehbühne, Technik als Schaltraum, Bank als Schalter,
+Kiosk als Verkaufstresen.
 
 Die alte `../madtv/index.html` bleibt unangetastet, bis diese Fassung sie
 eingeholt hat.
@@ -35,7 +36,7 @@ src/
   core/           reines TypeScript, kein DOM, keine Timer — die Simulation
   world/          gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
   ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
-  assets/icons/   90 Symbole, je eine SVG-Datei
+  assets/icons/   95 Symbole, je eine SVG-Datei
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Balancing
@@ -61,13 +62,13 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
 | Tests | Handarbeit im Browser | 82 automatische Prüfungen |
-| Material | 107 Filme, 15 Serien, 50 Marken | 186 Filme, 25 Serien, 100 Marken, 14 Eigenproduktionen, 7 Moderatoren |
+| Material | 107 Filme, 15 Serien, 50 Marken | 186 Filme, 25 Serien, 100 Marken, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
 | Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
-| Symbole | Emoji aus der Schriftart | 90 gezeichnete Vektorsymbole aus dem eigenen Satz |
+| Symbole | Emoji aus der Schriftart | 95 gezeichnete Vektorsymbole aus dem eigenen Satz |
 | Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
 
 Ein Fehler fiel beim Umzug auf: Nach der ersten KI-Runde fehlte das Auffrischen
@@ -96,9 +97,9 @@ Gemessen mit `npm run sim` (drei Startwerte je Grad, solide spielender Bot):
 
 | Grad | Sieg um Tag | Anmerkung |
 |---|---|---|
-| leicht | 12–32 | |
-| normal | 34–48 | |
-| schwer | 46–55 | mit Satellit, Starmoderator und Exklusivpaket |
+| leicht | 12–31 | |
+| normal | 31–47 | |
+| schwer | 42–57 | mit Satellit, Starmoderator und Exklusivpaket |
 | schwer | 78+ | ohne diese Werkzeuge — und mit 20–29 Mio € totem Kapital |
 
 Der letzte Fall ist Absicht: Wer die Geldsenken des Spätspiels nicht nutzt,
@@ -456,15 +457,46 @@ ist das nicht beim Ansehen, sondern durch `tests/icons.test.ts`: «lässt keine
 Datei ungenutzt liegen». Beide stehen jetzt in den Überschriften des
 Schaltfelds, wo sie hingehören.
 
+### Dritte Runde: Schalter und Verkaufstresen
+
+Beide Räume haben eines gemeinsam: Es geht um **Besitzwechsel**. Etwas
+wandert von der einen Seite des Tresens auf die andere. Genau das zeigen sie
+jetzt auch.
+
+**Bank als Schalter.** Oben das Kassenfenster mit drei Geldbündeln, unten die
+eigene Aktentasche. Ein Bündel in die Tasche ziehen heißt Kredit aufnehmen —
+und weil Geld in beide Richtungen fließt, erscheinen in der Tasche dieselben
+Bündel zum Zurückschieben, sobald Kredit offen ist. **Die Stapelhöhe ist der
+Betrag**: zwei Scheine für 100.000, fünf für eine halbe Million.
+
+Dazwischen liegt die Kreditlinie als Balken, darunter der Kontoauszug als
+Streifen aus dem Nadeldrucker, samt Perforation zum Abreißen. Das ist der
+einzige Ort im Spiel, an dem Zahlen auf Papier statt auf einem Bildschirm
+stehen — hier passt es.
+
+**Kiosk als Verkaufstresen.** Die Geschenke liegen in einer Vitrine, jedes mit
+einem Preisschild am Faden, darunter die Holzkante des Tresens und die eigene
+Tasche. Gekauftes bleibt sichtbar darin liegen, bis man es oben bei Betty
+überreicht.
+
+Eine Regel, die vorher in einer Fußnote stand, steht jetzt an der Ware: Ein
+teures Geschenk verpufft, wenn Betty einen noch nicht mag. Stücke, für die es
+zu früh ist, tragen die Marke **«wirkt erst ab 38»** direkt im Regal — man
+sieht beim Hinschauen, was sich heute lohnt und was nicht.
+
+**Material:** 7 → 12 Geschenke, von der handgeschriebenen Karte für 400 € bis
+zur Reise nach Venedig. Die Lücke zwischen Pralinenschachtel und Goldkette war
+vorher so groß, dass es im mittleren Spiel nichts Sinnvolles zu kaufen gab.
+
 ## Was als Nächstes läge
 
-Es fehlen noch sechs Räume: Bank, Chefbüro, Bettys Büro, Kiosk und die beiden
-Konkurrenzbüros. Die vier letzten sind Räume mit *Personen* darin — dort wird
-die Kulisse ohne die Figuren dahinter halb leer bleiben. Deshalb läuft es
-danach auf das Dritte hinaus: Betty, die auf dein Programm reagiert statt nur
-auf Geschenke; ein Herr Raffer, der bei drei schlechten Abenden persönlich
-wird; und eine Konkurrenz, die dir sichtbar Filme wegkauft, statt es still zu
-tun.
+Es fehlen noch vier Räume — und alle vier sind Räume mit *Personen* darin:
+Chefbüro, Bettys Büro und die beiden Konkurrenzbüros. Eine Kulisse ohne die
+Figuren dahinter bliebe dort halb leer. Deshalb kommt als Nächstes der dritte
+Strang: Betty, die auf dein Programm reagiert statt nur auf Geschenke; ein
+Herr Raffer, der bei drei schlechten Abenden in Folge persönlich wird; und eine
+Konkurrenz, die dir sichtbar Filme wegkauft, statt es still zu tun. Die Räume
+entstehen dann zusammen mit den Figuren, die darin sitzen.
 
 Die alte `../madtv/index.html` bleibt weiterhin unangetastet.
 

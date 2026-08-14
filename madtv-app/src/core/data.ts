@@ -520,6 +520,11 @@ export const GIFTS: readonly Gift[] = [
   { id: 'pelz',   name: 'Pelzmantel',        cost: 210_000,   love: 18, ico: 'gsh-pelz', min: 45 },
   { id: 'sport',  name: 'Sportwagen',        cost: 600_000,   love: 26, ico: 'gsh-auto', min: 60 },
   { id: 'ring',   name: 'Diamantring',       cost: 1_400_000, love: 40, ico: 'gsh-ring', min: 78 },
+  { id: 'karte',  name: 'Handgeschriebene Karte', cost: 400,   love: 1,  ico: 'gsh-karte', min: 0 },
+  { id: 'buch',   name: 'Gedichtband, signiert',  cost: 14_000, love: 5, ico: 'gsh-buch', min: 8 },
+  { id: 'platte', name: 'Schallplatte von 1962',  cost: 38_000, love: 8, ico: 'gsh-platte', min: 22 },
+  { id: 'uhr',    name: 'Armbanduhr in Gold',     cost: 130_000, love: 14, ico: 'gsh-uhr', min: 38 },
+  { id: 'reise',  name: 'Reise nach Venedig',     cost: 340_000, love: 22, ico: 'gsh-reise', min: 52 },
 ];
 
 /* ─────────── Etagen, Index 0 = unten ─────────── */

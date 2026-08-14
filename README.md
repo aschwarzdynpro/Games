@@ -34,12 +34,14 @@ jetzt 86 selbst gezeichnete Vektorsymbole in einem gemeinsamen Raster. Weil sie
 `currentColor` benutzen, erben sie die Farbe ihrer Umgebung — dasselbe Herz ist
 in der Kopfzeile rot und in der Tabelle grau.
 
-Seit der Umbau steht, wächst der Inhalt. Sieben Räume haben inzwischen eine
-eigene Kulisse: Die Werbeagentur ist eine Kundenkartei mit Koffer, das Archiv
-eine Regalwand mit Rollwagen, das Produktionsstudio eine Drehbühne mit
-Scheinwerfern und Filmklappe, die Technik ein Schaltraum mit Zeigerinstrument
-und Kippschaltern. Der Fundus ist auf 186 Filme, 25 Serien, 100 Werbekunden,
-14 Eigenproduktionen und 7 Moderatoren gewachsen.
+Seit der Umbau steht, wächst der Inhalt. Neun von dreizehn Räumen haben
+inzwischen eine eigene Kulisse: Die Werbeagentur ist eine Kundenkartei mit
+Koffer, das Archiv eine Regalwand mit Rollwagen, das Produktionsstudio eine
+Drehbühne mit Scheinwerfern und Filmklappe, die Technik ein Schaltraum mit
+Zeigerinstrument und Kippschaltern, die Bank ein Schalter, über den Geldbündel
+in beide Richtungen wandern, der Kiosk ein Verkaufstresen mit Vitrine. Der
+Fundus ist auf 186 Filme, 25 Serien, 100 Werbekunden, 14 Eigenproduktionen,
+7 Moderatoren und 12 Geschenke gewachsen.
 
 Es gibt zwei Ausgabeformen: `npm run build` erzeugt einen Ordner, der sich
 installieren lässt und nach dem ersten Besuch auch ohne Netz läuft;

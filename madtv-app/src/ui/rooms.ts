@@ -697,31 +697,71 @@ function technik(): string {
 
 /* ─────────── Bank ─────────── */
 
+/** Ein Geldbündel. Die Höhe des Stapels steht für den Betrag. */
+function buendel(v: number, art: 'schein' | 'tilgung', geht: boolean): string {
+  const scheine = v >= 500_000 ? 5 : v >= 250_000 ? 3 : 2;
+  return `<div class="buendel${geht ? '' : ' gesperrt'}" ` +
+    (geht ? `data-drag="${art}" data-v="${v}" data-act="${art === 'schein' ? 'loan' : 'repay'}" ` +
+      'role="button" tabindex="0" ' : 'aria-disabled="true" ') +
+    `title="${moneyShort(v)} ${art === 'schein' ? 'aufnehmen' : 'tilgen'}">` +
+    '<div class="bue-stapel">' + '<i></i>'.repeat(scheine) + '</div>' +
+    `<div class="bue-wert">${moneyShort(v)}</div></div>`;
+}
+
 function bank(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('flr-bank', 'Nordsee-Bank', 'Kredit, Zinsen und ernste Blicke');
-  h += '<div class="grid3" style="margin-bottom:10px">' +
-    `<div class="kpi"><div class="k">Konto</div><div class="v ${p.money < 0 ? 'bad' : 'ok'}">${moneyShort(p.money)}</div></div>` +
-    `<div class="kpi"><div class="k">Kredit</div><div class="v">${moneyShort(p.credit)}</div><div class="d">0,6% Tageszins</div></div>` +
-    `<div class="kpi"><div class="k">Tageszins</div><div class="v">${moneyShort(Math.round(p.credit * 0.006))}</div></div></div>`;
-  h += '<div class="card"><h3>Kredit</h3><div class="btnrow">' +
-    [100_000, 250_000, 500_000].map((v) =>
-      `<button class="btn" data-act="loan" data-v="${v}" ${p.credit + v > MAX_CREDIT ? 'disabled' : ''}>` +
-      `+${moneyShort(v)} aufnehmen</button>`).join('') +
-    '</div><div class="btnrow" style="margin-top:8px">' +
-    [100_000, 250_000, 500_000].map((v) =>
-      `<button class="btn ghost" data-act="repay" data-v="${v}" ${p.credit < v || p.money < v ? 'disabled' : ''}>` +
-      `−${moneyShort(v)} tilgen</button>`).join('') +
-    `</div><div class="hint">Kreditrahmen ${moneyShort(MAX_CREDIT)}. Unter −1 Mio € auf dem Konto ist der Sender weg.</div></div>`;
+  const zins = Math.round(p.credit * 0.006);
+  const frei = MAX_CREDIT - p.credit;
+  const stufen = [100_000, 250_000, 500_000];
 
-  h += '<div class="card"><h3>Bilanz seit Sendestart</h3><table class="tbl">' +
+  let h = '<div class="room">' + head('flr-bank', 'Nordsee-Bank',
+    'Schalter — Bündel über den Tresen schieben, in beide Richtungen');
+
+  h += '<div class="tresen">';
+
+  /* Oben: das Schalterfenster mit den Bündeln der Bank */
+  h += '<div class="schalter">' +
+    `<div class="sch-schild">${icon('flr-bank')} Nordsee-Bank · Kasse 1</div>` +
+    '<div class="sch-fenster">' +
+    stufen.map((v) => buendel(v, 'schein', p.credit + v <= MAX_CREDIT)).join('') +
+    '</div>' +
+    `<div class="sch-note">Kreditrahmen ${moneyShort(MAX_CREDIT)} · ` +
+    `noch ${moneyShort(frei)} frei · 0,6 % Tageszins</div></div>`;
+
+  /* Die Kreditlinie als Balken zwischen Schalter und Tasche */
+  const anteil = (p.credit / MAX_CREDIT) * 100;
+  h += '<div class="linie"><div class="li-kopf"><span>Ausgeschöpft</span>' +
+    `<b class="${anteil > 75 ? 'bad' : anteil > 40 ? 'warn' : ''}">${moneyShort(p.credit)}</b></div>` +
+    `<div class="li-balken"><i style="width:${anteil.toFixed(1)}%"></i></div>` +
+    `<div class="li-fuss"><span>Zins heute ${moneyShort(zins)}</span>` +
+    `<span>Konto <b class="${p.money < 0 ? 'bad' : 'ok'}">${moneyShort(p.money)}</b></span></div></div>`;
+
+  /* Unten: die eigene Aktentasche, zugleich Ablageziel */
+  h += '<div class="tasche" data-drop="tasche">' +
+    `<div class="ta-kopf">${icon('grp-ang')} Deine Aktentasche` +
+    '<span>Bündel hierher ziehen = aufnehmen</span></div>' +
+    '<div class="ta-fach">' +
+    (p.credit > 0
+      ? stufen.map((v) => buendel(v, 'tilgung', p.credit >= v && p.money >= v)).join('')
+      : '<div class="ta-leer">Kein Kredit offen — nichts zu tilgen.</div>') +
+    '</div>' +
+    '<div class="ta-note">Zum Tilgen ein Bündel zurück auf den Schalter schieben.</div></div>';
+
+  h += '<div class="tresen-kante" data-drop="schalter"></div></div>';
+
+  h += `<div class="hint">Unter ${moneyShort(-1_000_000)} auf dem Konto ist der Sender weg. ` +
+    'Zinsen laufen jeden Tag, auch wenn nicht gesendet wird.</div>';
+
+  /* Der Kontoauszug als Streifen aus dem Nadeldrucker */
+  h += '<div class="auszug"><div class="au-kopf">Kontoauszug · seit Sendestart</div><table class="tbl">' +
     `<tr><td>Werbeeinnahmen</td><td class="right num ok">${money(g.stats.revenue)}</td></tr>` +
     `<tr><td>Ausgaben</td><td class="right num bad">${money(g.stats.costs)}</td></tr>` +
     `<tr><td>Verträge erfüllt</td><td class="right num">${g.stats.contractsDone}</td></tr>` +
     `<tr><td>Verträge geplatzt</td><td class="right num bad">${g.stats.contractsFailed}</td></tr>` +
     `<tr><td>Lizenzen gekauft</td><td class="right num">${g.stats.filmsBought}</td></tr>` +
-    `<tr><td>Sammy Awards</td><td class="right num">${p.awards}</td></tr></table></div></div>`;
+    `<tr><td>Sammy Awards</td><td class="right num">${p.awards}</td></tr></table>` +
+    '<div class="au-riss"></div></div></div>';
   return h;
 }
 
@@ -794,10 +834,29 @@ function betty(): string {
 
 /* ─────────── Foyer & Kiosk ─────────── */
 
+/** Ein Stück in der Auslage, mit Preisschild am Faden. */
+function auslage(g: ReturnType<typeof G>, gift: typeof GIFTS[number]): string {
+  const p = g.player;
+  const bezahlbar = p.money >= gift.cost;
+  // Ein teures Geschenk zu früh überreicht verpufft — das gehört ins Regal,
+  // nicht in eine Fußnote.
+  const zuFrueh = gift.min > 0 && p.love < gift.min;
+  return `<div class="ware${bezahlbar ? '' : ' teuer'}${zuFrueh ? ' zufrueh' : ''}" ` +
+    `data-drag="ware" data-g="${gift.id}" data-act="buygift" role="button" tabindex="0" ` +
+    `title="${esc(gift.name)} — ${money(gift.cost)}">` +
+    `<div class="wa-ico">${icon(gift.ico)}</div>` +
+    `<div class="wa-name">${esc(gift.name)}</div>` +
+    `<div class="wa-herz">+${gift.love} ${icon('ui-herz')}</div>` +
+    `<div class="wa-schild"><i></i><span class="${bezahlbar ? '' : 'bad'}">${moneyShort(gift.cost)}</span></div>` +
+    (zuFrueh ? `<div class="wa-warn">wirkt erst ab ${gift.min}</div>` : '') +
+    '</div>';
+}
+
 function foyer(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('flr-foyer', 'Foyer & Kiosk', 'Geschenke, Klatsch und das Türschild-Verzeichnis');
+  let h = '<div class="room">' + head('flr-foyer', 'Foyer & Kiosk',
+    'Verkaufstresen — Ware in die Tasche legen, überreicht wird oben bei Betty');
 
   if (g.pendingTerror) {
     const cur = g.terrorSign;
@@ -811,15 +870,25 @@ function foyer(): string {
       '</div></div>';
   }
 
-  h += '<div class="card"><h3>Kiosk — Geschenke für Betty</h3><div class="list">';
-  GIFTS.forEach((gift) => {
-    h += `<div class="item"><div style="flex:1"><div class="t">${icon(gift.ico)} ${esc(gift.name)}</div>` +
-      `<div class="m">+${gift.love} Zuneigung${gift.min ? ` · erst ab ${gift.min} ${icon('ui-herz')} sinnvoll` : ''}</div></div>` +
-      `<div class="r"><div style="font-weight:700">${moneyShort(gift.cost)}</div>` +
-      `<button class="btn sm" style="margin-top:4px" data-act="buygift" data-g="${gift.id}" ` +
-      `${p.money < gift.cost ? 'disabled' : ''}>Kaufen</button></div></div>`;
-  });
-  h += '</div><div class="hint">Gekaufte Geschenke landen in deiner Tasche — überreichen musst du sie oben bei Betty.</div></div></div>';
+  h += '<div class="kiosk">';
+  h += `<div class="ki-schild">Kiosk im Foyer<span>Zuneigung ${Math.round(p.love)} ${icon('ui-herz')}</span></div>`;
+  h += '<div class="vitrine" data-scroll>' +
+    [...GIFTS].sort((a, b) => a.cost - b.cost).map((gift) => auslage(g, gift)).join('') +
+    '</div>';
+  h += '<div class="theke"></div>';
+
+  // Die Tasche liegt sichtbar auf dem Tresen und ist zugleich das Ablageziel
+  h += '<div class="beutel" data-drop="beutel">' +
+    `<div class="be-kopf">${icon('ui-karton')} Deine Tasche` +
+    `<span>${g.gifts.length ? `${g.gifts.length} Stück dabei` : 'leer'}</span></div>`;
+  h += g.gifts.length
+    ? '<div class="be-inhalt">' + g.gifts.map((x) =>
+        `<span class="be-stueck" title="${esc(x.name)}">${icon(x.ico)}</span>`).join('') + '</div>'
+    : '<div class="be-inhalt leer">Ware hierher ziehen oder anklicken.</div>';
+  h += '</div></div>';
+
+  h += '<div class="hint">Gekaufte Geschenke landen in der Tasche — überreichen musst du sie oben bei Betty. ' +
+    'Zu früh überreicht verpufft ein teures Stück: Der Sportwagen wirkt erst, wenn sie dich ohnehin schon mag.</div></div>';
   return h;
 }
 

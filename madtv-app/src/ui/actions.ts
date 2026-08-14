@@ -670,6 +670,31 @@ registerDrag('skript', {
   },
 });
 
+/* An der Bank geht das Geld in beide Richtungen über den Tresen. */
+registerDrag('schein', {
+  accepts: (target) => target.dataset.drop === 'tasche',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'tasche') return;
+    runAction('loan', { v: card.dataset.v });
+  },
+});
+
+registerDrag('tilgung', {
+  accepts: (target) => target.dataset.drop === 'schalter',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'schalter') return;
+    runAction('repay', { v: card.dataset.v });
+  },
+});
+
+registerDrag('ware', {
+  accepts: (target) => target.dataset.drop === 'beutel',
+  drop: (target, card) => {
+    if (target?.dataset.drop !== 'beutel') return;
+    runAction('buygift', { g: card.dataset.g });
+  },
+});
+
 registerDrag('band', {
   accepts: (target) => target.dataset.drop === 'wagen',
   drop: (target, card) => {
