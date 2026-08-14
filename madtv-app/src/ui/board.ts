@@ -100,6 +100,44 @@ function adCard(
   );
 }
 
+/* ─────────── Gegenüber ─────────── */
+
+/**
+ * Was zur selben Halbstunde bei der Konkurrenz läuft.
+ *
+ * Im Rivalenbüro stand der Hinweis schon lange — gleiches Genre zur gleichen
+ * Zeit teilt die Zuschauer —, nur sah man beim Planen nicht, wogegen man
+ * plant. Die Spalte steht deshalb direkt neben dem Sendeplan und markiert die
+ * Zeile, in der man dem Nachbarn ins selbe Genre läuft.
+ */
+function gegenspalte(day: number, meine: Slot[]): string {
+  const g = G();
+  // Gelesen, nicht angelegt: getDay() würde den Tag erzeugen, und Zeichnen
+  // soll den Spielstand nicht verändern.
+  const rivalen = g.ch.slice(1).map((c, n) => ({ ch: c, slots: c.sched[day], nr: n + 1 }));
+  let out = '';
+
+  for (let i = 0; i < SLOTS; i++) {
+    const zeilen = rivalen.map(({ ch, slots, nr }) => {
+      const prog = slots[i]?.prog;
+      if (!prog) {
+        return `<div class="gg-z k${nr}" title="${esc(ch.name)}: Testbild">` +
+          `<b>${esc(ch.name.slice(0, 2))}</b><span class="dim">Testbild</span></div>`;
+      }
+      const gd = GENRES[prog.genre];
+      const clash = meine[i]?.prog?.genre === prog.genre;
+      return `<div class="gg-z k${nr}${clash ? ' clash' : ''}" ` +
+        `title="${esc(ch.name)}: ${esc(prog.title)} (${gd.name})` +
+        `${clash ? ' — dasselbe Genre wie bei dir' : ''}">` +
+        `<b>${esc(ch.name.slice(0, 2))}</b>${icon(gd.ico)}<span>${esc(prog.title)}</span></div>`;
+    }).join('');
+
+    out += `<div class="gegen" style="grid-row:${i + 1};grid-column:4" ` +
+      `aria-label="${slotLabel(i)}, Konkurrenz">${zeilen}</div>`;
+  }
+  return out;
+}
+
 /* ─────────── Tafel ─────────── */
 
 export function renderBoard(day: number): string {
@@ -199,6 +237,8 @@ export function renderBoard(day: number): string {
       `${aired ? '' : 'role="button" tabindex="0"'} aria-label="${slotLabel(i)}, Werbung">${inner}</div>`;
   }
 
+  cells += gegenspalte(day, slots);
+
   // Ablagen
   const used = new Set(slots.filter((s) => s.prog).map((s) => s.prog!.uid));
   const shelf = [...p.licences]
@@ -225,6 +265,8 @@ export function renderBoard(day: number): string {
 
   return (
     `<div class="board" data-board-day="${day}">` +
+    '<div class="board-kopf"><span></span><span>Sendeplatz</span><span>Werbung</span>' +
+    `<span>Gegenüber <i>${esc(g.ch[1]!.name)} · ${esc(g.ch[2]!.name)}</i></span></div>` +
     `<div class="board-grid" data-scroll>${cells}</div>` +
     '<div class="board-foot">' +
     (frei
