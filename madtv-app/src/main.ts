@@ -1,9 +1,9 @@
 /**
  * Einstiegspunkt.
  *
- * Verdrahtet die Module miteinander und startet den Startbildschirm.
- * Der Spielkern unter src/core kennt keines dieser Module — er läuft auch
- * ohne Browser, siehe tests/.
+ * Verdrahtet Kern, Oberfläche und Weltschicht miteinander und startet den
+ * Startbildschirm. Der Spielkern unter src/core kennt keines dieser Module —
+ * er läuft auch ohne Browser, siehe tests/.
  */
 import './style.css';
 
@@ -14,6 +14,8 @@ import { renderAll, renderTop, renderView } from './ui/views';
 import { goFloor, leaveRoom, togglePause, wireLoop } from './ui/loop';
 import { closeDialog, modalOpen } from './ui/overlay';
 import { showEnd, showStart, wireScreens } from './ui/screens';
+import { mountWorld } from './world/world';
+import { el } from './ui/dom';
 
 wireLoop({
   render: () => { renderView(); renderTop(); },
@@ -22,7 +24,21 @@ wireLoop({
 });
 
 wireScreens({
-  gameStarted: () => renderAll(),
+  gameStarted: () => {
+    mountWorld(el('world'), {
+      floor: () => S().floor,
+      room: () => S().room,
+      travel: () => {
+        const s = S();
+        return { busy: s.elevBusy, total: s.elevTotal, target: s.elevTarget };
+      },
+      // Tür im Flur: betritt den Raum der Etage, in der die Figur steht
+      onDoor: () => goFloor(S().floor),
+      // Fahrstuhl: zurück in die Etagenübersicht
+      onLift: () => leaveRoom(),
+    });
+    renderAll();
+  },
 });
 
 /* ─────────── Tastatur ─────────── */

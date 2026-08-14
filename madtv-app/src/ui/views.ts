@@ -110,14 +110,11 @@ function viewElevator(): string {
 function viewTower(): string {
   const g = G();
   const s = S();
-  const cabTop = (FLOORS.length - 1 - s.floor) * 46;
 
   let h = '<div class="room">';
   h += '<div class="roomhead"><div class="ico" aria-hidden="true">🏢</div><div><h2>Sendehochhaus</h2>' +
     '<p>Etage wählen — der Fahrstuhl braucht seine Zeit</p></div>' +
     `<div class="backbtn" style="pointer-events:none">Etage ${s.floor + 1}</div></div>`;
-  h += '<div class="tower"><div class="shaft" aria-hidden="true"><div class="rail"></div>' +
-    `<div class="cab${s.elevBusy > 0 ? ' moving' : ''}" style="top:${cabTop + 4}px"><div class="dot"></div></div></div>`;
   h += '<div class="floors">';
 
   for (let i = FLOORS.length - 1; i >= 0; i--) {
@@ -147,8 +144,9 @@ function viewTower(): string {
       `<div class="sub">${esc(sub)}</div></div>`;
   }
 
-  h += '</div></div>';
-  h += '<div class="hint">Tipp: Über die Leiste unten springst du direkt in einen Raum — der Fahrstuhl fährt trotzdem mit.</div>';
+  h += '</div>';
+  h += '<div class="hint">Oben siehst du den Flur, in dem du gerade stehst. Ein Klick auf die Tür führt in ' +
+    'den Raum, ein Klick auf den Fahrstuhl bringt dich hierher zurück.</div>';
   return h + '</div>';
 }
 
