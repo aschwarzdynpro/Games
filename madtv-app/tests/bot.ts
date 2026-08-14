@@ -7,10 +7,10 @@
  * ohne dass jemand von Hand vierzig Spieltage klickt.
  */
 import {
-  BLOCKS, GIFTS, GROUPS, MAX_CONTRACTS, MAX_TRANSMITTERS, PRODUCTIONS, RESSORTS, STARS,
-  PRICE_SATELLITE, PRICE_TRANSMITTER, STUDIO_RENT,
-  airRemainingBlocks, buyLicence, createGame, endOfDay, estimateBlock, getDay, progScore,
-  reachOf,
+  SLOTS, BLOCKS, GIFTS, GROUPS, MAX_CONTRACTS, MAX_TRANSMITTERS, PRODUCTIONS, RESSORTS, STARS,
+  PRICE_SATELLITE, PRICE_TRANSMITTER, STUDIO_RENT, adSlotOf,
+  airRemainingBlocks, buyLicence, createGame, endOfDay, estimateBlock, getDay, placeProgramme,
+  progScore, reachOf,
 } from '../src/core';
 import type { DifficultyId, Game } from '../src/core';
 
@@ -47,12 +47,19 @@ function playDay(g: Game, o: BotOptions): void {
   fresh.sort((a, b) => b.weight - a.weight);
   P.newsShow = fresh.slice(0, 3);
 
-  // Lizenzen nach Preis-Leistung
+  // Lizenzen nach Preis-Leistung. Gezählt wird Sendezeit, nicht Titel: Der
+  // Abend hat 14 Halbstunden, und ein Magazin füllt eine davon.
+  const covered = () => P.licences.reduce((a, l) => a + l.lenSlots, 0);
   let guard = 0;
-  while (P.licences.length < 10 && P.money > 260_000 && guard++ < 20) {
-    const afford = g.market.filter((m) => m.price <= P.money * 0.2);
+  while (covered() < SLOTS + 6 && guard++ < 25) {
+    // Solange der Abend nicht einmal gefüllt ist, wird auch die Reserve
+    // angegriffen — Testbild kostet mehr Marktanteil als jeder Film Geld.
+    const floor = covered() < SLOTS ? 120_000 : 260_000;
+    if (P.money <= floor) break;
+    const afford = g.market.filter((m) => m.price <= P.money * 0.3);
     if (!afford.length) break;
-    afford.sort((a, b) => b.qual / b.price - a.qual / a.price);
+    // Preis je Sendeminute statt Preis je Titel
+    afford.sort((a, b) => (b.qual * b.lenSlots) / b.price - (a.qual * a.lenSlots) / a.price);
     buyLicence(g, P, afford[0]!);
   }
 
@@ -68,20 +75,24 @@ function playDay(g: Game, o: BotOptions): void {
     g.production = { def, left: def.days, no: g.productionNo };
   }
 
-  // Sendeplan
+  // Sendeplan: von vorn nach hinten belegen, Sendungen sind verschieden lang
   const slots = getDay(P, g.day);
   const used = new Set<number>();
-  for (let b = 0; b < BLOCKS; b++) {
-    if (slots[b]!.aired) continue;
-    const avail = P.licences.filter((l) => !used.has(l.uid));
-    if (!avail.length) break;
-    avail.sort((x, y) => progScore(g, P, y, b) - progScore(g, P, x, b));
-    slots[b]!.prog = avail[0]!;
-    used.add(avail[0]!.uid);
+  let at = 0;
+  while (at < SLOTS) {
+    const s = slots[at]!;
+    if (s.aired || (s.prog && !s.start)) { at++; continue; }
+    const avail = P.licences.filter((l) => !used.has(l.uid) && at + l.lenSlots <= SLOTS);
+    if (!avail.length) { at++; continue; }
+    avail.sort((x, y) => progScore(g, P, y, at) - progScore(g, P, x, at));
+    const pick = avail[0]!;
+    placeProgramme(slots, at, pick);
+    used.add(pick.uid);
+    at += pick.lenSlots;
   }
 
   // Werbeverträge, die die eigene Primetime auch trägt
-  const est = estimateBlock(g, g.day, 3).total;
+  const est = estimateBlock(g, g.day, 5).total;
   while (P.contracts.length < MAX_CONTRACTS) {
     const fit = g.adMarket.filter((c) => {
       const reachable = c.group ? est * GROUPS[c.gi]!.share * 1.1 : est;
@@ -96,11 +107,12 @@ function playDay(g: Game, o: BotOptions): void {
   P.contracts.forEach((ct) => {
     let need = ct.spots - ct.done;
     for (let b = BLOCKS - 1; b >= 0 && need > 0; b--) {
-      if (slots[b]!.aired || slots[b]!.ad) continue;
-      const e = estimateBlock(g, g.day, b);
+      const slot = adSlotOf(b);
+      if (slots[slot]!.aired || slots[slot]!.ad) continue;
+      const e = estimateBlock(g, g.day, slot);
       const reached = ct.group ? e.groups[ct.gi]! : e.total;
       if (reached >= ct.minAud) {
-        slots[b]!.ad = { id: ct.id, brand: ct.brand };
+        slots[slot]!.ad = { id: ct.id, brand: ct.brand };
         need--;
       }
     }

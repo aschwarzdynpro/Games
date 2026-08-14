@@ -20,8 +20,14 @@ Handarbeit.
 Über den Panels läuft inzwischen eine gezeichnete Flurszene: Fahrstuhl mit
 Etagenzähler, Zimmertür mit Schild, und eine Figur, die den Weg tatsächlich
 abläuft. Die Fahrzeit, die das Spiel schon immer in Spielminuten berechnet hat,
-ist damit sichtbar geworden. Als Nächstes bekommen die Büros selbst eine
-Grafik samt Drag & Drop.
+ist damit sichtbar geworden.
+
+Die Büros haben inzwischen selbst eine Grafik: Der Sendeplan ist eine Steckwand
+im Halbstundenraster, die Filmagentur eine Regalwand, in der die Schachtelbreite
+die Sendelänge zeigt, das Nachrichtenstudio ein Redaktionstisch mit
+Teleprompter. Überall wird gezogen statt ausgewählt. Sendungen dauern jetzt
+30 Minuten bis 3 Stunden, Serien kauft man als Staffel mit 8 bis 24 Folgen —
+Sendezeit ist damit die eigentliche Ware.
 
 `npm run build:single` erzeugt weiterhin eine selbstständige HTML-Datei — die
 Einzeldatei bleibt also als Ausgabeformat erhalten, nur nicht mehr als

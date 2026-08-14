@@ -18,10 +18,12 @@ export {
   reachOf, buyLicence, removeFromSchedules, refreshMarket, refreshAdMarket,
   rollNews, makeContract, makeNews, initTrends, driftTrends, trendOf,
   nextUid, emit, toast, dialog, sfx,
+  placeProgramme, clearProgramme, startOf, fits, lengthOf,
 } from './state';
 export type { NewGameOpts } from './state';
 export {
   newsAttraction, newsAge, blockAttraction, estimateBlock, airBlock, airRemainingBlocks,
+  programmeAudience,
 } from './ratings';
 export {
   endOfDay, dailyCosts, updateBetty, sammyAwards, bossCheck, randomEvent,

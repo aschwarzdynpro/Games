@@ -6,9 +6,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  BLOCKS, BLOCK_H, DIFFS, GENRES, GROUPS, NEWS_COST, POP, RESSORTS,
-  airBlock, airRemainingBlocks, buildCatalog, createGame, dailyCosts, deserialize,
-  endOfDay, estimateBlock, getDay, newsAttraction, reachOf, serialize,
+  SLOTS, DIFFS, GENRES, GROUPS, NEWS_COST, POP, RESSORTS, slotHour,
+  airBlock, airRemainingBlocks, buildCatalog, createGame, dailyCosts,
+  deserialize, endOfDay, estimateBlock, getDay, newsAttraction, placeProgramme,
+  reachOf, serialize,
 } from '../src/core';
 import { Rng, hash } from '../src/core';
 
@@ -61,7 +62,12 @@ describe('Partie ist reproduzierbar', () => {
       const g = createGame({ seed: 4242, diff: 'normal' });
       for (let d = 0; d < 10; d++) {
         const slots = getDay(g.player, g.day);
-        g.player.licences.forEach((l, i) => { if (i < BLOCKS) slots[i]!.prog = l; });
+        let at = 0;
+        for (const l of g.player.licences) {
+          if (at + l.lenSlots > SLOTS) break;
+          placeProgramme(slots, at, l);
+          at += l.lenSlots;
+        }
         airRemainingBlocks(g, g.day);
         endOfDay(g);
         g.events.length = 0;
@@ -102,7 +108,7 @@ describe('Katalog', () => {
 describe('Quoten', () => {
   it('verteilt niemals mehr Zuschauer als die Zielgruppe hergibt', () => {
     const g = createGame({ seed: 5, diff: 'normal' });
-    for (let b = 0; b < BLOCKS; b++) {
+    for (let b = 0; b < SLOTS; b++) {
       airBlock(g, g.day, b);
       const potential = GROUPS.reduce((a, grp) => a + POP * grp.share * grp.act[b]!, 0);
       const total = g.ch.reduce((a, c) => a + c.todayAud[b]!, 0);
@@ -113,9 +119,9 @@ describe('Quoten', () => {
 
   it('lässt einen Teil des Publikums abschalten', () => {
     const g = createGame({ seed: 6, diff: 'normal' });
-    airBlock(g, g.day, 3);
-    const potential = GROUPS.reduce((a, grp) => a + POP * grp.share * grp.act[3]!, 0);
-    const total = g.ch.reduce((a, c) => a + c.todayAud[3]!, 0);
+    airBlock(g, g.day, 5);
+    const potential = GROUPS.reduce((a, grp) => a + POP * grp.share * grp.act[5]!, 0);
+    const total = g.ch.reduce((a, c) => a + c.todayAud[5]!, 0);
     expect(total / potential).toBeLessThan(0.85);
   });
 
@@ -125,18 +131,18 @@ describe('Quoten', () => {
     const best = sorted[0]!;
     const worst = sorted[sorted.length - 1]!;
     if (best.uid === worst.uid) return;
-    const hi = estimateBlock(g, g.day, 3, best).total;
-    const lo = estimateBlock(g, g.day, 3, worst).total;
+    const hi = estimateBlock(g, g.day, 5, best).total;
+    const lo = estimateBlock(g, g.day, 5, worst).total;
     expect(hi).toBeGreaterThan(lo);
   });
 
   it('bestraft einen Film ab 18 zur frühen Sendezeit', () => {
     const g = createGame({ seed: 8, diff: 'normal' });
     const adult = g.catalog.find((l) => l.fsk >= 18)!;
-    const early = estimateBlock(g, g.day, 0, adult).total;   // 18 Uhr
-    const late = estimateBlock(g, g.day, 5, adult).total;    // 23 Uhr
-    expect(BLOCK_H[0]).toBe(18);
-    expect(BLOCK_H[5]).toBe(23);
+    const early = estimateBlock(g, g.day, 0, adult).total;    // 18:00
+    const late = estimateBlock(g, g.day, 10, adult).total;   // 23:00
+    expect(slotHour(0)).toBe(18);
+    expect(slotHour(10)).toBe(23);
     // Trotz geringerer Sehbeteiligung um 23 Uhr darf die Strafe nicht verpuffen
     expect(early).toBeLessThan(late * 2.2);
   });
@@ -159,11 +165,12 @@ describe('Behobene Fehler bleiben behoben', () => {
     // Die KI muss für heute UND die Folgetage geplant haben
     for (let d = 0; d < 3; d++) {
       const rivalSlots = getDay(g.ch[1]!, g.day + d).filter((s) => s.prog).length;
-      expect(rivalSlots).toBe(BLOCKS);
+      // Der Abend darf ein, zwei Restfelder frei lassen, wenn nichts mehr passt
+      expect(rivalSlots).toBeGreaterThanOrEqual(SLOTS - 2);
     }
     const cand = g.player.licences[0]!;
-    const heute = estimateBlock(g, g.day, 3, cand).total;
-    const morgen = estimateBlock(g, g.day + 1, 3, cand).total;
+    const heute = estimateBlock(g, g.day, 5, cand).total;
+    const morgen = estimateBlock(g, g.day + 1, 5, cand).total;
     // Früher lag die Vorschau für morgen rund 55 % zu hoch
     expect(Math.abs(morgen / heute - 1)).toBeLessThan(0.15);
   });
@@ -195,24 +202,24 @@ describe('Wirtschaft', () => {
   it('zahlt einen Werbespot nur bei erreichter Mindestquote', () => {
     const g = createGame({ seed: 21, diff: 'normal' });
     const slots = getDay(g.player, g.day);
-    slots[3]!.prog = g.player.licences[0]!;
-    const est = estimateBlock(g, g.day, 3).total;
+    placeProgramme(slots, 4, g.player.licences[0]!);
+    const est = estimateBlock(g, g.day, 5).total;
 
     const leicht = { ...g.adMarket[0]!, id: 90001, minAud: Math.round(est * 0.5), spots: 3, done: 0, group: null };
     const schwer = { ...g.adMarket[0]!, id: 90002, minAud: Math.round(est * 5), spots: 3, done: 0, group: null };
     g.player.contracts = [leicht, schwer];
 
-    slots[3]!.ad = { id: leicht.id, brand: leicht.brand };
+    slots[5]!.ad = { id: leicht.id, brand: leicht.brand };
     const vorher = g.player.money;
-    airBlock(g, g.day, 3);
+    airBlock(g, g.day, 5);
     expect(leicht.done).toBe(1);
     expect(g.player.money).toBe(vorher + leicht.perSpot);
 
     const slots2 = getDay(g.player, g.day + 1);
-    slots2[3]!.prog = g.player.licences[0]!;
-    slots2[3]!.ad = { id: schwer.id, brand: schwer.brand };
+    placeProgramme(slots2, 4, g.player.licences[0]!);
+    slots2[5]!.ad = { id: schwer.id, brand: schwer.brand };
     const vorher2 = g.player.money;
-    airBlock(g, g.day + 1, 3);
+    airBlock(g, g.day + 1, 5);
     expect(schwer.done).toBe(0);
     expect(g.player.money).toBe(vorher2);
   });
@@ -270,7 +277,12 @@ describe('Spielstand', () => {
     const g = createGame({ seed: 41, diff: 'normal' });
     for (let d = 0; d < 5; d++) {
       const slots = getDay(g.player, g.day);
-      g.player.licences.forEach((l, i) => { if (i < BLOCKS) slots[i]!.prog = l; });
+      let at = 0;
+      for (const l of g.player.licences) {
+        if (at + l.lenSlots > SLOTS) break;
+        placeProgramme(slots, at, l);
+        at += l.lenSlots;
+      }
       airRemainingBlocks(g, g.day);
       endOfDay(g);
       g.events.length = 0;
@@ -286,15 +298,17 @@ describe('Spielstand', () => {
     const g = createGame({ seed: 42, diff: 'normal' });
     const slots = getDay(g.player, g.day);
     const lic = g.player.licences[0]!;
-    slots[2]!.prog = lic;
-    slots[4]!.trailer = lic;
+    placeProgramme(slots, 2, lic);
+    slots[9]!.trailer = lic;
     const loaded = deserialize(serialize(g));
     const ls = getDay(loaded.player, loaded.day);
     expect(ls[2]!.prog).not.toBeNull();
     expect(ls[2]!.prog!.uid).toBe(lic.uid);
+    expect(ls[2]!.start).toBe(true);
+    expect(ls[2]!.len).toBe(lic.lenSlots);
     // Kein Duplikat: der Sendeplatz zeigt auf genau dasselbe Objekt im Archiv
     expect(ls[2]!.prog).toBe(loaded.player.licences.find((l) => l.uid === lic.uid));
-    expect(ls[4]!.trailer!.uid).toBe(lic.uid);
+    expect(ls[9]!.trailer!.uid).toBe(lic.uid);
   });
 
   it('setzt die Partie deterministisch fort', () => {
@@ -330,7 +344,7 @@ describe('Ereignisse verlassen den Kern als Daten', () => {
     airRemainingBlocks(g, g.day);
     const kinds = new Set(g.events.map((e) => e.kind));
     expect(kinds.has('blockAired')).toBe(true);
-    expect(g.events.filter((e) => e.kind === 'blockAired')).toHaveLength(BLOCKS);
+    expect(g.events.filter((e) => e.kind === 'blockAired')).toHaveLength(SLOTS);
   });
 });
 

@@ -5,10 +5,11 @@
  * Funktionen verändert — kein Rendering, keine Timer.
  */
 import {
-  BLOCKS, BLOCK_H, GENRES, GIFTS, GROUPS, MAX_CONTRACTS, MAX_CREDIT, MAX_TRANSMITTERS,
+  SLOTS, GENRES, GIFTS, GROUPS, MAX_CONTRACTS, MAX_CREDIT, MAX_TRANSMITTERS,
   PACKAGE_COST, PRICE_SATELLITE, PRICE_TRANSMITTER, PRODUCTIONS, STARS, STUDIO_RENT,
-  buyLicence, closeAuction, copyLicence, esc, estimateBlock, getDay, money, moneyShort,
-  nextUid, removeFromSchedules, viewers,
+  buyLicence, clearProgramme, closeAuction, copyLicence, esc, estimateBlock, getDay,
+  lengthLabel, money, moneyShort, nextUid, placeProgramme, removeFromSchedules,
+  slotHour, slotLabel, trendOf, viewers,
 } from '../core';
 import type { GenreId, Licence, RessortId } from '../core';
 import { G, S, markDirty } from './session';
@@ -27,7 +28,7 @@ function slotEditable(day: number, b: number): boolean {
   const g = G();
   if (day < g.day) { toast('warn', 'Zu spät', 'Der Tag ist vorbei.'); return false; }
   if (getDay(g.player, day)[b]!.aired) {
-    toast('warn', 'Zu spät', `${String(BLOCK_H[b]).padStart(2, '0')}:00 Uhr läuft bereits.`);
+    toast('warn', 'Zu spät', `${slotLabel(b)} läuft bereits.`);
     return false;
   }
   return true;
@@ -56,30 +57,47 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     if (slots[b]!.prog) {
       items.push({ label: '⌫ Sendeplatz leeren', sub: 'Testbild senden', value: { clear: true } });
     }
+    const hour = slotHour(b);
     [...g.player.licences]
       .sort((a, x) => estimateBlock(g, day, b, x).total - estimateBlock(g, day, b, a).total)
       .forEach((l) => {
+        const passt = b + l.lenSlots <= SLOTS;
         const est = estimateBlock(g, day, b, l);
         const gd = GENRES[l.genre];
-        const warn = l.fsk >= 18 && BLOCK_H[b]! < 22 && BLOCK_H[b]! >= 6
+        const warn = l.fsk >= 18 && hour < 22 && hour >= 6
           ? ' <span class="tag b">zu früh!</span>' : '';
+        const zuLang = passt ? '' : ' <span class="tag b">passt nicht mehr</span>';
         const used = slots.some((s, i) => i !== b && s.prog?.uid === l.uid)
           ? ' <span class="tag w">läuft heute schon</span>' : '';
         items.push({
-          label: `${esc(l.title)} ${fskTag(l.fsk)}${warn}${used}`,
-          sub: `${gd.ico} ${gd.name} · Frische ${Math.round(l.fresh * 100)}% · Zuschauerwert ${l.qual}`,
+          label: `${esc(l.title)} ${fskTag(l.fsk)}${warn}${zuLang}${used}`,
+          sub: `${gd.ico} ${gd.name} · ${lengthLabel(l.lenSlots)} · ` +
+            `Frische ${Math.round(l.fresh * 100)}% · Zuschauerwert ${l.qual}`,
           right: `<b>${viewers(est.total)}</b>`,
           value: { lic: l },
         });
       });
 
     chooser(
-      `${String(BLOCK_H[b]).padStart(2, '0')}:00 Uhr — Sendung wählen`, 'Sendeplan', '📺',
+      `${slotLabel(b)} — Sendung wählen`, 'Sendeplan', '📺',
       items,
       (v) => {
         if (!slotEditable(day, b)) return;
-        if (v.clear) slots[b]!.prog = null;
-        else if (v.lic) { slots[b]!.prog = v.lic; playSfx('buy'); }
+        if (v.clear) {
+          const cur = slots[b]!.prog;
+          if (cur) clearProgramme(slots, cur.uid);
+        } else if (v.lic) {
+          if (b + v.lic.lenSlots > SLOTS) {
+            toast('warn', 'Zu lang',
+              `${lengthLabel(v.lic.lenSlots)} passen ab ${slotLabel(b)} nicht mehr in den Abend.`);
+            return;
+          }
+          const weg = placeProgramme(slots, b, v.lic).filter((w) => w.uid !== v.lic!.uid);
+          if (weg.length) {
+            toast('info', 'Umgeplant', `${weg.map((w) => `«${w.title}»`).join(', ')} zurück in den Ordner.`);
+          }
+          playSfx('buy');
+        }
       },
       { emptyText: 'Dein Archiv ist leer. Kauf erst Lizenzen in der Filmagentur.', pause: !g.opt.timePressure },
     );
@@ -110,17 +128,17 @@ const ACTIONS: Record<string, (d: Data) => void> = {
       });
     });
     slots.forEach((s, i) => {
-      if (i <= b || !s.prog) return;
+      if (i <= b || !s.prog || !s.start) return;
       if (items.some((x) => x.value.trail?.uid === s.prog!.uid)) return;
       items.push({
         label: `🎞️ Trailer: ${esc(s.prog.title)}`,
-        sub: `Bewirbt die Sendung um ${String(BLOCK_H[i]).padStart(2, '0')}:00 Uhr (+13% Zuschauer)`,
+        sub: `Bewirbt die Sendung um ${slotLabel(i)} (+13% Zuschauer)`,
         value: { trail: s.prog },
       });
     });
 
     chooser(
-      `${String(BLOCK_H[b]).padStart(2, '0')}:00 Uhr — Werbeblock`, 'Sendeplan', '📣',
+      `${slotLabel(b)} — Werbeblock`, 'Sendeplan', '📣',
       items,
       (v) => {
         if (!slotEditable(day, b)) return;
@@ -146,7 +164,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     const all = s.res.total + rivals.reduce((a, r) => a + r.aud, 0);
     const gmax = Math.max(...s.res.groups);
 
-    dialog('📊', `${String(BLOCK_H[b]).padStart(2, '0')}:00 Uhr — ${s.prog ? s.prog.title : 'Testbild'}`,
+    dialog('📊', `${slotLabel(b)} — ${s.prog ? s.prog.title : 'Testbild'}`,
       'Zuschauerforschung',
       `<b>${viewers(s.res.total)}</b> Zuschauer · Marktanteil ` +
       `${((s.res.total / (all || 1)) * 100).toFixed(1).replace('.', ',')}%<br><br>` +
@@ -165,14 +183,15 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     const src = getDay(g.player, day - 1);
     const dst = getDay(g.player, day);
     let n = 0;
-    for (let b = 0; b < BLOCKS; b++) {
-      const from = src[b]!.prog;
-      if (dst[b]!.aired || !from) continue;
-      if (!g.player.licences.some((l) => l.uid === from.uid)) continue;
-      dst[b]!.prog = from;
-      n++;
+    for (let b = 0; b < SLOTS; b++) {
+      const from = src[b]!;
+      if (!from.prog || !from.start) continue;
+      if (dst[b]!.aired || dst[b]!.prog) continue;
+      if (!g.player.licences.some((l) => l.uid === from.prog!.uid)) continue;
+      if (b + from.prog.lenSlots > SLOTS) continue;
+      if (placeProgramme(dst, b, from.prog).length || dst[b]!.prog) n++;
     }
-    toast(n ? 'good' : 'warn', 'Plan übernommen', `${n} von ${BLOCKS} Sendeplätzen aus dem Vortag gefüllt.`);
+    toast(n ? 'good' : 'warn', 'Plan übernommen', `${n} Sendungen aus dem Vortag übernommen.`);
   },
 
   copynext(d) {
@@ -181,13 +200,14 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     const src = getDay(g.player, day);
     const dst = getDay(g.player, day + 1);
     let n = 0;
-    for (let b = 0; b < BLOCKS; b++) {
-      if (dst[b]!.aired || !src[b]!.prog) continue;
-      dst[b]!.prog = src[b]!.prog;
+    for (let b = 0; b < SLOTS; b++) {
+      const from = src[b]!;
+      if (!from.prog || !from.start || dst[b]!.aired) continue;
+      placeProgramme(dst, b, from.prog);
       n++;
     }
     S().viewDay = Math.max(0, Math.min(3, day + 1 - g.day));
-    toast('good', 'Kopiert', `${n} Sendeplätze auf den Folgetag übertragen.`);
+    toast('good', 'Kopiert', `${n} Sendungen auf den Folgetag übertragen.`);
   },
 
   autofill(d) {
@@ -197,22 +217,26 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     const used = new Set<number>();
     slots.forEach((s) => { if (s.prog) used.add(s.prog.uid); });
     let n = 0;
-    for (let b = 0; b < BLOCKS; b++) {
-      if (slots[b]!.aired || slots[b]!.prog) continue;
-      const avail = g.player.licences.filter((l) => !used.has(l.uid));
-      if (!avail.length) break;
-      avail.sort((x, y) => estimateBlock(g, day, b, y).total - estimateBlock(g, day, b, x).total);
-      slots[b]!.prog = avail[0]!;
-      used.add(avail[0]!.uid);
+    let at = 0;
+    while (at < SLOTS) {
+      const s = slots[at]!;
+      if (s.aired || s.prog) { at++; continue; }
+      const avail = g.player.licences.filter((l) => !used.has(l.uid) && at + l.lenSlots <= SLOTS);
+      if (!avail.length) { at++; continue; }
+      avail.sort((x, y) => estimateBlock(g, day, at, y).total - estimateBlock(g, day, at, x).total);
+      const pick = avail[0]!;
+      placeProgramme(slots, at, pick);
+      used.add(pick.uid);
+      at += pick.lenSlots;
       n++;
     }
-    toast(n ? 'good' : 'warn', 'Lücken gefüllt', `${n} Sendeplätze automatisch belegt — prüf sie ruhig nach.`);
+    toast(n ? 'good' : 'warn', 'Lücken gefüllt', `${n} Sendungen automatisch eingeplant — prüf sie ruhig nach.`);
   },
 
   clearday(d) {
     const day = Number(d.day);
     getDay(G().player, day).forEach((s) => {
-      if (!s.aired) { s.prog = null; s.ad = null; s.trailer = null; }
+      if (!s.aired) { s.prog = null; s.start = false; s.len = 0; s.ad = null; s.trailer = null; }
     });
     toast('warn', 'Geleert', 'Alle nicht gesendeten Plätze des Tages sind frei.');
   },
@@ -228,6 +252,49 @@ const ACTIONS: Record<string, (d: Data) => void> = {
     addTime(3);
     playSfx('buy');
     toast('good', 'Gekauft', `«${m.title}» liegt im Archiv.`);
+  },
+
+  /** Schachtel aus dem Regal ziehen und ansehen. */
+  inspect(d) {
+    const g = G();
+    const m = g.market.find((x) => x.uid === Number(d.u));
+    if (!m) return;
+    const gd = GENRES[m.genre];
+    const afford = g.player.money >= m.price;
+    const tv = Math.round(trendOf(g, m.genre) * 100);
+    const staffel = m.isSerie
+      ? `<tr><td>Staffel</td><td class="right num">${m.eps} Folgen à ${lengthLabel(m.lenSlots)}</td></tr>` +
+        `<tr><td>Sendezeit gesamt</td><td class="right num">${(m.eps * m.lenSlots) / 2} Stunden</td></tr>`
+      : '';
+
+    dialog(gd.ico, m.title, 'Filmagentur',
+      '<table class="tbl">' +
+      `<tr><td>Genre</td><td class="right">${gd.name}${m.isSerie ? ' · Serie' : ''}</td></tr>` +
+      `<tr><td>Jahr</td><td class="right num">${m.year}</td></tr>` +
+      `<tr><td>Sendelänge</td><td class="right num"><b>${lengthLabel(m.lenSlots)}</b>` +
+      `${m.isSerie ? ' je Folge' : ''}</td></tr>` +
+      staffel +
+      `<tr><td>Altersfreigabe</td><td class="right">${m.fsk === 0 ? 'ohne' : `ab ${m.fsk}`}</td></tr>` +
+      `<tr><td>Zuschauerwert</td><td class="right num">${m.qual}</td></tr>` +
+      `<tr><td>Kritikerurteil</td><td class="right num">${m.critic}</td></tr>` +
+      `<tr><td>Kinokasse</td><td class="right num">${m.box}</td></tr>` +
+      `<tr><td>Genre-Konjunktur</td><td class="right num ${tv > 106 ? 'ok' : tv < 94 ? 'bad' : ''}">${tv}%</td></tr>` +
+      `<tr><td>Preis</td><td class="right num ${afford ? '' : 'bad'}"><b>${money(m.price)}</b></td></tr>` +
+      '</table>',
+      [
+        {
+          t: afford ? `Kaufen · ${moneyShort(m.price)}` : 'Zu teuer',
+          cls: afford ? 'btn' : 'btn ghost',
+          fn: afford ? () => {
+            buyLicence(g, g.player, m);
+            addTime(3);
+            playSfx('buy');
+            toast('good', 'Gekauft', `«${m.title}» liegt im Archiv.`);
+            markDirty();
+          } : undefined,
+        },
+        { t: 'Zurückstellen', cls: 'btn ghost' },
+      ]);
   },
 
   bid() {

@@ -3,11 +3,62 @@
 /** Haushalte im Sendegebiet. */
 export const POP = 42_000_000;
 
-/** Sendeblöcke pro Abend. */
+/**
+ * Der Sendeabend läuft in Halbstunden-Feldern: 18:00 bis 01:00 sind 14 Felder
+ * zu je 30 Minuten. Eine Sendung belegt 1 bis 6 davon (30 Minuten bis 3 Stunden).
+ */
+export const SLOTS = 14;
+
+/** Länge eines Feldes in Minuten. */
+export const SLOT_MIN = 30;
+
+/** Längste zulässige Sendung in Feldern (3 Stunden). */
+export const MAX_LEN = 6;
+
+/**
+ * Werbeblöcke bleiben stündlich wie im Vorbild: je Stunde vier Minuten
+ * Nachrichten am Anfang und fünf Minuten Werbung am Ende. Der Werbeplatz einer
+ * Stunde hängt damit am zweiten Halbstundenfeld.
+ */
 export const BLOCKS = 7;
 
-/** Anfangsstunde jedes Blocks. */
+/** Anfangsstunde jedes Werbeblocks. */
 export const BLOCK_H = [18, 19, 20, 21, 22, 23, 0] as const;
+
+/** Feldnummer → Stunde. */
+export function slotHour(slot: number): number {
+  return BLOCK_H[Math.floor(slot / 2)] ?? 0;
+}
+
+/** Feldnummer → Uhrzeit als "18:30". */
+export function slotLabel(slot: number): string {
+  const h = slotHour(slot);
+  return `${String(h).padStart(2, '0')}:${slot % 2 ? '30' : '00'}`;
+}
+
+/** Trägt dieses Feld den Werbeplatz seiner Stunde? */
+export function isAdSlot(slot: number): boolean {
+  return slot % 2 === 1;
+}
+
+/** Werbeblock einer Stunde → Feldnummer, in der der Spot läuft. */
+export function adSlotOf(block: number): number {
+  return block * 2 + 1;
+}
+
+/** Primetime: 20:00 bis 22:00. */
+export function isPrime(slot: number): boolean {
+  return slot >= 4 && slot <= 7;
+}
+
+/** Sendelänge in Feldern → Klartext. */
+export function lengthLabel(len: number): string {
+  const min = len * SLOT_MIN;
+  if (min < 60) return `${min} Min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}:${String(m).padStart(2, '0')} Std` : `${h} Std`;
+}
 
 /** Arbeitsbeginn 17:00 in Minuten seit Mitternacht. */
 export const DAY_START = 17 * 60;

@@ -5,7 +5,7 @@
 import { clamp } from './rng';
 import { GENRES, GIFTS, RESSORTS } from './data';
 import {
-  BANKRUPT_AT, BLOCKS, COST_SATELLITE_DAY, COST_STUDIO_DAY, COST_TRANSMITTER_DAY,
+  BANKRUPT_AT, SLOTS, COST_SATELLITE_DAY, COST_STUDIO_DAY, COST_TRANSMITTER_DAY,
   DAY_START, INTEREST_DAY, NEWS_COST,
 } from './constants';
 import {
@@ -299,7 +299,7 @@ export function endOfDay(g: Game): void {
     c.audHist.push(totals[i]!);
     if (c.audHist.length > 21) c.audHist.shift();
     c.lastAud = c.todayAud.slice();
-    c.todayAud = new Array(BLOCKS).fill(0);
+    c.todayAud = new Array(SLOTS).fill(0);
   });
   const isum = g.ch.reduce((a, c) => a + c.image, 0);
   g.ch.forEach((c) => { c.image = (c.image / isum) * 100; });
@@ -356,6 +356,7 @@ export function endOfDay(g: Game): void {
         qual: clamp(Math.round(pr.quality + g.rng.int(-6, 8)), 10, 98),
         critic: clamp(Math.round(pr.quality + GENRES[pr.genre].krit * 30 + g.rng.int(-5, 10)), 5, 99),
         box: 40, fresh: 1, aired: 0, lastDay: -99, lastBlock: null,
+        lenSlots: pr.lenSlots,
         isSerie: !!pr.episodes, eps: pr.episodes ?? 0, ep: 1, produced: true,
         bettyBonus: pr.betty,
       };

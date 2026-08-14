@@ -11,14 +11,23 @@ import type {
 
 /* ─────────── Zielgruppen ───────────
    share = Anteil an der Bevölkerung
-   act   = Fernsehneigung je Sendeblock (18, 19, 20, 21, 22, 23, 0 Uhr) */
+   act   = Fernsehneigung je Halbstundenfeld, 18:00 bis 00:30 (14 Werte).
+           Die Kurven stammen aus den früheren Stundenwerten; die halben
+           Stunden liegen dazwischen, damit ein Film, der 20:30 beginnt,
+           nicht dieselbe Ausgangslage hat wie einer um 20:00. */
 export const GROUPS: readonly Group[] = [
-  { id: 'kind', name: 'Kinder',      ico: '🧒', share: 0.11, act: [0.58, 0.46, 0.24, 0.07, 0.02, 0.01, 0.00] },
-  { id: 'teen', name: 'Jugendliche', ico: '🧑', share: 0.14, act: [0.30, 0.40, 0.50, 0.56, 0.52, 0.42, 0.26] },
-  { id: 'haus', name: 'Hausfrauen',  ico: '🧺', share: 0.16, act: [0.46, 0.56, 0.60, 0.54, 0.38, 0.24, 0.09] },
-  { id: 'ang',  name: 'Angestellte', ico: '💼', share: 0.30, act: [0.24, 0.40, 0.60, 0.63, 0.50, 0.34, 0.17] },
-  { id: 'rent', name: 'Rentner',     ico: '👴', share: 0.19, act: [0.52, 0.61, 0.62, 0.49, 0.29, 0.14, 0.05] },
-  { id: 'arbl', name: 'Arbeitslose', ico: '🛋️', share: 0.10, act: [0.40, 0.46, 0.51, 0.53, 0.51, 0.46, 0.36] },
+  { id: 'kind', name: 'Kinder',      ico: '🧒', share: 0.11,
+    act: [0.58, 0.52, 0.46, 0.35, 0.24, 0.15, 0.07, 0.04, 0.02, 0.015, 0.01, 0.005, 0.00, 0.00] },
+  { id: 'teen', name: 'Jugendliche', ico: '🧑', share: 0.14,
+    act: [0.30, 0.35, 0.40, 0.45, 0.50, 0.53, 0.56, 0.54, 0.52, 0.47, 0.42, 0.34, 0.26, 0.20] },
+  { id: 'haus', name: 'Hausfrauen',  ico: '🧺', share: 0.16,
+    act: [0.46, 0.51, 0.56, 0.58, 0.60, 0.57, 0.54, 0.46, 0.38, 0.31, 0.24, 0.16, 0.09, 0.05] },
+  { id: 'ang',  name: 'Angestellte', ico: '💼', share: 0.30,
+    act: [0.24, 0.32, 0.40, 0.50, 0.60, 0.62, 0.63, 0.57, 0.50, 0.42, 0.34, 0.25, 0.17, 0.11] },
+  { id: 'rent', name: 'Rentner',     ico: '👴', share: 0.19,
+    act: [0.52, 0.57, 0.61, 0.62, 0.62, 0.56, 0.49, 0.39, 0.29, 0.22, 0.14, 0.09, 0.05, 0.03] },
+  { id: 'arbl', name: 'Arbeitslose', ico: '🛋️', share: 0.10,
+    act: [0.40, 0.43, 0.46, 0.49, 0.51, 0.52, 0.53, 0.52, 0.51, 0.49, 0.46, 0.41, 0.36, 0.31] },
 ];
 
 /** Index einer Zielgruppe in GROUPS. */
@@ -308,18 +317,18 @@ export const HEADLINES: Record<RessortId, readonly string[]> = {
 
 /* ─────────── Eigenproduktionen ─────────── */
 export const PRODUCTIONS: readonly Production[] = [
-  { id: 'kultur_heute', name: 'Kultur heute',       genre: 'kultur', cost: 32_000,  days: 1, quality: 62, betty: 9, ico: '🏛️',
-    desc: 'Bettys eigenes Kulturmagazin. Wenig Quote, viel Herz.' },
-  { id: 'talk_spaet',   name: 'Spätschicht-Talk',   genre: 'talk',   cost: 45_000,  days: 1, quality: 58, betty: 2, ico: '🎙️',
-    desc: 'Billige Gäste, große Klappe. Läuft spät gut.' },
-  { id: 'quiz_gross',   name: 'Die Millionenfalle', genre: 'quiz',   cost: 120_000, days: 2, quality: 74, betty: 1, ico: '❓',
-    desc: 'Teure Studioshow mit hohem Quotenpotenzial.' },
-  { id: 'show_samstag', name: 'Mad Samstagsshow',   genre: 'show',   cost: 180_000, days: 2, quality: 80, betty: 2, ico: '✨',
-    desc: 'Die große Gala. Frisst Geld, bringt Zuschauer.' },
-  { id: 'doku_eigen',   name: 'Report Spezial',     genre: 'doku',   cost: 70_000,  days: 2, quality: 66, betty: 6, ico: '🌍',
-    desc: 'Seriöse Eigenrecherche. Kritiker mögen das.' },
-  { id: 'serie_soap',   name: 'Bergblick – Soap',   genre: 'serie',  cost: 95_000,  days: 2, quality: 64, betty: 0, ico: '📺',
-    desc: 'Endlos-Soap, 6 Folgen am Stück produziert.', episodes: 6 },
+  { id: 'kultur_heute', name: 'Kultur heute',       genre: 'kultur', cost: 32_000,  days: 1, quality: 62, betty: 9, ico: '🏛️', lenSlots: 1,
+    desc: 'Bettys eigenes Kulturmagazin. Eine halbe Stunde, wenig Quote, viel Herz.' },
+  { id: 'talk_spaet',   name: 'Spätschicht-Talk',   genre: 'talk',   cost: 45_000,  days: 1, quality: 58, betty: 2, ico: '🎙️', lenSlots: 2,
+    desc: 'Billige Gäste, große Klappe. Eine Stunde, läuft spät gut.' },
+  { id: 'quiz_gross',   name: 'Die Millionenfalle', genre: 'quiz',   cost: 120_000, days: 2, quality: 74, betty: 1, ico: '❓', lenSlots: 2,
+    desc: 'Teure Studioshow mit hohem Quotenpotenzial. Eine Stunde.' },
+  { id: 'show_samstag', name: 'Mad Samstagsshow',   genre: 'show',   cost: 180_000, days: 2, quality: 80, betty: 2, ico: '✨', lenSlots: 4,
+    desc: 'Die große Gala über zwei Stunden. Frisst Geld, bringt Zuschauer.' },
+  { id: 'doku_eigen',   name: 'Report Spezial',     genre: 'doku',   cost: 70_000,  days: 2, quality: 66, betty: 6, ico: '🌍', lenSlots: 1,
+    desc: 'Seriöse Eigenrecherche, eine halbe Stunde. Kritiker mögen das.' },
+  { id: 'serie_soap',   name: 'Bergblick – Soap',   genre: 'serie',  cost: 95_000,  days: 2, quality: 64, betty: 0, ico: '📺', lenSlots: 1,
+    desc: 'Endlos-Soap, 12 Folgen zu je 30 Minuten am Stück produziert.', episodes: 12 },
 ];
 
 /* ─────────── Starmoderatoren (Geldsenke fürs Spätspiel) ─────────── */

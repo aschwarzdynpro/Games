@@ -13,10 +13,14 @@ import type {
   Channel, Contract, DifficultyId, Game, Licence, NewsItem, RessortId, Slot,
 } from './types';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 interface SavedSlot {
   p: number | null;
+  /** Erstes Feld der Sendung. */
+  s?: boolean;
+  /** Länge in Feldern, nur im Startfeld. */
+  l?: number;
   a: { id: number; brand: string } | null;
   t: number | null;
   aired: boolean;
@@ -98,6 +102,8 @@ export function serialize(g: Game): string {
           d,
           slots.map((s) => ({
             p: s.prog?.uid ?? null,
+            s: s.start,
+            l: s.len,
             a: s.ad,
             t: s.trailer?.uid ?? null,
             aired: s.aired,
@@ -150,6 +156,8 @@ export function deserialize(json: string): Game {
     Object.entries(c.sched).forEach(([d, slots]) => {
       k.sched[Number(d)] = slots.map((sl) => ({
         prog: sl.p !== null ? byUid.get(sl.p) ?? null : null,
+        start: sl.s ?? sl.p !== null,
+        len: sl.l ?? (sl.p !== null ? 1 : 0),
         ad: sl.a,
         trailer: sl.t !== null ? byUid.get(sl.t) ?? null : null,
         aired: sl.aired,

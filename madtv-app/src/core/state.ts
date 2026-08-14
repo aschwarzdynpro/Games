@@ -8,7 +8,7 @@ import { Rng, hash, clamp } from './rng';
 import {
   GENRES, GIDX, GROUPS, FILM_DATA, SERIE_DATA, BRANDS, RESSORTS, HEADLINES, DIFFS,
 } from './data';
-import { BLOCKS, DAY_START, RIVAL_NAMES } from './constants';
+import { SLOTS, DAY_START, RIVAL_NAMES } from './constants';
 import type {
   Channel, Contract, DifficultyId, Game, GameEvent, GenreId, GroupId, Licence,
   NewsItem, Options, RessortId, SfxName, Slot, ToastLevel,
@@ -44,6 +44,35 @@ export function nextUid(g: Game): number {
  * Kennzahlen einer Lizenz stammen aus dem Titel-Hash, nicht aus dem Rng:
  * derselbe Film hat in jeder Partie denselben Zuschauerwert.
  */
+/**
+ * Sendelänge in Halbstundenfeldern, je Genre plausibel gestaffelt.
+ * Magazine und Trickfilme sind kurz, Spielfilme füllen den Abend, und ein
+ * Spitzentitel darf auch mal drei Stunden laufen.
+ */
+const LENGTHS: Record<GenreId, readonly number[]> = {
+  action: [3, 3, 4], komoed: [3, 3, 4], drama: [3, 4, 4], horror: [3, 3, 4],
+  scifi: [3, 4, 4], krimi: [3, 3, 4], liebe: [3, 3, 4], western: [3, 4, 4],
+  doku: [1, 1, 2], trick: [1, 2, 3], erotik: [2, 3, 3], sport: [3, 4, 4],
+  musik: [1, 2, 3], show: [2, 3, 4], quiz: [2, 2, 3], talk: [2, 2, 3],
+  kultur: [1, 1, 2], serie: [1, 2, 2],
+};
+
+/** Folgenlänge einer Serienstaffel: 30 oder 60 Minuten. */
+function serieEpisodeLength(h: number): number {
+  return h < 0.55 ? 1 : 2;
+}
+
+export function lengthOf(title: string, genre: GenreId, tier: number, isSerie: boolean): number {
+  const h = hash(title + 'len');
+  if (isSerie) return serieEpisodeLength(h);
+  const table = LENGTHS[genre];
+  let len = table[Math.floor(h * table.length)] ?? 3;
+  // Ein Spitzentitel darf überlang sein — der Abendfüller schlechthin
+  if (tier >= 5 && hash(title + 'epic') > 0.45) len = Math.min(6, len + 2);
+  else if (tier >= 4 && hash(title + 'epic') > 0.78) len = Math.min(6, len + 1);
+  return Math.max(1, Math.min(6, len));
+}
+
 export function makeLicence(line: string, isSerie: boolean, uid: number): Licence {
   const p = line.split('|');
   const title = p[0]!;
@@ -64,16 +93,22 @@ export function makeLicence(line: string, isSerie: boolean, uid: number): Licenc
   if (h2 > 0.75 && fsk < 18) fsk = fsk === 0 ? 6 : fsk === 6 ? 12 : fsk === 12 ? 16 : 18;
   if (h3 > 0.9 && (genre === 'horror' || genre === 'action')) fsk = 18;
 
+  const lenSlots = lengthOf(title, genre, tier, isSerie);
+
+  // Sendezeit ist die eigentliche Ware: ein Dreistünder füllt einen halben
+  // Abend und kostet entsprechend mehr als ein Halbstundenmagazin.
   let price = Math.round(
-    (qual * 300 + box * 160 + Math.max(0, year - 1968) * 1050) * (1 + tier * 0.14) * 2.1,
+    (qual * 300 + box * 160 + Math.max(0, year - 1968) * 1050)
+    * (1 + tier * 0.14) * 2.1 * (0.55 + lenSlots * 0.22),
   );
   price = Math.round(price / 1000) * 1000;
-  if (isSerie) price = Math.round((price * (0.45 + eps * 0.055)) / 1000) * 1000;
+  // Eine Staffel wird am Stück gekauft — viele Folgen, entsprechender Preis
+  if (isSerie) price = Math.round((price * (0.34 + eps * 0.05)) / 1000) * 1000;
 
   return {
     uid, title, genre, year, tier, fsk, price, qual, critic, box,
     fresh: 1, aired: 0, lastDay: -99, lastBlock: null,
-    isSerie, eps, ep: 1, produced: false,
+    lenSlots, isSerie, eps, ep: 1, produced: false,
   };
 }
 
@@ -126,11 +161,16 @@ export function makeContract(g: Game, tierHint?: number): Contract {
 
 /* ─────────── Nachrichten ─────────── */
 
-export function makeNews(g: Game, res: RessortId): NewsItem {
+export function makeNews(g: Game, res: RessortId, taken?: Set<string>): NewsItem {
+  const pool = HEADLINES[res];
+  // Zwei gleiche Schlagzeilen nebeneinander im Korb sehen nach Kulisse aus.
+  const frei = taken ? pool.filter((t) => !taken.has(t)) : pool;
+  const text = g.rng.pick(frei.length ? frei : pool);
+  taken?.add(text);
   return {
     id: nextUid(g),
     res,
-    text: g.rng.pick(HEADLINES[res]),
+    text,
     day: g.day,
     weight: 0.55 + g.rng.next() * 0.65,
   };
@@ -139,7 +179,8 @@ export function makeNews(g: Game, res: RessortId): NewsItem {
 export function rollNews(g: Game): void {
   RESSORTS.forEach((r) => {
     const kept = g.newsPool[r.id].filter((n) => g.day - n.day < 3);
-    for (let i = 0; i < 3; i++) kept.push(makeNews(g, r.id));
+    const taken = new Set(kept.map((n) => n.text));
+    for (let i = 0; i < 3; i++) kept.push(makeNews(g, r.id, taken));
     g.newsPool[r.id] = kept;
   });
   g.ch.forEach((ch) => {
@@ -180,8 +221,8 @@ export function makeChannel(name: string, isAI: boolean, money: number, aiSkill:
     newsSub: emptyNewsRecord(), newsSubMax: emptyNewsRecord(), newsShow: [],
     star: null, transmitters: 0, satellite: false, studio: false,
     image: 33.34, love: 0, aiSkill,
-    lastAud: new Array(BLOCKS).fill(0),
-    todayAud: new Array(BLOCKS).fill(0),
+    lastAud: new Array(SLOTS).fill(0),
+    todayAud: new Array(SLOTS).fill(0),
     audHist: [],
     awards: 0, culturePoints: 0, newsPoints: 0, primePoints: 0,
     lowImageDays: 0, cultureToday: 0,
@@ -189,9 +230,54 @@ export function makeChannel(name: string, isAI: boolean, money: number, aiSkill:
 }
 
 export function emptyDay(): Slot[] {
-  return Array.from({ length: BLOCKS }, () => ({
-    prog: null, ad: null, trailer: null, aired: false, res: null,
+  return Array.from({ length: SLOTS }, () => ({
+    prog: null, start: false, len: 0, ad: null, trailer: null, aired: false, res: null,
   }));
+}
+
+/**
+ * Sendung ab einem Feld einplanen. Überlappende Sendungen weichen; die
+ * Rückgabe nennt sie, damit die Oberfläche darüber berichten kann.
+ */
+export function placeProgramme(slots: Slot[], at: number, lic: Licence): Licence[] {
+  const len = Math.max(1, Math.min(lic.lenSlots, SLOTS - at));
+  const displaced: Licence[] = [];
+  for (let i = at; i < at + len; i++) {
+    const s = slots[i];
+    if (!s || s.aired) return [];        // in gesendete Felder wird nichts gelegt
+  }
+  for (let i = at; i < at + len; i++) {
+    const s = slots[i]!;
+    if (s.prog && !displaced.some((d) => d.uid === s.prog!.uid)) displaced.push(s.prog);
+  }
+  displaced.forEach((d) => clearProgramme(slots, d.uid));
+  for (let i = at; i < at + len; i++) {
+    const s = slots[i]!;
+    s.prog = lic;
+    s.start = i === at;
+    s.len = i === at ? len : 0;
+  }
+  return displaced;
+}
+
+/** Alle Felder einer Sendung räumen. */
+export function clearProgramme(slots: Slot[], uid: number): void {
+  slots.forEach((s) => {
+    if (s.prog?.uid === uid && !s.aired) { s.prog = null; s.start = false; s.len = 0; }
+  });
+}
+
+/** Feld, in dem die Sendung dieses Feldes beginnt. */
+export function startOf(slots: Slot[], at: number): number {
+  const p = slots[at]?.prog;
+  if (!p) return at;
+  for (let i = at; i >= 0; i--) if (slots[i]?.start && slots[i]?.prog?.uid === p.uid) return i;
+  return at;
+}
+
+/** Passt eine Sendung dieser Länge ab hier noch in den Abend? */
+export function fits(at: number, len: number): boolean {
+  return at >= 0 && at + len <= SLOTS;
 }
 
 export function getDay(ch: Channel, day: number): Slot[] {

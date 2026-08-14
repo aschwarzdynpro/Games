@@ -6,11 +6,11 @@
  * gezeichnete SVG-Szenen — die Datenzugriffe hier bleiben dabei dieselben.
  */
 import {
-  BLOCKS, BLOCK_H, DIFFS, FLOORS, GENRES, GIFTS, GROUPS, MAX_CONTRACTS, MAX_CREDIT,
+  SLOTS, DIFFS, FLOORS, GENRES, GIFTS, GROUPS, MAX_CONTRACTS, MAX_CREDIT,
   MAX_TRANSMITTERS, NEWS_COST, NEWS_QUAL, PACKAGE_COST, POP, PRICE_SATELLITE,
   PRICE_TRANSMITTER, PRODUCTIONS, RESSORTS, STARS, STUDIO_RENT, WEEKDAYS,
-  dailyCosts, esc, estimateBlock, getDay, money, moneyShort, newsAttraction, pct,
-  reachOf, trendOf, viewers,
+  dailyCosts, esc, estimateBlock, getDay, lengthLabel, money, moneyShort,
+  newsAttraction, pct, reachOf, slotLabel, trendOf, viewers,
 } from '../core';
 import type { Channel, GenreId, Licence, RoomId } from '../core';
 import { G, S } from './session';
@@ -39,8 +39,8 @@ export function fskTag(f: number): string {
 
 export function licMeta(l: Licence): string {
   const g = GENRES[l.genre];
-  return `${g.ico} ${g.name} · ${l.year}` +
-    (l.isSerie ? ` · Serie (${l.eps} Folgen, aktuell ${l.ep})` : '');
+  return `${g.ico} ${g.name} · ${l.year} · ${lengthLabel(l.lenSlots)}` +
+    (l.isSerie ? ` je Folge · Staffel mit ${l.eps} Folgen (aktuell ${l.ep})` : '');
 }
 
 function sellPrice(l: Licence): number {
@@ -166,13 +166,13 @@ function office(): string {
   h += '<div class="card"><h3>Quotenverlauf gestern</h3><div class="chart">';
   const maxA = Math.max(1, ...g.ch.map((c) => Math.max(...c.lastAud)));
   const colors = ['var(--acc)', 'var(--warn)', 'var(--bad)'];
-  for (let b = 0; b < BLOCKS; b++) {
+  for (let b = 0; b < SLOTS; b++) {
     h += '<div class="col">';
     g.ch.forEach((c, ci) => {
       const v = (c.lastAud[b]! / maxA) * 68;
       h += `<i style="height:${Math.max(1, v)}px;background:${colors[ci]}"></i>`;
     });
-    h += `<div class="lab">${String(BLOCK_H[b]).padStart(2, '0')}</div></div>`;
+    h += `<div class="lab">${b % 2 === 0 ? slotLabel(b).slice(0, 2) : ''}</div></div>`;
   }
   h += '</div><div class="legend">' +
     g.ch.map((c, i) => `<span><i style="background:${colors[i]}"></i>${esc(c.name)}</span>`).join('') +
@@ -183,7 +183,7 @@ function office(): string {
       '<tr><th>Tag</th><th>Zeit</th><th>Sendung</th><th class="right">Zuschauer</th><th class="right">Anteil</th></tr>' +
       g.log.slice(0, 14).map((e) =>
         `<tr><td class="num dim">${e.day}</td>` +
-        `<td class="num">${String(BLOCK_H[e.block]).padStart(2, '0')}:00</td>` +
+        `<td class="num">${slotLabel(e.block)}</td>` +
         `<td>${esc(e.title)}</td><td class="right num">${viewers(e.aud)}</td>` +
         `<td class="right num ${e.share > 0.4 ? 'ok' : e.share < 0.2 ? 'bad' : ''}">${pct(e.share, 0)}</td></tr>`)
         .join('') + '</table></div>';
@@ -194,11 +194,49 @@ function office(): string {
 
 /* ─────────── Filmagentur ─────────── */
 
+/** Farbe je Genre, gleich wie auf der Sendetafel. */
+const BOX_HUE: Record<string, number> = {
+  action: 6, komoed: 42, drama: 265, horror: 300, scifi: 195, krimi: 220,
+  liebe: 335, western: 28, doku: 150, trick: 55, erotik: 320, sport: 130,
+  musik: 280, show: 48, quiz: 170, talk: 205, kultur: 240, serie: 185,
+};
+
+/**
+ * Eine Schachtel im Regal. Ihre Breite entspricht der Sendelänge — ein
+ * Dreistünder ist buchstäblich ein dicker Schuber, ein Magazin ein schmaler
+ * Rücken. Damit sieht man die wichtigste Kennzahl, bevor man sie liest.
+ */
+function filmBox(g: ReturnType<typeof G>, m: Licence, owned: boolean): string {
+  const gd = GENRES[m.genre];
+  const w = 30 + m.lenSlots * 26;
+  const wide = m.lenSlots >= 3;
+  const afford = g.player.money >= m.price;
+  const tv = trendOf(g, m.genre);
+  const trend = tv > 1.06 ? '▲' : tv < 0.94 ? '▼' : '';
+
+  const body = wide
+    ? '<div class="box-wide">' +
+      `<span class="box-title">${esc(m.title)}</span>` +
+      `<span class="box-sub">${gd.ico} ${gd.name} · ${m.year}${trend}</span></div>`
+    : `<div class="box-spine">${esc(m.title)}</div>`;
+
+  return `<div class="boxcase${owned ? ' owned' : ''}${afford && !owned ? ' cheap' : ''}" ` +
+    `style="--h:${BOX_HUE[m.genre] ?? 210};width:${w}px" ` +
+    `${owned ? '' : `data-act="inspect" data-u="${m.uid}" role="button" tabindex="0"`} ` +
+    `title="${esc(m.title)} — ${gd.name}, ${lengthLabel(m.lenSlots)}, ${money(m.price)}">` +
+    body +
+    '<div class="box-foot">' +
+    `<span class="box-len">${lengthLabel(m.lenSlots)}</span>` +
+    (wide ? `<span class="box-price${afford ? '' : ' bad'}">${moneyShort(m.price)}</span>` : '') +
+    '</div></div>';
+}
+
 function film(): string {
   const g = G();
   const s = S();
   const p = g.player;
-  let h = '<div class="room">' + head('🎬', 'Filmagentur', 'Lizenzen kaufen — wer zu spät kommt, sieht Testbild');
+  const owned = new Set(p.licences.map((l) => l.title));
+  let h = '<div class="room">' + head('🎬', 'Filmagentur', 'Regalwand — die Breite einer Schachtel ist ihre Sendelänge');
 
   if (g.auction && !g.auction.closed) {
     const a = g.auction;
@@ -227,32 +265,36 @@ function film(): string {
   }
 
   const present = ['alle', ...new Set(g.market.map((m) => m.genre))];
-  h += '<div class="card"><div class="btnrow" style="margin-bottom:9px">' +
+  h += '<div class="card"><div class="btnrow" style="margin-bottom:10px">' +
     present.map((gen) =>
       `<button class="btn sm ${s.filmFilter === gen ? '' : 'ghost'}" data-act="filmfilter" data-g="${gen}">` +
       `${gen === 'alle' ? 'Alle' : `${GENRES[gen as GenreId].ico} ${GENRES[gen as GenreId].name}`}</button>`).join('') +
     '</div>';
 
   const list = g.market.filter((m) => s.filmFilter === 'alle' || m.genre === s.filmFilter);
-  h += '<div class="list">';
-  list.forEach((m) => {
-    const afford = p.money >= m.price;
-    const tv = trendOf(g, m.genre);
-    const tclass = tv > 1.06 ? 'up' : tv < 0.94 ? 'dn' : 'fl';
-    const tsym = tv > 1.06 ? '▲' : tv < 0.94 ? '▼' : '▬';
-    h += '<div class="item"><div style="flex:1;min-width:0">' +
-      `<div class="t">${esc(m.title)} ${fskTag(m.fsk)}${m.isSerie ? ' <span class="tag a">Serie</span>' : ''}</div>` +
-      `<div class="m">${licMeta(m)} · <span class="trend ${tclass}">${tsym} Genre ${Math.round(tv * 100)}%</span></div>` +
-      `<div class="statline" style="margin-top:4px">Zusch. ${bar(m.qual)}${m.qual} · ` +
-      `Krit. ${bar(m.critic, 100, 'var(--acc2)')}${m.critic} · ` +
-      `Kasse ${bar(m.box, 100, 'var(--gold)')}${m.box}</div></div>` +
-      `<div class="r"><div style="font-weight:800;font-size:13px" class="${afford ? '' : 'bad'}">${money(m.price)}</div>` +
-      `<button class="btn sm" style="margin-top:4px" data-act="buy" data-u="${m.uid}" ${afford ? '' : 'disabled'}>Kaufen</button></div></div>`;
+  // Nach Länge in Regalbretter sortieren: kurze Magazine oben, Abendfüller unten
+  const regale: { label: string; test: (l: Licence) => boolean }[] = [
+    { label: 'Magazine & Kurzes · bis 1 Stunde', test: (l) => l.lenSlots <= 2 },
+    { label: 'Abendprogramm · 1½ bis 2 Stunden', test: (l) => l.lenSlots === 3 || l.lenSlots === 4 },
+    { label: 'Überlänge · ab 2½ Stunden', test: (l) => l.lenSlots >= 5 },
+  ];
+
+  h += '<div class="wall">';
+  regale.forEach((r) => {
+    const items = list.filter(r.test);
+    if (!items.length) return;
+    h += '<div class="wall-shelf">' +
+      `<div class="wall-label">${esc(r.label)} · ${items.length} Titel</div>` +
+      '<div class="wall-row">' +
+      items.map((m) => filmBox(g, m, owned.has(m.title))).join('') +
+      '</div><div class="wall-board"></div></div>';
   });
-  if (!list.length) h += '<div class="empty-note">Nichts im Angebot.</div>';
+  if (!list.length) h += '<div class="wall-empty">Das Regal ist leer.</div>';
   h += '</div></div>';
-  h += '<div class="hint">Der Preis richtet sich nach Zuschauerwert, Kritikerurteil und Kinokasse. ' +
-    'Gekaufte Titel nutzen sich beim Senden ab und erholen sich über mehrere Tage.</div></div>';
+
+  h += '<div class="hint">Ein Klick auf eine Schachtel zeigt die Kennzahlen und kauft sie. Sendezeit ist die ' +
+    'eigentliche Ware: Ein Dreistünder füllt einen halben Abend, ein Magazin nur eine halbe Stunde — ' +
+    'entsprechend fällt der Preis aus.</div></div>';
   return h;
 }
 
@@ -300,57 +342,77 @@ function werbe(): string {
 function news(): string {
   const g = G();
   const p = g.player;
-  let h = '<div class="room">' + head('📰', 'Nachrichtenstudio', 'Abos wählen, Meldungen zur Sendung zusammenstellen');
+  let h = '<div class="room">' + head('📰', 'Nachrichtenstudio', 'Redaktionstisch — Meldungen auf den Teleprompter ziehen');
 
-  h += '<div class="card"><h3>Ressort-Abonnements</h3><table class="tbl">' +
-    '<tr><th>Ressort</th><th>Stufe</th><th class="right">Kosten/Tag</th><th class="right">Aktualität</th></tr>';
-  RESSORTS.forEach((r) => {
-    const lvl = p.newsSub[r.id] ?? 0;
-    h += `<tr><td>${r.ico} ${esc(r.name)}</td><td>` +
-      [0, 1, 2, 3].map((l) =>
-        `<button class="btn sm ${lvl === l ? '' : 'ghost'}" style="margin-right:3px" ` +
-        `data-act="sub" data-r="${r.id}" data-l="${l}">${l}</button>`).join('') +
-      `</td><td class="right num">${money(NEWS_COST[lvl] ?? 0)}</td>` +
-      `<td class="right num">${Math.round((NEWS_QUAL[lvl] ?? 0) * 100)}%</td></tr>`;
-  });
-  h += '</table><div class="hint">Stufe 0 = kein Abo. Stufe 3 liefert tagesaktuelle Meldungen — und nur die ' +
-    'ziehen Zuschauer von der Konkurrenz ab. Abgerechnet wird die <b>höchste Stufe des Tages</b>; ' +
-    'nach Sendeschluss herunterzustufen spart also nichts mehr.</div></div>';
+  h += '<div class="desk">';
 
-  h += `<div class="card"><h3>Sendung (${p.newsShow.length}/3 Meldungen)</h3>`;
-  if (!p.newsShow.length) {
-    h += '<div class="empty-note">Noch keine Meldung gewählt — die Nachrichten laufen leer.</div>';
-  } else {
-    h += '<div class="list">' + p.newsShow.map((n) => {
+  // Teleprompter: die drei Meldungen der Sendung
+  h += '<div class="prompter"><div class="prompter-head">' +
+    '<span class="live">AUF SENDUNG</span> Teleprompter · 4 Minuten zu jeder vollen Stunde' +
+    '</div><div class="prompter-slots">';
+  for (let i = 0; i < 3; i++) {
+    const n = p.newsShow[i];
+    if (n) {
       const r = RESSORTS.find((x) => x.id === n.res)!;
       const age = g.day - n.day;
-      return `<div class="item"><div style="flex:1"><div class="t">${r.ico} ${esc(n.text)}</div>` +
-        `<div class="m">${esc(r.name)} · ${age === 0 ? '<span class="ok">heute</span>' : `${age} Tage alt`} · ` +
-        `Nachrichtenwert ${Math.round(n.weight * 100)}</div></div>` +
-        `<button class="btn sm ghost" data-act="unnews" data-i="${n.id}" aria-label="Meldung entfernen">✕</button></div>`;
-    }).join('') + '</div>';
+      h += `<div class="newsslot filled" data-drop="news" data-i="${i}">` +
+        `<div class="no">${i + 1}</div>` +
+        `<div class="txt">${r.ico} ${esc(n.text)}` +
+        `<small>${esc(r.name)} · ${age === 0 ? 'heute' : `${age} Tage alt`} · ` +
+        `Nachrichtenwert ${Math.round(n.weight * 100)}</small></div>` +
+        `<button class="btn sm ghost" data-act="unnews" data-i="${n.id}" aria-label="Meldung entfernen">✕</button>` +
+        '</div>';
+    } else {
+      h += `<div class="newsslot" data-drop="news" data-i="${i}"><div class="no">${i + 1}</div>` +
+        '<div class="empty">Meldung aus einem Ressortkorb hierher ziehen</div></div>';
+    }
   }
-  h += '</div>';
+  const na = newsAttraction(g, p);
+  const wirkung = (na.reduce((a, b) => a + b, 0) / GROUPS.length) * 100;
+  h += '</div>' +
+    `<div class="hint" style="margin-top:7px">Wirkung dieser Sendung: <b>${wirkung.toFixed(0)}</b>. ` +
+    'Nur tagesaktuelle Meldungen aus einem hohen Abo ziehen Zuschauer von der Konkurrenz ab.</div></div>';
 
-  h += '<div class="card"><h3>Eingegangene Meldungen</h3><div class="list">';
-  let any = false;
+  // Ressortkörbe mit Abostufe und Ticker
+  h += '<div class="trays">';
   RESSORTS.forEach((r) => {
     const lvl = p.newsSub[r.id] ?? 0;
-    if (lvl === 0) return;
-    g.newsPool[r.id].forEach((n) => {
-      if (p.newsShow.some((x) => x.id === n.id)) return;
-      const age = g.day - n.day;
-      if (age >= (lvl >= 3 ? 1 : lvl >= 2 ? 2 : 3)) return;
-      any = true;
-      h += `<div class="item"><div style="flex:1"><div class="t">${r.ico} ${esc(n.text)}</div>` +
-        `<div class="m">${esc(r.name)} · ${age === 0 ? '<span class="ok">heute</span>' : `${age} Tage alt`} · ` +
-        `Wert ${Math.round(n.weight * 100)}</div></div>` +
-        `<button class="btn sm" data-act="addnews" data-i="${n.id}" data-r="${r.id}" ` +
-        `${p.newsShow.length >= 3 ? 'disabled' : ''}>Aufnehmen</button></div>`;
-    });
+    h += '<div class="tray"><div class="tray-head">' +
+      `<span>${r.ico}</span><span>${esc(r.name)}</span>` +
+      '<span class="lvl">' +
+      [0, 1, 2, 3].map((l) =>
+        `<button class="${lvl === l ? 'on' : ''}" data-act="sub" data-r="${r.id}" data-l="${l}" ` +
+        `title="Abostufe ${l} · ${money(NEWS_COST[l] ?? 0)} pro Tag · Aktualität ${Math.round((NEWS_QUAL[l] ?? 0) * 100)}%">${l}</button>`).join('') +
+      '</span></div><div class="ticker">';
+
+    if (lvl === 0) {
+      h += '<div class="ticker-none">Kein Abo — hier kommt nichts über den Ticker.</div>';
+    } else {
+      const items = g.newsPool[r.id].filter((n) => {
+        if (p.newsShow.some((x) => x.id === n.id)) return false;
+        const age = g.day - n.day;
+        return age < (lvl >= 3 ? 1 : lvl >= 2 ? 2 : 3);
+      });
+      if (!items.length) {
+        h += '<div class="ticker-none">Nichts Neues aus diesem Ressort.</div>';
+      } else {
+        items.slice(0, 4).forEach((n) => {
+          const age = g.day - n.day;
+          h += `<div class="ticker-item" data-news="${n.id}" data-res="${r.id}" tabindex="0" role="button">` +
+            `${esc(n.text)}<small>${age === 0 ? 'heute' : `${age} Tage alt`} · Wert ${Math.round(n.weight * 100)}</small></div>`;
+        });
+      }
+    }
+    h += '</div>' +
+      `<div class="hint" style="margin-top:5px">Stufe ${lvl} · ${money(NEWS_COST[lvl] ?? 0)}/Tag</div>` +
+      '</div>';
   });
-  if (!any) h += '<div class="empty-note">Keine Meldungen. Ohne Abo kommt nichts über den Ticker.</div>';
-  return h + '</div></div></div>';
+  h += '</div></div>';
+
+  h += '<div class="hint">Abgerechnet wird die <b>höchste Stufe des Tages</b>; nach Sendeschluss ' +
+    'herunterzustufen spart also nichts mehr. Ein Klick auf eine Meldung setzt sie auf den nächsten ' +
+    'freien Prompterplatz.</div></div>';
+  return h;
 }
 
 /* ─────────── Archiv ─────────── */
@@ -612,11 +674,14 @@ function rivalRoom(c: Channel): string {
     `<div class="d">${c.transmitters} Masten${c.satellite ? ' + Satellit' : ''}</div></div>` +
     `<div class="kpi"><div class="k">Betty ♥</div><div class="v" style="color:var(--love)">${Math.round(c.love)}</div></div></div>`;
   h += '<div class="card"><h3>Heutiges Programm</h3><table class="tbl">' +
-    '<tr><th>Zeit</th><th>Sendung</th><th class="right">Zuschauer</th></tr>' +
-    slots.map((s, b) =>
-      `<tr><td class="num">${String(BLOCK_H[b]).padStart(2, '0')}:00</td>` +
-      `<td>${s.prog ? `${esc(s.prog.title)} <span class="dim">${GENRES[s.prog.genre].name}</span>` : '<span class="dim">—</span>'}</td>` +
-      `<td class="right num">${s.aired && s.res ? viewers(s.res.total) : '<span class="dim">…</span>'}</td></tr>`).join('') +
+    '<tr><th>Zeit</th><th>Sendung</th><th class="right">Länge</th><th class="right">Zuschauer</th></tr>' +
+    slots.map((s, b) => {
+      if (s.prog && !s.start) return '';       // Fortsetzung, steht schon oben
+      return `<tr><td class="num">${slotLabel(b)}</td>` +
+        `<td>${s.prog ? `${esc(s.prog.title)} <span class="dim">${GENRES[s.prog.genre].name}</span>` : '<span class="dim">—</span>'}</td>` +
+        `<td class="right num dim">${s.prog ? lengthLabel(s.len) : ''}</td>` +
+        `<td class="right num">${s.aired && s.res ? viewers(s.res.total) : '<span class="dim">…</span>'}</td></tr>`;
+    }).join('') +
     '</table></div>';
   h += '<div class="hint">Wer weiß, was drüben läuft, kann sein eigenes Programm daneben legen — ' +
     'gleiches Genre zur gleichen Zeit teilt die Zuschauer.</div></div>';

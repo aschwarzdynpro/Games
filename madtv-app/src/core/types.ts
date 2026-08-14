@@ -72,9 +72,15 @@ export interface Licence {
   fresh: number;
   aired: number;
   lastDay: number;
-  /** Sendeblock der letzten Ausstrahlung — Serien binden ihr Publikum daran. */
+  /** Feld der letzten Ausstrahlung — Serien binden ihr Publikum daran. */
   lastBlock: number | null;
+  /**
+   * Sendelänge in Halbstundenfeldern (1 = 30 Min, 6 = 3 Std).
+   * Bei Serien ist das die Länge einer Folge.
+   */
+  lenSlots: number;
   isSerie: boolean;
+  /** Folgen der gekauften Staffel. */
   eps: number;
   ep: number;
   produced: boolean;
@@ -121,6 +127,8 @@ export interface Production {
   readonly ico: string;
   readonly desc: string;
   readonly episodes?: number;
+  /** Sendelänge in Halbstundenfeldern. */
+  readonly lenSlots: number;
 }
 
 export interface Star {
@@ -168,8 +176,19 @@ export interface BlockResult {
   groups: number[];
 }
 
+/**
+ * Ein Halbstundenfeld des Sendeplans.
+ *
+ * Eine Sendung über mehrere Felder trägt sich in jedes davon ein; nur das
+ * erste hat `start = true` und kennt die Länge. So bleibt die Quotenrechnung
+ * feldweise, ohne dass sie die Sendung zerlegen muss.
+ */
 export interface Slot {
   prog: Licence | null;
+  /** Erstes Feld dieser Sendung? */
+  start: boolean;
+  /** Länge der Sendung in Feldern; nur im Startfeld gesetzt. */
+  len: number;
   /** Belegter Werbeplatz — verweist auf einen Vertrag im Koffer. */
   ad: { id: number; brand: string } | null;
   /** Statt Werbung ein Trailer für eine spätere Sendung. */
