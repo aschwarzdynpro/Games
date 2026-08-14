@@ -19,6 +19,8 @@ eingeholt hat.
 npm install
 npm run dev            # Entwicklungsserver mit Hot Reload
 npm test               # Simulationstests
+npm run sim            # Schwierigkeitskurve, drei Startwerte
+npm run sim:breit      # dieselbe Messung mit zehn — dauert, aber sagt etwas
 npm run build          # dist/         — Ordner-Build (z. B. GitHub Pages)
 npm run build:single   # dist-single/  — eine einzige HTML-Datei
 ```
@@ -60,8 +62,8 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 99 automatische Prüfungen |
-| Material | 107 Filme, 15 Serien, 50 Marken | 186 Filme, 25 Serien, 100 Marken, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
+| Tests | Handarbeit im Browser | 100 automatische Prüfungen |
+| Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
@@ -95,20 +97,30 @@ bleiben dabei exakt erhalten**; das ist die Ressource, um die gespielt wird, und
 
 Gemessen mit `npm run sim` (drei Startwerte je Grad, solide spielender Bot):
 
-| Grad | Sieg um Tag | Anmerkung |
-|---|---|---|
-| leicht | 12–31 | |
-| normal | 31–47 | |
-| schwer | 42–57 | mit Satellit, Starmoderator und Exklusivpaket |
-| schwer | 78+ | ohne diese Werkzeuge — und mit 20–29 Mio € totem Kapital |
+Gemessen mit `npm run sim:breit` (zehn Startwerte je Grad, solide spielender
+Bot):
+
+| Grad | Siege | Median | Spanne |
+|---|---|---|---|
+| leicht | 10/10 | Tag 26 | 19–38 |
+| normal | 10/10 | Tag 33 | 22–45 |
+| schwer, voller Werkzeugkasten | 9/10 | Tag 43 | 36–64 |
+| schwer, ohne Satellit und Star | 8/10 | Tag 74 | 43–80 |
 
 Der letzte Fall ist Absicht: Wer die Geldsenken des Spätspiels nicht nutzt,
-gewinnt zwar irgendwann, aber quälend langsam.
+gewinnt zwar meistens noch, aber quälend langsam — und in zwei von zehn Partien
+gar nicht mehr.
 
-Der größere Katalog aus Etappe 6 hat die Partien um rund ein Fünftel verlängert.
-Das war zu erwarten und ist nicht schlimm: Mehr Titel heißt auch mehr Auswahl
-für die Konkurrenz, und die Spitzenklasse ist nicht mitgewachsen. Die Ordnung
-der Grade — worauf es ankommt — bleibt unberührt.
+**Drei Startwerte sind zu wenig, um eine Kurve zu beurteilen.** Als der Katalog
+auf über tausend Titel wuchs, sahen die drei Läufe von `npm run sim` nach einem
+Einbruch aus: leicht plötzlich bei Tag 32–38, ein „normal"-Lauf bei Tag 67, die
+Ordnung schien dahin. Mit zehn Startwerten war sie völlig intakt — die drei
+Läufe hatten nur drei ungünstige Stichproben erwischt. Seitdem gibt es beide
+Messungen; die schnelle für jeden Commit, die breite für jede Entscheidung.
+
+Eine echte Verschiebung steckte trotzdem darin: Der gewachsene Katalog hatte
+den Anteil guter Titel von 33,5 auf 29,8 Prozent verwässert. Die neuen Titel
+sind jetzt so nachjustiert, dass die Dichte wieder stimmt.
 
 Eine Prüfung musste dabei umgestellt werden. Sie verglich das **Spitzenimage**
 mit und ohne Spätspiel-Werkzeuge — und maß damit in Wahrheit die Spieldauer:
@@ -555,6 +567,33 @@ hellem Papier steht.
 Der Spielstand ist auf Fassung 5 gegangen. Ältere Stände laden weiter: Die
 neuen Felder fangen bei null an, und eine Prüfung lädt einen Stand der
 Fassung 4 ohne sie.
+
+### Nachschlag: Material und Takt
+
+Der Katalog ist von 211 auf **1008 Titel** gewachsen (883 Filme, 125 Serien),
+dazu 200 Werbekunden und 250 Schlagzeilen. Damit wiederholt sich in einer
+Partie über vierzig Sendetage praktisch nichts mehr.
+
+Die Uhr läuft **rund anderthalbmal langsamer**: Ein Sendetag dauert jetzt echte
+8 / 4,3 / 1,8 Minuten statt 5 / 2,6 / 1. Vorher blieb zwischen zwei
+Werbeblöcken kaum Zeit, zwei Etagen abzuklappern — der Zeitdruck soll drücken,
+nicht hetzen.
+
+#### Ein Fehler, den erst der große Katalog gezeigt hat
+
+`removeFromSchedules` räumt eine verlorene Lizenz bewusst nur aus
+**ungesendeten** Feldern: Was gelaufen ist, bleibt im Plan stehen, sonst würde
+der Rückblick lügen. Der Spielstand speicherte Programme im Sendeplan aber als
+Verweis auf das eigene Archiv — und wenn der Gerichtsvollzieher einen längst
+gesendeten Titel mitgenommen hatte, zeigte der Verweis ins Leere. **Nach dem
+Laden stand dort Testbild.** Die Sendehistorie änderte sich durch einen
+Neustart.
+
+Der Fehler war die ganze Zeit da; sichtbar wurde er erst, als der größere
+Katalog den Zufallslauf verschob und die Prüfung „übersteht Speichern und Laden
+unverändert" plötzlich anschlug. Der Spielstand führt jetzt die verwaisten
+Lizenzen mit — meist eine leere Liste, im Ernstfall ein, zwei Einträge. Eine
+eigene Prüfung hält den Fall fest.
 
 ## Was als Nächstes läge
 

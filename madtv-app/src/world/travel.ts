@@ -6,8 +6,8 @@
  * fest (das ist die Ressource, um die es im Spiel geht); die *Darstellung*
  * leitet sich daraus ab.
  *
- * Der Knackpunkt: Bei dreifachem Tempo dauert eine Spielminute 130 ms, bei
- * einfachem 620 ms. Liefe die Animation stur mit, wäre das Laufen einmal
+ * Der Knackpunkt: Bei dreifachem Tempo dauert eine Spielminute 220 ms, bei
+ * einfachem 1000 ms. Liefe die Animation stur mit, wäre das Laufen einmal
  * hektisch und einmal zäh. Deshalb bekommen die beiden Laufabschnitte einen
  * gedeckelten Anteil, und die Fahrt schluckt den Rest — sie darf ruhig dauern,
  * man sieht ja die Etagen vorbeiziehen.

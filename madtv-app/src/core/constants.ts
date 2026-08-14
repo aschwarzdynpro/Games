@@ -76,8 +76,15 @@ export const AD_MINUTES = 5;
 /** Minuten Nachrichten am Anfang jedes Blocks. */
 export const NEWS_MINUTES = 4;
 
-/** Millisekunden je Spielminute, je Geschwindigkeitsstufe. */
-export const SPEEDS: Record<number, number> = { 1: 620, 2: 330, 3: 130 };
+/**
+ * Millisekunden je Spielminute, je Geschwindigkeitsstufe.
+ *
+ * Ein Sendetag umfasst 480 Spielminuten (17:00 bis 01:00). Damit dauert er
+ * echte 8 / 4,3 / 1,8 Minuten. Vorher war jede Stufe rund zwei Drittel so
+ * lang — zu wenig, um zwischen zwei Werbeblöcken noch in Ruhe zwei Etagen
+ * abzuklappern.
+ */
+export const SPEEDS: Record<number, number> = { 1: 1000, 2: 540, 3: 220 };
 
 export const RIVAL_NAMES = ['Brain TV', 'Kanal Kaputt'] as const;
 

@@ -9,7 +9,7 @@ import {
   SLOTS, DIFFS, GENRES, GROUPS, NEWS_COST, POP, RESSORTS, slotHour,
   airBlock, airRemainingBlocks, buildCatalog, createGame, dailyCosts,
   deserialize, endOfDay, estimateBlock, getDay, newsAttraction, placeProgramme,
-  reachOf, serialize, speak,
+  reachOf, removeFromSchedules, serialize, speak,
 } from '../src/core';
 import { Rng, hash } from '../src/core';
 
@@ -328,6 +328,25 @@ describe('Spielstand', () => {
       return game.player.image.toFixed(9) + '|' + Math.round(game.player.money);
     };
     expect(weiter(deserialize(snapshot))).toBe(weiter(deserialize(snapshot)));
+  });
+
+  it('behält gesendete Titel, die niemandem mehr gehören', () => {
+    // Der Gerichtsvollzieher nimmt eine Lizenz mit, die schon gelaufen ist.
+    // removeFromSchedules räumt bewusst nur ungesendete Felder — der Rückblick
+    // soll nicht lügen. Beim Laden darf der Titel deshalb nicht verschwinden.
+    const g = createGame({ seed: 77, diff: 'normal' });
+    const lic = g.player.licences[0]!;
+    const slots = getDay(g.player, g.day);
+    placeProgramme(slots, 0, lic);
+    airBlock(g, g.day, 0);
+    expect(slots[0]!.aired).toBe(true);
+
+    g.player.licences.splice(0, 1);
+    removeFromSchedules(g.player, lic);
+    expect(slots[0]!.prog?.title).toBe(lic.title);   // gesendet, bleibt stehen
+
+    const geladen = deserialize(serialize(g));
+    expect(getDay(geladen.player, geladen.day)[0]!.prog?.title).toBe(lic.title);
   });
 
   it('lädt einen Stand aus Fassung 4, der die Figurenfelder noch nicht kennt', () => {

@@ -59,7 +59,7 @@ export function stopLoop(): void {
 }
 
 function msPerMinute(): number {
-  return SPEEDS[S().speed] ?? 330;
+  return SPEEDS[S().speed] ?? SPEEDS[2]!;
 }
 
 export function setSpeed(v: number): void {

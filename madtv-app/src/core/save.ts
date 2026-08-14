@@ -41,6 +41,12 @@ interface SavedChannel {
   awards: number; culturePoints: number; newsPoints: number; primePoints: number;
   lowImageDays: number; cultureToday: number;
   trashToday?: number; lastImage?: number;
+  /**
+   * Lizenzen, die im Sendeplan noch stehen, aber niemandem mehr gehören —
+   * beschlagnahmt oder verbrannt, nachdem sie schon gesendet hatten. Ohne sie
+   * verlöre die Sendehistorie beim Laden ihren Titel.
+   */
+  lost?: Licence[];
 }
 
 export interface SavedGame {
@@ -70,6 +76,27 @@ export interface SavedGame {
   snipes?: Game['snipes'];
   saidLast?: Game['saidLast'];
   ch: SavedChannel[];
+}
+
+/**
+ * Programme, die im Sendeplan stehen, aber nicht mehr im Archiv.
+ *
+ * `removeFromSchedules` räumt bewusst nur *ungesendete* Felder: Was gelaufen
+ * ist, bleibt im Plan stehen, sonst würde der Rückblick lügen. Damit kann ein
+ * gesendetes Feld auf eine Lizenz zeigen, die der Gerichtsvollzieher längst
+ * mitgenommen hat — die muss mitgespeichert werden.
+ */
+function verwaisteLizenzen(c: Channel): Licence[] {
+  const haben = new Set(c.licences.map((l) => l.uid));
+  const weg = new Map<number, Licence>();
+  for (const slots of Object.values(c.sched)) {
+    for (const s of slots) {
+      for (const l of [s.prog, s.trailer]) {
+        if (l && !haben.has(l.uid)) weg.set(l.uid, l);
+      }
+    }
+  }
+  return [...weg.values()];
 }
 
 export function serialize(g: Game): string {
@@ -117,6 +144,7 @@ export function serialize(g: Game): string {
           })),
         ]),
       ),
+      lost: verwaisteLizenzen(c),
       newsSub: c.newsSub, newsSubMax: c.newsSubMax, newsShow: c.newsShow,
       star: c.star?.id ?? null,
       transmitters: c.transmitters, satellite: c.satellite, studio: c.studio,
@@ -159,7 +187,8 @@ export function deserialize(json: string): Game {
       trashToday: c.trashToday ?? 0, lastImage: c.lastImage ?? 0,
     });
     // Verweise im Sendeplan wieder auflösen
-    const byUid = new Map(k.licences.map((l) => [l.uid, l]));
+    const byUid = new Map<number, Licence>(k.licences.map((l) => [l.uid, l]));
+    for (const l of c.lost ?? []) if (!byUid.has(l.uid)) byUid.set(l.uid, l);
     k.sched = {};
     Object.entries(c.sched).forEach(([d, slots]) => {
       k.sched[Number(d)] = slots.map((sl) => ({

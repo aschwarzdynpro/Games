@@ -41,7 +41,7 @@ Scheinwerfern und Filmklappe, die Technik ein Schaltraum mit Zeigerinstrument
 und Kippschaltern, die Bank ein Schalter, über den Geldbündel in beide
 Richtungen wandern, der Kiosk ein Verkaufstresen mit Vitrine. Der Fundus ist
 auf 186 Filme, 25 Serien, 100 Werbekunden, 14 Eigenproduktionen, 7 Moderatoren
-und 12 Geschenke gewachsen.
+und 12 Geschenke gewachsen — der Filmkatalog allein umfasst 1008 Titel.
 
 Und die Figuren reden mit: Betty schaut zur besten Zeit selbst zu und nimmt
 Reißerisches übel, Herr Raffer wird bei fallender Quote persönlich, und die
