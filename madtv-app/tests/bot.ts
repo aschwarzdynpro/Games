@@ -38,7 +38,7 @@ export interface BotResult {
   history: { day: number; image: number; money: number; love: number }[];
 }
 
-export function playDay(g: Game, o: BotOptions): void {
+function playDay(g: Game, o: BotOptions): void {
   const P = g.player;
 
   // Nachrichten: Abostufe nach Kassenlage

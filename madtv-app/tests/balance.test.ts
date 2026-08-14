@@ -66,6 +66,32 @@ describe('Schwierigkeitskurve', () => {
     expect(Math.max(...mit.map((r) => r.reach))).toBeGreaterThan(Math.max(...ohne.map((r) => r.reach)));
   });
 
+  /**
+   * Die Konkurrenz muss die ganze Partie über handlungsfähig bleiben.
+   *
+   * Sie war es lange nicht: Weil sie die Mindestquote von Zielgruppenverträgen
+   * mit ihrer Gesamtzuschauerzahl verglich, unterschrieb sie Verträge, von
+   * denen sie keinen einzigen Spot erfüllen konnte, und war ab Tag 7 mit
+   * Millionenschulden aus dem Spiel — unsichtbar, denn ihre Kasse steht
+   * nirgends. Der Marktanteil, den der Spieler ab Woche zwei gewann, war zu
+   * einem guten Teil der Anteil zweier Sender, die sich selbst abgeschafft
+   * hatten. Genau das prüfen diese beiden Zahlen.
+   */
+  it('lässt die Konkurrenz nicht am eigenen Werbegeschäft zugrunde gehen', () => {
+    const runs = bestOf('normal', true);
+    const kassen = runs.flatMap((r) => r.rivalMoney);
+    console.log(
+      `Konkurrenzkassen am Partieende: ${kassen.map((m) => Math.round(m / 1000) + 'k').join(', ')}` +
+      ` · weggeschnappte Titel je Partie: ${runs.map((r) => r.snipes).join(', ')}`,
+    );
+
+    // Ein Minus darf vorkommen; ein Millionenloch heißt, dass sie sich selbst
+    // zerlegt hat statt gegen den Spieler zu verlieren.
+    kassen.forEach((m) => expect(m).toBeGreaterThan(-3_000_000));
+    // Und sie muss dem Spieler mindestens gelegentlich einen Titel wegkaufen.
+    expect(runs.reduce((a, r) => a + r.snipes, 0)).toBeGreaterThan(0);
+  });
+
   it('führt nirgends zu absurden Zuständen', () => {
     for (const diff of ['leicht', 'normal', 'schwer'] as DifficultyId[]) {
       for (const seed of SEEDS) {

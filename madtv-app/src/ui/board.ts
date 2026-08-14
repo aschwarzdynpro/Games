@@ -113,8 +113,10 @@ function adCard(
 function gegenspalte(day: number, meine: Slot[]): string {
   const g = G();
   // Gelesen, nicht angelegt: getDay() würde den Tag erzeugen, und Zeichnen
-  // soll den Spielstand nicht verändern.
-  const rivalen = g.ch.slice(1).map((c, n) => ({ ch: c, slots: c.sched[day], nr: n + 1 }));
+  // soll den Spielstand nicht verändern. Die Tafel reicht einen Tag weiter, als
+  // die Konkurrenz plant — der vierte Reiter zeigt deshalb Testbild statt zu
+  // stürzen.
+  const rivalen = g.ch.slice(1).map((c, n) => ({ ch: c, slots: c.sched[day] ?? [], nr: n + 1 }));
   let out = '';
 
   for (let i = 0; i < SLOTS; i++) {

@@ -61,7 +61,14 @@ function serve() {
     res.writeHead(200, { 'content-type': TYPEN[extname(datei)] ?? 'application/octet-stream' });
     createReadStream(datei).pipe(res);
   });
-  return new Promise((ok) => srv.listen(PORT, () => ok(srv)));
+  return new Promise((ok, fehl) => {
+    srv.once('error', (e) => fehl(
+      e.code === 'EADDRINUSE'
+        ? new Error(`Port ${PORT} ist belegt — läuft noch ein Server aus einem früheren Lauf?`)
+        : e,
+    ));
+    srv.listen(PORT, () => ok(srv));
+  });
 }
 
 /* ─────────── Kleiner Prüfläufer ─────────── */
@@ -228,6 +235,20 @@ async function main() {
   pruefe('Gegenüber-Spalte hat 14 Halbstunden', tafel.gegen === 14, String(tafel.gegen));
   pruefe('Sendeplan hat Felder', tafel.felder > 0, String(tafel.felder));
 
+  // Alle vier Sendeplan-Reiter. Der vierte reicht einen Tag weiter, als die
+  // Konkurrenz plant — genau dort hat die Gegenüber-Spalte einmal geworfen.
+  for (const reiter of ['Morgen', 'Mittwoch', 'Donnerstag']) {
+    const vorher = meldungen.length;
+    await seite.click(`button:has-text("${reiter}")`);
+    await seite.waitForTimeout(400);
+    const zeilen = await seite.evaluate(() => document.querySelectorAll('.gegen').length);
+    pruefe(`Reiter «${reiter}» zeichnet vollständig`, zeilen === 14, `${zeilen} Zeilen`);
+    pruefe(`Reiter «${reiter}» wirft nicht`, meldungen.length === vorher,
+      meldungen.slice(vorher, vorher + 1).join(''));
+  }
+  await seite.click('button:has-text("Heute")');
+  await seite.waitForTimeout(300);
+
   // Tastatur. Jede Station muss sichtbar umrandet sein, sonst weiß niemand,
   // wo er gerade steht.
   const ohneRahmen = [];
@@ -281,6 +302,14 @@ async function main() {
   pruefe('rechter Pfeil scrollt', nachher.pos > 20, `scrollLeft ${nachher.pos}`);
   pruefe('linker Pfeil schaltet sich danach frei', nachher.linksAn);
 
+  // Die Ansicht wird bei jeder Zustandsänderung neu geschrieben. Vorher warf
+  // das die gescrollte Reihe an den Anfang zurück, mitten im Blättern.
+  await seite.evaluate(() => { window.madtv.session().dirty = true; });
+  await seite.waitForTimeout(600);
+  const ueberlebt = await seite.evaluate(() => document.querySelector('.kartei').scrollLeft);
+  pruefe('die gescrollte Stelle überlebt das Neuzeichnen', Math.abs(ueberlebt - nachher.pos) < 5,
+    `${nachher.pos} → ${ueberlebt}`);
+
   await raumRundgang(seite, meldungen);
   await seite.close();
 
@@ -293,14 +322,20 @@ async function main() {
     s.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
     await starte(s);
 
-    const lage = await s.evaluate(() => ({
-      ueberlauf: document.body.scrollWidth - document.body.clientWidth,
-      gegenSichtbar: [...document.querySelectorAll('.gegen')].some((x) => x.offsetParent !== null),
-      knopfHoehe: Math.min(...[...document.querySelectorAll('#bottom button')]
-        .map((b) => b.getBoundingClientRect().height)),
-    }));
+    const lage = await s.evaluate(() => {
+      const knoepfe = [...document.querySelectorAll('#bottom button')];
+      return {
+        ueberlauf: document.body.scrollWidth - document.body.clientWidth,
+        gegenSichtbar: [...document.querySelectorAll('.gegen')].some((x) => x.offsetParent !== null),
+        knoepfe: knoepfe.length,
+        // Math.min() ohne Werte wäre Infinity und damit ein stillschweigendes Bestanden
+        knopfHoehe: knoepfe.length
+          ? Math.min(...knoepfe.map((b) => b.getBoundingClientRect().height)) : 0,
+      };
+    });
     pruefe(`${name}: kein seitlicher Überlauf`, lage.ueberlauf <= 1, `${lage.ueberlauf} px`);
     pruefe(`${name}: Gegenüber-Spalte weicht dem eigenen Plan`, lage.gegenSichtbar === (breite > 520));
+    pruefe(`${name}: Etagenleiste ist da`, lage.knoepfe > 0);
     pruefe(`${name}: Schaltflächen sind mindestens 32 px hoch`, lage.knopfHoehe >= 32,
       `${Math.round(lage.knopfHoehe)} px`);
     pruefe(`${name}: keine Konsolenfehler`, mm.length === 0, mm.join(' | '));

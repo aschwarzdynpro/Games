@@ -155,9 +155,9 @@ export function aiTurn(g: Game, ch: Channel): void {
 
   // Ausbau. Reichweite ist der stärkste Imagehebel im Spiel — wenn die
   // Konkurrenz daran dreht, muss der Spieler es erfahren. Sonst wächst der
-  // Nachbar in einer Zahl, die nur sein eigenes Büro anzeigt. Am Aufbautag
-  // (g.day === 0) bleibt es still: Was vor Spielbeginn gekauft wurde, hat
-  // niemand vorher anders gesehen.
+  // Nachbar in einer Zahl, die nur sein eigenes Büro anzeigt. Gemeldet wird
+  // wie beim weggeschnappten Titel erst ab Tag 2: Der Partieaufbau läuft mit
+  // g.day = 0, und was dabei entsteht, hat niemand vorher anders gesehen.
   const melden = (text: string): void => {
     if (g.day > 1) toast(g, 'warn', 'Die Konkurrenz rüstet auf', text);
   };

@@ -445,10 +445,8 @@ table.tbl tr:last-child td{border-bottom:none;}
   touch-action:pan-y;
 }
 
-/* Vierzehn Halbstundenzeilen. Eine Sendung zieht sich als ein Feld über so
-   viele Zeilen, wie sie lang ist — deshalb Raster statt Liste. */
-/* Beschriftung der drei Spalten. Sie teilt sich das Raster mit der Tafel
-   darunter, damit sie mitwandert, wenn die Spaltenbreiten sich ändern. */
+/* Beschriftung über der Tafel. Sie teilt sich deren Raster, damit sie
+   mitwandert, wenn die Spaltenbreiten sich zur schmalen Ansicht hin ändern. */
 .board-kopf{
   display:grid;
   grid-template-columns:46px minmax(0,1fr) 170px 124px;
@@ -460,6 +458,9 @@ table.tbl tr:last-child td{border-bottom:none;}
   font-style:normal;text-transform:none;letter-spacing:0;font-weight:400;
   color:var(--dim2);display:block;font-size:9px;
 }
+/* Vierzehn Halbstundenzeilen. Eine Sendung zieht sich als ein Feld über so
+   viele Zeilen, wie sie lang ist — deshalb Raster statt Liste. Vierte Spalte:
+   das Programm der Konkurrenz zur selben Zeit. */
 .board-grid{
   display:grid;
   grid-template-columns:46px minmax(0,1fr) 170px 124px;

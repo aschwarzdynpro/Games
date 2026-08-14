@@ -26,6 +26,48 @@ export function railNav(label: string): string {
 /** Der Kasten samt Kennzeichnung, damit Kopf und Reihe zusammenfinden. */
 export const RAILBOX = 'data-railbox';
 
+/* ─────────── Gescrollte Stelle über das Neuzeichnen retten ─────────── */
+
+/**
+ * Die Ansicht wird komplett neu geschrieben, sobald sich am Spielstand etwas
+ * ändert — spätestens alle dreißig Spielminuten. Bis eben warf das jede
+ * gescrollte Reihe an den Anfang zurück: Wer in der Kundenkartei nach hinten
+ * blätterte, stand Sekunden später wieder bei der ersten Karte.
+ *
+ * Der Schlüssel ist Klasse plus laufende Nummer unter Gleichen. Er muss nur
+ * innerhalb einer Ansicht eindeutig sein; wechselt der Raum, passt er ohnehin
+ * auf nichts mehr.
+ */
+function scroller(root: ParentNode): HTMLElement[] {
+  return [...root.querySelectorAll<HTMLElement>('.shelf-rail, [data-scroll]')];
+}
+
+function schluessel(el: HTMLElement, alle: HTMLElement[]): string {
+  const gleiche = alle.filter((x) => x.className === el.className);
+  return `${el.className}#${gleiche.indexOf(el)}`;
+}
+
+/** Vor dem Neuschreiben aufrufen und das Ergebnis an `scrollZurueck` geben. */
+export function scrollMerken(root: ParentNode): Map<string, number> {
+  const alle = scroller(root);
+  const stand = new Map<string, number>();
+  alle.forEach((el) => {
+    if (el.scrollLeft > 0) stand.set(schluessel(el, alle), el.scrollLeft);
+  });
+  return stand;
+}
+
+/** Nach dem Neuschreiben aufrufen. Was nicht mehr passt, fällt weg. */
+export function scrollZurueck(root: ParentNode, stand: Map<string, number>): void {
+  if (!stand.size) return;
+  const alle = scroller(root);
+  alle.forEach((el) => {
+    const wert = stand.get(schluessel(el, alle));
+    // Nie über das Ende hinaus: Die Reihe kann inzwischen kürzer sein.
+    if (wert) el.scrollLeft = Math.min(wert, el.scrollWidth - el.clientWidth);
+  });
+}
+
 /**
  * Verdrahtet alle Pfeile unterhalb von `root`. Wird nach jedem Neuzeichnen
  * aufgerufen; die Zuhörer hängen an frisch erzeugten Knoten und verschwinden

@@ -45,13 +45,6 @@ tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figu
   browser/ui.mjs  was nur ein echter Browser beantworten kann
 ```
 
-`tests/browser/ui.mjs` prüft, was ohne DOM nicht messbar ist: ob ein Symbol in
-seiner Schachtel bleibt, ob jede überlaufende Regalwand ihre Pfeile hat, ob eine
-Seite auf 390 Pixeln seitlich überläuft, ob jeder Text den Kontrastwert AA
-erreicht und jede Tabulatorstation sichtbar umrandet ist. Jede einzelne Prüfung
-dort steht für einen Fehler, der schon einmal da war. Der Ordner wird vor jedem
-Lauf frisch gebaut, damit nie ein alter Stand geprüft wird.
-
 Die Trennung ist der eigentliche Zweck dieser Etappe. `core` lässt sich in
 Millisekunden über hundert Spieltage laufen lassen, ohne dass ein Browser
 beteiligt ist — deshalb sind Balancing-Messungen jetzt Tests statt Handarbeit.
@@ -63,6 +56,23 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 **Die Weltschicht liest nur.** `world/` verändert keinen Spielstand — sie
 übersetzt den Fahrstuhlzähler der Sitzung in einen Weg durch den Flur.
 
+`tests/browser/ui.mjs` prüft, was ohne DOM nicht messbar ist: ob ein Symbol in
+seiner Schachtel bleibt, ob jede überlaufende Regalwand ihre Pfeile hat, ob eine
+Seite auf 390 Pixeln seitlich überläuft, ob jeder Text den Kontrastwert AA
+erreicht und jede Tabulatorstation sichtbar umrandet ist. Jede einzelne Prüfung
+dort steht für einen Fehler, der schon einmal da war. Der Ordner wird vor jedem
+Lauf frisch gebaut, damit nie ein alter Stand geprüft wird.
+
+Sie hat sich sofort bezahlt gemacht: Zwei Fehler in der frisch gebauten
+Gegenüber-Spalte fielen erst dort auf. Der vierte Sendeplan-Reiter reicht einen
+Tag weiter, als die Konkurrenz plant — `sched[tag]` war dort schlicht nicht da,
+und die Spalte warf bei jedem Bild. Und der zweite war älter als die Spalte:
+Jedes Neuzeichnen setzte gescrollte Regalwände auf Anfang zurück. Wer in der
+Kundenkartei nach hinten blätterte, stand Sekunden später wieder bei der ersten
+Karte — die Ansicht wird bei jeder Zustandsänderung neu geschrieben, spätestens
+alle dreißig Spielminuten. Ohne die neuen Pfeile wäre das weiter niemandem
+aufgefallen.
+
 ## Was sich gegenüber der Einzeldatei geändert hat
 
 | | vorher | jetzt |
@@ -71,7 +81,7 @@ ab und macht Einblendungen, Dialoge oder Töne daraus.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 104 Prüfungen ohne DOM, 56 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 65 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |

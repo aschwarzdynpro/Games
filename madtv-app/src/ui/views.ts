@@ -14,6 +14,7 @@ import { G, S } from './session';
 import { ROOMS } from './rooms';
 import { runAction } from './actions';
 import { bindBoard } from './board';
+import { scrollMerken, scrollZurueck } from './rail';
 import { goFloor, leaveRoom, setSpeed, togglePause } from './loop';
 import { openMenu } from './screens';
 
@@ -174,9 +175,14 @@ export function renderView(): void {
   const move = transitionFor(lastScene, key);
   lastScene = key;
 
+  // Wo der Spieler in den Regalwänden gerade steht, überlebt das Neuschreiben.
+  const gescrollt = scrollMerken(view);
+
   if (s.elevBusy > 0) view.innerHTML = viewElevator();
   else if (!s.room) view.innerHTML = viewTower();
   else view.innerHTML = ROOMS[s.room]();
+
+  scrollZurueck(view, gescrollt);
 
   view.classList.remove('v-in', 'v-out', 'v-ride', 'v-arrive');
   if (move) {
