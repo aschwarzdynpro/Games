@@ -3,3 +3,7 @@ dist/
 dist-single/
 *.local
 .DS_Store
+
+# Screenshots aus Browser-Prüfläufen gehören in ein Scratchpad, nicht ins Repo
+*.png
+
