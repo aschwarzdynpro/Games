@@ -3,7 +3,7 @@
  * Speichern und Laden.
  */
 import { icon } from './icons';
-import { resetScene, resetTop } from './views';
+import { resetBrett, resetScene, resetTop } from './views';
 import { buildInfo } from './install';
 import { DIFFS, createGame, esc, hhmm, moneyShort, WEEKDAYS } from '../core';
 import type { DifficultyId, Options } from '../core';
@@ -209,6 +209,7 @@ function applyLoad(slot: number): void {
   // Ein geladener Stand hat keine Vorgeschichte: Kopfzeile neu bauen, und der
   // Raum soll nicht so tun, als sei man gerade hineingegangen.
   resetTop();
+  resetBrett();
   resetScene();
   el('start').style.display = 'none';
   startLoop();

@@ -172,7 +172,23 @@ export function customDialog(e: Omit<Entry, 'pause'> & { pause?: boolean }): voi
 
 /* ─────────── Einblendungen ─────────── */
 
+/**
+ * Die letzten Meldungen, für die Anzeige im Armaturenbrett.
+ *
+ * Eine Einblendung ist nach vier Sekunden weg. Wer in dem Moment auf den
+ * Sendeplan sah, hat sie nie gelesen — im Brett unter dem Bild stehen sie
+ * deshalb noch eine Weile.
+ */
+export interface Meldung { level: ToastLevel; titel: string; text: string; }
+const buch: Meldung[] = [];
+
+export function meldungen(): readonly Meldung[] {
+  return buch;
+}
+
 export function toast(level: ToastLevel, title: string, text: string): void {
+  buch.unshift({ level, titel: title, text });
+  while (buch.length > 4) buch.pop();
   const box = el('toasts');
   const d = document.createElement('div');
   d.className = `toast ${level === 'info' ? '' : level}`;

@@ -39,6 +39,122 @@ input,select{font:inherit;color:inherit;}
 /* ─────────── Layout ─────────── */
 #app{display:flex;flex-direction:column;height:100dvh;}
 
+/* ─────────── Armaturenbrett ───────────
+   Die App besteht aus dem Bild und dem Brett darunter. Der Raum darüber
+   wechselt, das Brett bleibt stehen — deshalb sitzt es im Rahmen und nicht in
+   der Ansicht. Im Querformat rückt es neben das Bild, weil dort die Höhe knapp
+   ist und die Breite übrig; die Regel ist dieselbe wie beim Raum selbst. */
+#brett{
+  flex-shrink:0;background:var(--bg2);border-top:1px solid var(--line);
+  padding:8px 12px;overflow:auto;max-height:46dvh;
+}
+.brett{display:flex;flex-direction:column;gap:8px;}
+.br-zeile{display:flex;gap:8px;flex-wrap:wrap;}
+.br-zahlen .br-feld{flex:1 1 132px;}
+.br-feld{
+  display:flex;align-items:center;gap:9px;min-width:0;
+  padding:7px 10px;border-radius:9px;
+  background:#0e131b;border:1px solid #10151d;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.55);
+}
+.br-ico{color:var(--dim);display:flex;flex-shrink:0;}
+.br-ico .ic{width:1.4em;height:1.4em;}
+.br-feld.geld .br-ico{color:var(--gold);}
+.br-feld.couch .br-ico{color:#7fa88c;}
+.br-feld.betty .br-ico{color:var(--love);}
+.br-feld.quote .br-ico{color:var(--acc);}
+.br-werte{min-width:0;}
+.br-k{
+  font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.br-v{
+  font-size:17px;font-weight:800;line-height:1.15;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.br-v.bad{color:var(--bad);}
+.br-v.onair{color:var(--acc);}
+
+/* Die drei Tafeln: was läuft, was folgt, was passiert ist */
+.br-tafeln>*{
+  flex:1 1 210px;min-width:0;
+  padding:8px 10px;border-radius:9px;
+  background:#0e131b;border:1px solid #10151d;
+}
+.br-titel{
+  font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--dim2);margin-bottom:6px;
+}
+.br-tv-schirm{
+  border-radius:5px;padding:5px 8px;min-width:0;
+  background:linear-gradient(180deg,#121b26,#0a0f16);border:1px solid #223046;
+}
+.br-tv.laeuft .br-tv-schirm{border-color:#2f4b6b;background:linear-gradient(180deg,#14202e,#0b1119);}
+.br-tv-genre{
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--dim2);display:flex;align-items:center;gap:4px;
+}
+.br-tv-genre .ic{width:1.05em;height:1.05em;}
+.br-tv-titel{
+  font-size:13px;font-weight:700;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.br-tv-fuss{
+  display:flex;align-items:center;gap:6px;margin-top:5px;
+  font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim2);
+}
+.br-lampe{width:7px;height:7px;border-radius:50%;background:var(--line2);flex-shrink:0;}
+.br-tv.laeuft .br-lampe{background:var(--bad);animation:onairBlink 1.6s ease-in-out infinite;}
+
+.br-plan-liste,.br-meld-liste{display:flex;flex-direction:column;gap:3px;}
+.br-zeile-plan{
+  display:flex;align-items:center;gap:7px;font-size:11.5px;
+  padding:2px 4px;border-radius:5px;min-width:0;
+}
+.br-zeile-plan.jetzt{background:rgba(90,169,255,.14);}
+.br-zeile-plan.gelaufen{color:var(--dim2);}
+.br-zeit{font-variant-numeric:tabular-nums;color:var(--dim2);flex-shrink:0;font-size:10.5px;}
+.br-was{
+  display:flex;align-items:center;gap:4px;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.br-was .ic{width:1em;height:1em;flex-shrink:0;color:var(--dim);}
+.br-wert{margin-left:auto;font-variant-numeric:tabular-nums;font-size:10.5px;color:var(--ok);}
+.br-meldung{
+  display:flex;flex-direction:column;gap:1px;font-size:11px;
+  padding:3px 6px;border-radius:5px;border-left:2px solid var(--line2);
+  background:rgba(255,255,255,.02);
+}
+.br-meldung.good{border-left-color:var(--ok);}
+.br-meldung.warn{border-left-color:var(--warn);}
+.br-meldung.bad{border-left-color:var(--bad);}
+.br-meldung b{font-size:10.5px;}
+.br-meldung span{color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.br-leer{font-size:11px;color:var(--dim2);padding:4px;}
+
+/* Die Handgriffe des Raums stehen im Brett, nicht im Bild darüber. */
+.br-knoepfe:empty{display:none;}
+.br-knoepfe .raum-leiste{margin-top:0;}
+
+/* Querformat: das Brett neben das Bild statt darunter. Höhe ist dort das
+   knappe Gut, Breite ist übrig. */
+@media (orientation:landscape) and (min-width:660px){
+  #app{display:grid;grid-template-columns:1fr clamp(300px,27vw,400px);
+    grid-template-rows:auto 1fr auto;height:100dvh;}
+  #topbar{grid-column:1/-1;}
+  #main{grid-column:1;grid-row:2;}
+  #brett{
+    grid-column:2;grid-row:2;max-height:none;
+    border-top:0;border-left:1px solid var(--line);
+  }
+  #bottom{grid-column:1/-1;}
+  .br-zahlen .br-feld{flex:1 1 44%;}
+  /* Untereinander, aber jede nur so hoch wie ihr Inhalt — mit `flex:1 1`
+     zögen sie sich sonst über die ganze Spalte auseinander. */
+  .br-tafeln{flex-direction:column;}
+  .br-tafeln>*{flex:0 0 auto;}
+}
+
 /* ─────────── Topbar ─────────── */
 #topbar{
   display:flex;align-items:center;gap:10px;
@@ -1726,8 +1842,30 @@ body.dragging .tresen-kante{pointer-events:auto;}
 /* Die Szene füllt die Ansicht, die Leiste darunter zählt dieselben Punkte als
    Knöpfe auf. Beides zusammen ist der Raum; das Fenster legt sich darüber. */
 /* Im begehbaren Raum ist das Bild der Inhalt — die Spalte für Fließtext wäre
-   dafür zu schmal. */
-body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
+   dafür zu schmal.
+
+   Die Höhe kommt nicht mehr aus geschätzten Abzügen («100dvh minus 360»),
+   sondern aus einer durchgehenden Kette: #main bekommt vom Rahmen einen festen
+   Rest, und Wrap, Szene und Bild reichen ihn weiter. Das hält auch dann, wenn
+   sich das Brett darunter ändert — und genau daran waren die Konstanten
+   vorher jedes Mal zerbrochen. */
+body.im-raum .wrap{
+  max-width:1420px;padding:10px 12px 12px;
+  height:100%;box-sizing:border-box;
+}
+body.im-raum .raum-szene{height:100%;}
+/* `height`, nicht `max-height`: Ein Prozentwert gegen eine automatische Höhe
+   greift nicht — das Bild hätte sich an nichts anlehnen können und wäre über
+   den Rand hinausgewachsen. */
+body.im-raum .raum-bild{
+  height:100%;min-height:0;
+  /* Der Kasten füllt jetzt den Platz, das Bild steht mittig darin. Mit Rahmen
+     und Grund sähe man vor allem den leeren Kasten; die Bilder bringen ihre
+     eigene Kante mit. */
+  align-items:center;
+  background:transparent;border-color:transparent;box-shadow:none;
+}
+body.im-raum .raum-svg{max-height:100%;}
 
 /* Ohne Flur darüber hat der Raum die Höhe, die er braucht. Der Deckel liegt
    trotzdem fest: Darunter müssen Konsole und Leiste noch hinpassen. */
@@ -1745,7 +1883,7 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
    Die Untergrenze von 640 Punkten hält das quer gehaltene Telefon drin — genau
    dort ist die Spalte am nötigsten — und lässt Winzfenster außen vor. */
 @media (orientation:landscape) and (min-width:640px){
-  .raum-szene.hoch{display:flex;align-items:flex-start;gap:12px;}
+  .raum-szene.hoch{display:flex;align-items:stretch;gap:12px;min-height:0;}
   /* Der Kasten füllt den Platz, das Bild steht mittig darin. Ihn schrumpfen zu
      lassen wäre das Naheliegende, geht aber nicht: Ein SVG als Flex-Kind mit
      flex-basis auto fällt auf null zusammen. Stattdessen wird der Rahmen hier
@@ -1765,7 +1903,7 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
   .raum-szene.hoch .raum-leiste{flex-direction:column;margin-top:0;}
   .raum-szene.hoch .raum-knopf{justify-content:flex-start;}
   /* Unter dem Bild liegt nichts mehr, also darf es fast die ganze Höhe haben. */
-  .raum-szene.hoch .raum-svg{max-height:min(calc(100dvh - 202px),920px);}
+  .raum-szene.hoch .raum-svg{max-height:100%;}
 }
 
 /* Quer und flach — das liegende Telefon. Dort ist jede Zeile Höhe kostbar:
@@ -1777,7 +1915,7 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
   #topbar{padding:4px 10px;gap:7px;}
   .clock{font-size:15px;padding:1px 8px;}
   body.im-raum .wrap{padding:6px 10px 10px;}
-  .raum-szene.hoch .raum-svg{max-height:calc(100dvh - 104px);}
+  .raum-szene.hoch .raum-svg{max-height:100%;}
   .ko-v{font-size:14px;}
   .ko-feld{padding:5px 8px;}
   .raum-knopf{padding:5px 10px;font-size:11px;}
@@ -1815,7 +1953,7 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
    dem Raum die Knöpfe ab. */
 .raum-svg{
   display:block;width:auto;max-width:100%;height:auto;
-  max-height:min(calc(100dvh - 348px),760px);
+  max-height:min(100%,920px);
 }
 
 /* ─────────── Sendekonsole ─────────── */
@@ -1971,7 +2109,7 @@ body.fenster-offen #main{overflow:hidden;}
    gemessen, nicht geschätzt — auf dem hochkant gehaltenen Telefon ist die
    Kopfzeile zweizeilig und die Konsole gestapelt, zusammen rund 360 Punkte. */
 @media (max-width:700px){
-  .raum-svg{max-height:calc(100dvh - 360px);}
+  .raum-svg{max-height:100%;}
   /* Nur die Ränder enger, nicht die Unterkante festnageln — sonst stünde der
      Deckel wieder auf voller Höhe und ein Zweizeiler füllte das Telefon. */
   .fenster{top:4px;left:4px;right:4px;max-height:calc(100% - 8px);}

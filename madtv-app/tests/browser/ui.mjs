@@ -217,9 +217,11 @@ async function main() {
     `${symbole.zuGross} von ${symbole.gesamt}`);
 
   // Kopfzeile. Hier stand einmal «8,1 Mio € €».
-  const kopf = await seite.evaluate(() => document.getElementById('topbar').innerText);
-  pruefe('Kopfzeile ohne doppeltes Währungszeichen', !/€\s*€/.test(kopf), kopf.replace(/\n/g, ' '));
-  pruefe('Kopfzeile zeigt die Uhr', /\d\d:\d\d/.test(kopf));
+  // Die Zahlen stehen seit dem Umbau im Brett, nicht mehr in der Kopfzeile.
+  const brett = await seite.evaluate(() => document.getElementById('brett').innerText);
+  pruefe('das Brett ohne doppeltes Währungszeichen', !/€\s*€/.test(brett),
+    brett.replace(/\n/g, ' ').slice(0, 80));
+  pruefe('das Brett zeigt die Uhr', /\d\d:\d\d/.test(brett));
 
   // Lesbarkeit. Kleine Schrift braucht nach WCAG AA 4,5:1, ab 18px reichen 3:1.
   const kontrast = await seite.evaluate(() => {
@@ -444,12 +446,13 @@ async function main() {
     pruefe('sein Hintergrund ist ein aufgezogenes Bild',
       !!grundBuero?.geladen && grundBuero.breit > 300 && grundBuero.hoch > 300,
       JSON.stringify(grundBuero));
-    // Stehendes Bild: Konsole und Leiste gehören daneben, nicht darunter.
-    pruefe('bei stehendem Bild steht die Konsole daneben',
+    // Das Armaturenbrett gehört seit dem Umbau zum Rahmen, nicht zur Szene:
+    // Im Querformat steht es neben dem Bild, hochkant darunter.
+    pruefe('das Brett steht neben dem Bild',
       await r.evaluate(() => {
         const sz2 = document.querySelector('.raum-bild').getBoundingClientRect();
-        const se = document.querySelector('.raum-seite').getBoundingClientRect();
-        return se.left >= sz2.right - 2;
+        const br = document.getElementById('brett').getBoundingClientRect();
+        return br.left >= sz2.right - 2;
       }));
     pruefe('sie hat sechs Klickpunkte', sz.punkte === 6, String(sz.punkte));
     pruefe('und dieselbe Zahl Knöpfe in der Leiste', sz.knoepfe === sz.punkte,
@@ -479,21 +482,31 @@ async function main() {
     pruefe('der Flur weicht dem Raum',
       !(await r.evaluate(() => document.getElementById('world').offsetParent !== null)));
 
-    // Die Konsole unter dem Bild: fünf Anzeigen, gefüllt
+    // Das Armaturenbrett: alle Anzeigen, gefüllt. Die Kopfzeile trägt keine
+    // Zahlen mehr — sie standen dort und hier, und das war eine zu viel.
     const ko = await r.evaluate(() => ({
-      da: !!document.querySelector('.konsole'),
-      uhr: document.getElementById('k-uhr')?.textContent ?? '',
-      quote: document.getElementById('k-quote')?.textContent ?? '',
-      geld: document.getElementById('k-geld')?.textContent ?? '',
-      tv: document.getElementById('k-tv-titel')?.textContent ?? '',
-      couch: document.getElementById('k-couch')?.textContent ?? '',
+      da: !!document.querySelector('.brett'),
+      uhr: document.getElementById('b-uhr')?.textContent ?? '',
+      quote: document.getElementById('b-quote')?.textContent ?? '',
+      geld: document.getElementById('b-geld')?.textContent ?? '',
+      tag: document.getElementById('b-tag')?.textContent ?? '',
+      tv: document.getElementById('b-tv-titel')?.textContent ?? '',
+      couch: document.getElementById('b-couch')?.textContent ?? '',
+      plan: document.querySelectorAll('.br-zeile-plan, .br-plan-liste .br-leer').length,
+      meld: document.querySelectorAll('.br-meldung, .br-meld-liste .br-leer').length,
+      kopfzahlen: document.querySelectorAll('#topbar .stat').length,
     }));
-    pruefe('die Sendekonsole steht unter dem Raum', ko.da);
-    pruefe('ihre Uhr geht', /^\d\d:\d\d$/.test(ko.uhr), ko.uhr);
-    pruefe('Marktanteil und Konto stehen darin',
-      /%$/.test(ko.quote) && ko.geld.length > 1, `${ko.quote} · ${ko.geld}`);
+    pruefe('das Armaturenbrett steht im Rahmen', ko.da);
+    pruefe('seine Uhr geht', /^\d\d:\d\d$/.test(ko.uhr), ko.uhr);
+    pruefe('Marktanteil, Konto und Sendetag stehen darin',
+      /%$/.test(ko.quote) && ko.geld.length > 1 && ko.tag.length > 2,
+      `${ko.quote} · ${ko.geld} · ${ko.tag}`);
     pruefe('der Vorschaumonitor sagt, was läuft', ko.tv.length > 3, ko.tv);
     pruefe('die Couch ist beschriftet', ko.couch.length > 0, ko.couch);
+    pruefe('der Abend steht als Liste darin', ko.plan > 0, String(ko.plan));
+    pruefe('und die Meldungen haben ihren Platz', ko.meld > 0, String(ko.meld));
+    pruefe('die Kopfzeile zeigt keine Zahlen mehr', ko.kopfzahlen === 0,
+      `${ko.kopfzahlen} Anzeigen in der Kopfzeile`);
 
     // Der Sendeplan im Fenster ist derselbe wie vorher — samt Steckwand
     await r.click('[data-f="sendeplan"].hs');
@@ -1278,9 +1291,9 @@ async function main() {
 
     const lage = await o.evaluate(() => {
       const kasten = document.querySelector('.raum-bild')?.getBoundingClientRect();
-      const seite = document.querySelector('.raum-seite')?.getBoundingClientRect();
+      const seite = document.getElementById('brett')?.getBoundingClientRect();
       const knopf = [...document.querySelectorAll('.raum-knopf')].pop();
-      const spalte = document.querySelector('.raum-seite');
+      const spalte = document.getElementById('brett');
       const nav = document.getElementById('bottom').getBoundingClientRect();
       const main = document.getElementById('main');
       return {

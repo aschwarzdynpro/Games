@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 219 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 222 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -316,6 +316,31 @@ keiner war: Quelle und Ziel passten nicht gleichzeitig ins Fenster, das
 Einscrollen der Quelle schob das Ziel hinaus, und der Zeiger landete auf der
 Kopfzeile. Die Prüfung misst deshalb ausdrücklich mit, ob beide sichtbar sind,
 bevor sie das Ergebnis glaubt.
+
+**Die App ist das Bild und das Brett darunter.** Der Raum oben wechselt, das
+Armaturenbrett bleibt stehen — deshalb sitzt es im Rahmen und nicht in der
+Ansicht. Darin steht alles, was man beim Spielen wissen muss: Sendetag,
+Sendezeit, Konto samt Tageskosten, Marktanteil, Zuschauer, Betty; daneben der
+Vorschaumonitor, der Abend als Liste und die letzten Meldungen. Und die
+Handgriffe des Raums — der Laptop, die Tür — stehen gleich darunter statt unter
+dem Bild.
+
+Die Kopfzeile zeigte dieselben Zahlen noch einmal. Zwei Orte für dieselbe Zahl
+sind einer zu viel; sie ist auf das geschrumpft, was keine Anzeige ist: Tempo
+und Menü. Im Querformat rückt das Brett neben das Bild, hochkant darunter —
+dieselbe Regel wie beim Raum, weil es dieselbe Frage ist.
+
+Dabei sind die geschätzten Höhenabzüge verschwunden. Wie hoch das Bild sein
+darf, stand bis dahin als Konstante im Stilblatt («100dvh minus 360»), und
+genau daran war die Ansicht bei jeder Änderung darunter zerbrochen. Jetzt
+reicht der Rahmen die Höhe durch: #main bekommt seinen Rest, Wrap, Szene und
+Bild geben ihn weiter. Eine Stelle war dabei tückisch — `max-height:100%` gegen
+eine automatische Höhe greift nicht; erst eine echte `height` gibt dem Bild
+etwas zum Anlehnen.
+
+Die letzten Meldungen brauchten eine Quelle: Eine Einblendung ist nach vier
+Sekunden weg, und wer in dem Moment auf den Sendeplan sah, hat sie nie gelesen.
+`toast()` führt jetzt nebenbei ein kurzes Buch der letzten vier.
 
 **Zwei Ebenen statt drei.** Gemessen war der Weg zu einer Sendung: Raum ›
 Fenster › Dialog. Der Dialog listete die eigenen Kassetten auf, sortiert nach
