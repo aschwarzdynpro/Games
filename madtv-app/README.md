@@ -26,11 +26,29 @@ npm run build          # dist/         — Ordner-Build (z. B. GitHub Pages)
 npm run build:single   # dist-single/  — eine einzige HTML-Datei
 ```
 
-`npm run build:single` erzeugt weiterhin eine selbstständige Datei zum
-Doppelklicken oder Verschicken. Sie ist mit den drei Raumbildern von 271 KB auf
-**913 KB** gewachsen — die Bilder stecken als Daten-URI mit drin. Bei dreizehn
-Räumen liefe das auf gut zwei Megabyte hinaus; ob die Einzeldatei die Bilder
-weiter mitschleppt, ist zu entscheiden, bevor die nächsten dazukommen.
+**Die beiden Ausgaben sind seit den Raumbildern nicht mehr dasselbe in anderer
+Verpackung.** Ein eingebettetes Bild wiegt als Daten-URI rund ein Drittel mehr
+als die Datei selbst; drei davon trieben die Einzeldatei von 271 auf 913 KB, und
+dreizehn hätten daraus gut zwei Megabyte gemacht — für etwas, das man per E-Mail
+verschickt, zu viel.
+
+Die Bilder danebenzulegen hätte das gelöst und zugleich den Zweck zerstört: Eine
+Einzeldatei mit Nebendateien ist keine. Also fehlen die Bilder dort ganz. Ein
+Raum ohne Hintergrund ist keine Szene, und wer keine Szene hat, zeigt sein Panel
+— derselbe Weg, den die übrigen zehn Räume ohnehin gehen. Zuständig dafür ist
+`ohneRaumbilder()` in `vite.config.ts`, zwölf Zeilen, die den Bildimport in
+diesem einen Baumodus durch eine leere Zeichenkette ersetzen.
+
+| | `dist/` | `dist-single/` |
+|---|---|---|
+| Umfang | Ordner mit Nebendateien | **eine** Datei |
+| Raumbilder | ja, als eigene Dateien | nein |
+| Büro, Chefbüro, Filmagentur | begehbare Szene | Panel |
+| Größe | 237 KB JS + 458 KB Bilder | **303 KB** |
+
+Nebenbei ist auch der Ordner-Build günstiger geworden: Die Bilder sind dort
+jetzt eigene Dateien statt Base64 im Bündel, das Skript schrumpfte von rund
+890 auf 237 KB und die Bilder lassen sich einzeln zwischenspeichern.
 
 ## Aufbau
 
@@ -44,7 +62,7 @@ src/
     szenen/       je Raum: Zeichnung oder Bild, plus Karte der Klickpunkte
     konsole.ts    Marktanteil, Konto, Uhr, Vorschaumonitor, Zuschauercouch
   assets/icons/   98 Symbole, je eine SVG-Datei
-  assets/szenen/  Raumbilder, als Daten-URI eingebettet
+  assets/szenen/  Raumbilder; im Ordner-Build eigene Dateien, in der Einzeldatei gar nicht
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figuren, Balancing
@@ -87,7 +105,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 159 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 163 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |

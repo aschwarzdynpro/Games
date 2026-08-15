@@ -6,16 +6,17 @@
  * dieselbe Karte aus Klickpunkten. Genau dafür stehen die Punkte in einem
  * eigenen Raster und nicht in Bildpunkten.
  *
- * Das Bild wird als Daten-URI eingebettet (`?inline`), nicht als Datei daneben.
- * Der Grund steht im README: Die Einzeldatei zum Doppelklicken bleibt ein
- * Ausgabeformat, und die trägt keine Nebendateien. 106 KB WebP werden dabei zu
- * rund 146 KB im Bündel — das ist der Preis, und er ist genannt.
+ * Das Bild ist ein gewöhnlicher Baustein, keine eingebettete Daten-URI mehr.
+ * Im Ordner-Build wird daraus eine eigene Datei; in der Einzeldatei ersetzt
+ * `ohneRaumbilder()` aus der Vite-Konfiguration diesen Import durch eine leere
+ * Zeichenkette, und der Raum fällt dort auf sein Panel zurück. Warum das so
+ * ist, steht in der Konfiguration und im README.
  *
  * Das Raster ist wie überall auf 1600 Punkte Breite normiert, damit Schildchen
  * und Fokusrahmen in jedem Raum gleich groß aussehen. Der Zuschnitt misst
  * 930×787 Bildpunkte; dazwischen liegt SKALA.
  */
-import bild from '../../assets/szenen/chef.webp?inline';
+import bild from '../../assets/szenen/chef.webp';
 import type { Klickpunkt, Raumszene } from '../szene';
 
 /** Maße des Bildzuschnitts in seinen eigenen Bildpunkten. */

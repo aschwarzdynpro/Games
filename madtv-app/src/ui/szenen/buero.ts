@@ -10,7 +10,7 @@
  * Gitter über dem Bild; `ausBild()` rechnet sie ins Raster von 1600 Punkten
  * Breite, damit Schildchen und Fokusrahmen in jedem Raum gleich groß sind.
  */
-import bild from '../../assets/szenen/buero.webp?inline';
+import bild from '../../assets/szenen/buero.webp';
 import type { Klickpunkt, Raumszene } from '../szene';
 
 const BILD_W = 926;

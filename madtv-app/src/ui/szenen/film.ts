@@ -1,22 +1,21 @@
 /**
  * Die Filmagentur — als Bild.
  *
- * Der dritte Raum mit fertigem Hintergrund. Wie bei den Büros steckt das Bild
- * als Daten-URI im Bündel (`?inline`), damit die Einzeldatei zum Doppelklicken
- * ohne Nebendateien auskommt.
+ * Der dritte Raum mit fertigem Hintergrund.
  *
  * Dieses Bild ist teurer als die beiden Büros: 218 statt rund 120 KB. Es zeigt
  * dutzende beschriftete Filmrollen und zwei Bildschirme voller Text — genau
  * die feine Zeichnung, die ein Bildkomprimierer nicht wegwerfen kann, ohne dass
  * es matschig aussieht. Der Zuschnitt wurde deshalb von 1254 auf 1040 Punkte
- * verkleinert; darstellbar sind ohnehin höchstens rund 780.
+ * verkleinert; darstellbar sind ohnehin höchstens rund 780. Genau dieser Raum
+ * gab den Ausschlag, die Bilder aus der Einzeldatei zu nehmen.
  *
  * Das Bild ist quadratisch, anders als die hochformatigen Büros. Für die
  * Aufteilung zählt das als „stehend" (Höhe/Breite über 0,8) — im Querformat
  * wandern Konsole und Leiste also auch hier an die Seite, was richtig ist:
  * Ein quadratisches Bild bindet auf einem liegenden Bildschirm über die Höhe.
  */
-import bild from '../../assets/szenen/film.webp?inline';
+import bild from '../../assets/szenen/film.webp';
 import type { Klickpunkt, Raumszene } from '../szene';
 
 /** Maße des Bildzuschnitts in seinen eigenen Bildpunkten. */

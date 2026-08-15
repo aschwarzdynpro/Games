@@ -16,11 +16,27 @@ import { BUERO } from './buero';
 import { CHEF } from './chef';
 import { FILM } from './film';
 
-export const SZENEN: Partial<Record<RoomId, Raumszene>> = {
+const ALLE: Partial<Record<RoomId, Raumszene>> = {
   office: BUERO,
   chef: CHEF,
   film: FILM,
 };
+
+/**
+ * Ein Raum ohne Hintergrund ist keine Szene.
+ *
+ * In der Einzeldatei fehlen die Bilder (siehe `ohneRaumbilder()` in
+ * `vite.config.ts`), und `bild` ist dann eine leere Zeichenkette. Ein Raum
+ * bliebe damit als Fläche mit Klickpunkten über nichts übrig — schlechter als
+ * das Panel, das es weiterhin gibt. Die Prüfung hier sortiert solche Räume aus,
+ * und `renderView()` greift von selbst zum Panel zurück.
+ *
+ * Dieselbe Regel trägt später gezeichnete Szenen mit: Wer `malen` hat, bleibt
+ * drin, auch ohne Bilddatei.
+ */
+export const SZENEN: Partial<Record<RoomId, Raumszene>> = Object.fromEntries(
+  Object.entries(ALLE).filter(([, sz]) => sz.bild || sz.malen),
+) as Partial<Record<RoomId, Raumszene>>;
 
 export interface Fensterinhalt {
   titel: string;

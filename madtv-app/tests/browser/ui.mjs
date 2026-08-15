@@ -11,7 +11,7 @@
  * ein alter Stand geprüft wird.
  */
 import { createServer } from 'node:http';
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -51,6 +51,9 @@ const TYPEN = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.ico': 'image/x-icon',
+  // Seit die Raumbilder eigene Dateien sind, kommen sie hier durch. Ohne diesen
+  // Eintrag gingen sie als application/octet-stream hinaus.
+  '.webp': 'image/webp',
 };
 
 function serve() {
@@ -105,6 +108,31 @@ async function angekommen(seite) {
   await seite.waitForTimeout(250);
 }
 
+/**
+ * Ob der Hintergrund eines Raums wirklich ein geladenes Bild ist.
+ *
+ * Früher stand hier die Frage, ob die Quelle mit `data:image/` beginnt — damals
+ * steckten die Bilder als Daten-URI im Bündel. Seit sie im Ordner-Build eigene
+ * Dateien sind, wäre das die falsche Frage; und sie war ohnehin die schwächere.
+ * Jetzt wird die Quelle tatsächlich geholt: Ein Verweis, der ins Leere zeigt,
+ * fällt damit auf, eine Daten-URI besteht weiterhin.
+ */
+async function hintergrundBild(seite) {
+  return seite.evaluate(async () => {
+    const i = document.querySelector('.raum-grund image');
+    if (!i) return null;
+    const r = i.getBoundingClientRect();
+    const quelle = i.getAttribute('href') ?? '';
+    let typ = null; let geladen = false;
+    try {
+      const antwort = await fetch(quelle);
+      geladen = antwort.ok;
+      typ = antwort.headers.get('content-type');
+    } catch (e) { typ = `Fehler: ${e.message}`; }
+    return { breit: Math.round(r.width), hoch: Math.round(r.height), geladen, typ };
+  });
+}
+
 async function raumRundgang(seite, meldungen) {
   const etagen = await seite.evaluate(() => window.madtv.core.FLOORS.map((f) => f.name));
   for (let i = 0; i < etagen.length; i++) {
@@ -132,6 +160,32 @@ async function main() {
   if (bau.status !== 0) {
     console.error(bau.stdout + bau.stderr);
     process.exit(1);
+  }
+
+  /* ── Die Einzeldatei muss eine Datei bleiben ──
+     Sie ist zum Verschicken da. Ein eingebettetes Raumbild wiegt als Daten-URI
+     rund ein Drittel mehr als die Datei selbst; drei davon trieben sie von 271
+     auf 913 KB. Deshalb lässt `ohneRaumbilder()` die Bilder dort weg und die
+     betroffenen Räume fallen auf ihr Panel zurück. Geprüft wird beides: dass
+     kein Bild drinsteckt und dass auch keins von außen nachgeladen wird. */
+  console.log('\nEinzeldatei');
+  {
+    const einzel = spawnSync('npm', ['run', 'build:single'], { cwd: ROOT, encoding: 'utf8' });
+    if (einzel.status !== 0) {
+      console.error(einzel.stdout + einzel.stderr);
+      process.exit(1);
+    }
+    const ordner = join(ROOT, 'dist-single');
+    const dateien = readdirSync(ordner);
+    const html = readFileSync(join(ordner, 'index.html'), 'utf8');
+    const kb = Math.round(Buffer.byteLength(html) / 1024);
+
+    pruefe('sie besteht aus genau einer Datei', dateien.length === 1, dateien.join(', '));
+    pruefe('ohne eingebettetes Raumbild', !html.includes('data:image/webp'));
+    pruefe('und ohne Verweis auf eine Bilddatei', !/["'(][^"'()]*\.webp/.test(html));
+    // Der Deckel ist großzügig gesetzt: Er soll das Wiedereinwandern eines
+    // Bildes melden, nicht jedes Kilobyte Spielinhalt.
+    pruefe('sie bleibt unter 400 KB', kb < 400, `${kb} KB`);
   }
 
   const srv = await serve();
@@ -377,14 +431,9 @@ async function main() {
     pruefe('Dein Büro ist eine Szene', sz.szene);
     // Auch dieser Raum ist inzwischen ein Bild — dasselbe Argument wie beim
     // Chefbüro: Ein Bild, das nicht lädt, fällt sonst nicht auf.
-    const grundBuero = await r.evaluate(() => {
-      const i = document.querySelector('.raum-grund image');
-      const rr = i?.getBoundingClientRect();
-      return i ? { art: (i.getAttribute('href') ?? '').slice(0, 11),
-        breit: Math.round(rr.width), hoch: Math.round(rr.height) } : null;
-    });
+    const grundBuero = await hintergrundBild(r);
     pruefe('sein Hintergrund ist ein aufgezogenes Bild',
-      grundBuero?.art === 'data:image/' && grundBuero.breit > 300 && grundBuero.hoch > 300,
+      !!grundBuero?.geladen && grundBuero.breit > 300 && grundBuero.hoch > 300,
       JSON.stringify(grundBuero));
     // Stehendes Bild: Konsole und Leiste gehören daneben, nicht darunter.
     pruefe('bei stehendem Bild steht die Konsole daneben',
@@ -517,16 +566,10 @@ async function main() {
     // Der Raum ist der erste mit einem Bild statt einer Zeichnung. Ein Bild, das
     // nicht lädt, fällt sonst nicht auf: Die Klickpunkte lägen weiter da, nur
     // eben über einer leeren Fläche.
-    const grund = await c.evaluate(() => {
-      const i = document.querySelector('.raum-grund image');
-      if (!i) return null;
-      const r = i.getBoundingClientRect();
-      const href = i.getAttribute('href') ?? '';
-      return { breit: Math.round(r.width), hoch: Math.round(r.height), art: href.slice(0, 11) };
-    });
+    const grund = await hintergrundBild(c);
     pruefe('der Hintergrund ist ein Bild', grund !== null);
-    pruefe('das Bild steckt in der Seite, nicht daneben',
-      grund?.art === 'data:image/', grund?.art ?? '—');
+    pruefe('und die Bildquelle lässt sich wirklich holen',
+      grund?.geladen === true, JSON.stringify(grund));
     pruefe('und es ist tatsächlich aufgezogen',
       (grund?.breit ?? 0) > 300 && (grund?.hoch ?? 0) > 250,
       `${grund?.breit}×${grund?.hoch}`);
@@ -648,15 +691,9 @@ async function main() {
 
     await f.click('[data-go="4"]');
     await angekommen(f);
-    const grundF = await f.evaluate(() => {
-      const i = document.querySelector('.raum-grund image');
-      if (!i) return null;
-      const r = i.getBoundingClientRect();
-      return { breit: Math.round(r.width), hoch: Math.round(r.height),
-        art: (i.getAttribute('href') ?? '').slice(0, 11) };
-    });
-    pruefe('der Hintergrund ist ein eingebettetes Bild',
-      grundF?.art === 'data:image/', grundF?.art ?? '—');
+    const grundF = await hintergrundBild(f);
+    pruefe('die Bildquelle lässt sich wirklich holen',
+      grundF?.geladen === true, JSON.stringify(grundF));
     pruefe('und es ist tatsächlich aufgezogen',
       (grundF?.breit ?? 0) > 300 && (grundF?.hoch ?? 0) > 300,
       `${grundF?.breit}×${grundF?.hoch}`);
