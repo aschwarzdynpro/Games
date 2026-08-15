@@ -65,6 +65,10 @@ Solange man im Raum steht, weicht die Flurszene darüber; unter dem Bild steht
 stattdessen eine Sendekonsole mit Marktanteil, Konto, Uhr, einem
 Vorschaumonitor und der Zuschauercouch.
 
+Das Chefbüro ist der erste Raum, dessen Hintergrund ein fertiges Bild ist statt
+einer Zeichnung — für die Bedienung hat sich dabei nichts geändert, weil die
+Klickpunkte in einem eigenen Raster liegen und nicht im Bild.
+
 Und die Figuren reden mit: Betty schaut zur besten Zeit selbst zu und nimmt
 Reißerisches übel, Herr Raffer wird bei fallender Quote persönlich, und die
 Konkurrenz reibt einem den weggeschnappten Spitzenfilm unter die Nase. Welcher

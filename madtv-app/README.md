@@ -39,9 +39,10 @@ src/
   world/          gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
   ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
     szene.ts      Räume als begehbares Bild mit Klickpunkten
-    szenen/       je Raum: Zeichnung und Karte der Klickpunkte
+    szenen/       je Raum: Zeichnung oder Bild, plus Karte der Klickpunkte
     konsole.ts    Marktanteil, Konto, Uhr, Vorschaumonitor, Zuschauercouch
   assets/icons/   98 Symbole, je eine SVG-Datei
+  assets/szenen/  Raumbilder, als Daten-URI eingebettet
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figuren, Balancing
@@ -84,7 +85,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 106 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 108 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -180,22 +181,39 @@ aber aus wie ein graues Brett, das quer über dem Laptop lehnt. Was funktioniert
 ist die Wirkung statt des Strahls: eine warme Pfütze auf der Platte und ein
 Schein um die Leuchte.
 
-### Chefbüro
+### Chefbüro — der erste Raum mit einem Bild
 
-Der zweite begehbare Raum, und bewusst gegen das eigene Büro gesetzt: Dort
-Jalousien und kühles Blau, hier Vertäfelung, Vorhänge und dunkles Holz. Der
-Schreibtisch steht quer im Bild, Raffer sitzt dahinter, die Besucherstühle sind
-am unteren Rand angeschnitten — man steht davor, nicht dahinter. Das ist der
-einzige Raum im Haus, in dem nicht man selbst der Chef ist.
+Hier ist der Hintergrund kein gezeichnetes SVG, sondern ein fertiges Bild. Für
+die Szenenschicht ändert das **nichts**: Sie legt beides unter dieselbe Karte
+aus Klickpunkten. Genau dafür stehen die Punkte in einem eigenen Raster und
+nicht in Bildpunkten — der Tausch war eine Zeile.
 
-Anfassen kann man Raffer (was er zu sagen hat), den Aushang (Senderanking) und
-das Kalenderblatt (Sammy-Termin).
+Angefasst wird, was das Bild hergibt: Raffer selbst, die Auszeichnungen auf dem
+Sideboard (Senderanking) und die Preisfigur im Regal (Sammy-Termin). Die
+Koordinaten werden am Bild abgelesen — Gitter drüberlegen, ablesen — und von
+`ausBild()` ins Raster gerechnet. Das Auge liest Bildpunkte, die Rechnung macht
+der Code.
 
-Das Kalenderblatt **rechnet**, statt eine Zahl zu malen: Es liest den Spieltag
-und zeigt die echten Tage bis zur Verleihung. Ein Kalender an der Wand, der
-immer dasselbe zeigt, wäre eine Lüge im Bild — und eine, die man beim Vorbeigehen
-glaubt. Geprüft wird das, indem die Zahl im Bild gegen dieselbe Rechnung gehalten
-wird.
+**Das Bild steckt in der Seite, nicht daneben.** `?inline` macht daraus einen
+Daten-URI, damit die Einzeldatei zum Doppelklicken ein Ausgabeformat bleibt.
+Der Preis ist genannt: 106 KB WebP werden zu rund 146 KB im Bündel, die
+Einzeldatei wächst von 317 auf 454 KB. Bei dreizehn Räumen wäre das eine andere
+Rechnung — dann gehören die Bilder in den Ordner-Build und die Einzeldatei
+bekommt die Zeichnungen.
+
+Zwei Dinge hat der Wechsel nebenbei erzwungen. Das Bild ist hochformatig (930×787),
+also bindet die **Höhe** statt der Breite: Der Kasten legt sich jetzt um das Bild
+statt umgekehrt, sonst stünde ein hochformatiger Raum in einer breiten leeren
+Fläche. Und die Höhe ist das knappe Gut — unter dem Bild müssen Sendekonsole und
+Knopfleiste noch hinpassen. Beim ersten Versuch schnitt die Etagenleiste dem Raum
+die Knöpfe ab; jetzt steht der Abzug als Rechnung in der CSS und wird auf drei
+Fenstergrößen geprüft.
+
+Auch die Prüfung musste umziehen: Vorher hielt sie die gemalte Zahl auf dem
+Kalenderblatt gegen die gerechnete. Jetzt prüft sie, dass der Hintergrund
+überhaupt ein Bild ist, dass es als Daten-URI in der Seite steckt und dass es
+aufgezogen wurde. Ein Bild, das nicht lädt, fällt sonst nicht auf: Die
+Klickpunkte lägen weiter da, nur über einer leeren Fläche.
 
 Die übrigen elf Räume zeigen weiterhin ihr Panel. Ein Raum wandert um, sobald
 er eine Szene hat — zwischen zwei Ständen ist nie etwas kaputt.

@@ -1609,23 +1609,34 @@ body.dragging .tresen-kante{pointer-events:auto;}
    Knöpfe auf. Beides zusammen ist der Raum; das Fenster legt sich darüber. */
 /* Im begehbaren Raum ist das Bild der Inhalt — die Spalte für Fließtext wäre
    dafür zu schmal. */
-body.im-raum .wrap{max-width:1420px;padding-bottom:74px;}
+body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
 
 /* Ohne Flur darüber hat der Raum die Höhe, die er braucht. Der Deckel liegt
    trotzdem fest: Darunter müssen Konsole und Leiste noch hinpassen. */
 .raum-szene{position:static;}
 .szene{
-  position:relative;border:1px solid var(--line2);border-radius:12px;overflow:hidden;
+  position:relative;display:flex;justify-content:center;
+  border:1px solid var(--line2);border-radius:12px;overflow:hidden;
   background:#0d1219;box-shadow:0 8px 26px rgba(0,0,0,.42);
 }
-.szene-svg{display:block;width:100%;height:auto;max-height:min(74vh,720px);}
+/* Breite und Höhe sind beide gedeckelt: Der Kasten legt sich damit um das Bild
+   statt umgekehrt — sonst stünde ein hochformatiger Raum in einer breiten
+   leeren Fläche. */
+/* Die Höhe ist das knappe Gut: Unter dem Bild müssen Sendekonsole und
+   Knopfleiste noch hinpassen, darüber die Kopfzeile, darunter die Etagen. Was
+   die beanspruchen, steht hier als Abzug — sonst schneidet die Etagenleiste
+   dem Raum die Knöpfe ab. */
+.szene-svg{
+  display:block;width:auto;max-width:100%;height:auto;
+  max-height:min(calc(100dvh - 314px),760px);
+}
 
 /* ─────────── Sendekonsole ─────────── */
 
 /* Ein Instrumentenbrett, kein Formular: eingelassene Anzeigen in einer
    Metallschiene, so wie das Gerät, das im Spiel darüber gemeint ist. */
 .konsole{
-  display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-top:10px;
+  display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-top:8px;
   padding:9px 10px;border-radius:11px;
   background:linear-gradient(180deg,#2a3341,#1b222d);
   border:1px solid var(--line2);
@@ -1715,18 +1726,8 @@ body.im-raum .wrap{max-width:1420px;padding-bottom:74px;}
   font-family:Inter,system-ui,sans-serif;}
 .b-mark{fill:#e33c3c;font-size:38px;font-weight:900;letter-spacing:.06em;text-anchor:middle;
   font-family:Inter,system-ui,sans-serif;}
-.c-schild{fill:#e0c98a;font-size:19px;font-weight:800;letter-spacing:.11em;text-anchor:middle;
-  font-family:Inter,system-ui,sans-serif;}
-.c-schild-klein{fill:#8a7a55;font-size:10px;letter-spacing:.13em;text-anchor:middle;
-  font-family:Inter,system-ui,sans-serif;}
-.c-aushang{fill:#5c5340;font-size:19px;font-weight:800;letter-spacing:.13em;text-anchor:middle;
-  font-family:Inter,system-ui,sans-serif;}
-.c-kal-kopf{fill:#f3e6d8;font-size:17px;font-weight:800;letter-spacing:.14em;text-anchor:middle;
-  font-family:Inter,system-ui,sans-serif;}
-.c-kal-tag{fill:#33241f;font-size:74px;font-weight:900;text-anchor:middle;
-  font-family:Inter,system-ui,sans-serif;}
 
-.szene-leiste{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
+.szene-leiste{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;}
 .szene-knopf{
   display:flex;align-items:center;gap:6px;
   padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;
@@ -1775,7 +1776,7 @@ body.fenster-offen #main{overflow:hidden;}
 
 /* Schmal: Die Szene wird flacher, das Fenster nimmt die ganze Fläche. */
 @media (max-width:700px){
-  .szene-svg{max-height:40vh;}
+  .szene-svg{max-height:min(calc(100dvh - 330px),46vh);}
   .fenster{inset:4px;}
   .szene-knopf span{display:none;}
   .szene-knopf{padding:9px 12px;}

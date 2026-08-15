@@ -496,15 +496,22 @@ async function main() {
       await c.waitForTimeout(180);
     }
 
-    // Das Kalenderblatt an der Wand rechnet mit, statt eine Zahl zu malen.
-    const gemalt = await c.evaluate(() =>
-      document.querySelector('.c-kal-tag')?.textContent ?? '');
-    const gerechnet = await c.evaluate(() => {
-      const d = window.madtv.session().g.day;
-      return String(7 - (d % 7 || 7) + (d % 7 === 0 ? 7 : 0));
+    // Der Raum ist der erste mit einem Bild statt einer Zeichnung. Ein Bild, das
+    // nicht lädt, fällt sonst nicht auf: Die Klickpunkte lägen weiter da, nur
+    // eben über einer leeren Fläche.
+    const grund = await c.evaluate(() => {
+      const i = document.querySelector('.szene-grund image');
+      if (!i) return null;
+      const r = i.getBoundingClientRect();
+      const href = i.getAttribute('href') ?? '';
+      return { breit: Math.round(r.width), hoch: Math.round(r.height), art: href.slice(0, 11) };
     });
-    pruefe('das Kalenderblatt zeigt den echten Termin', gemalt === gerechnet,
-      `${gemalt} statt ${gerechnet}`);
+    pruefe('der Hintergrund ist ein Bild', grund !== null);
+    pruefe('das Bild steckt in der Seite, nicht daneben',
+      grund?.art === 'data:image/', grund?.art ?? '—');
+    pruefe('und es ist tatsächlich aufgezogen',
+      (grund?.breit ?? 0) > 300 && (grund?.hoch ?? 0) > 250,
+      `${grund?.breit}×${grund?.hoch}`);
     pruefe('Chefbüro ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
     await c.close();
   }
