@@ -695,6 +695,8 @@ body.dragging .pocket{transition:none;}
 .wall-label{
   font-size:10px;font-weight:700;color:#c8a97f;letter-spacing:.05em;
   text-transform:uppercase;margin-bottom:4px;
+  /* Flex, damit die Pfeile rechts andocken können (`margin-left:auto`). */
+  display:flex;align-items:center;gap:8px;min-height:26px;
 }
 
 /* Filmschachtel: die Breite zeigt die Sendelänge */

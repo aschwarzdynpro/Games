@@ -10,13 +10,16 @@ import type { Raumszene } from '../szene';
 import {
   bueroBilanz, bueroKoffer, bueroLage, bueroQuote, bueroSendeplan,
   chefAushang, chefKalender, chefRaffer,
+  filmAuktion, filmKatalog, filmPaket, genreKonjunktur,
 } from '../rooms';
 import { BUERO } from './buero';
 import { CHEF } from './chef';
+import { FILM } from './film';
 
 export const SZENEN: Partial<Record<RoomId, Raumszene>> = {
   office: BUERO,
   chef: CHEF,
+  film: FILM,
 };
 
 export interface Fensterinhalt {
@@ -45,6 +48,24 @@ export function fensterInhalt(room: RoomId, welches: string): Fensterinhalt | nu
         return bau('Senderanking', 'ui-diagramm', chefAushang(), 'Der Aushang ist leer.');
       case 'sammy':
         return bau('Sammy-Verleihung', 'ui-pokal', chefKalender(), 'Kein Termin angeschlagen.');
+      default:
+        return null;
+    }
+  }
+
+  if (room === 'film') {
+    switch (welches) {
+      case 'katalog':
+        return bau('Filmkatalog', 'flr-film', filmKatalog(), 'Das Regal ist leer.');
+      case 'auktion':
+        return bau('Auktion', 'ui-hammer', filmAuktion(),
+          'Zurzeit wird nichts versteigert. Der Verleih kündigt eine Auktion an, wenn ein '
+          + 'Titel dabei ist, um den sich mehrere Sender reißen.');
+      case 'paket':
+        return bau('Exklusivpaket', 'ui-karton', filmPaket(),
+          'Das Paket ist verkauft — die fünf Titel stehen in deinem Archiv.');
+      case 'trend':
+        return bau('Genre-Konjunktur', 'ui-diagramm', genreKonjunktur(), 'Noch keine Bewegung.');
       default:
         return null;
     }

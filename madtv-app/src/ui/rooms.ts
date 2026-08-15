@@ -179,15 +179,21 @@ export function bueroQuote(): string {
   return h;
 }
 
-/** Konjunktur, Quotenverlauf und Protokoll — was im Regal stünde. */
-export function bueroLage(): string {
+/**
+ * Welches Genre gerade gefragt ist.
+ *
+ * Steht an zwei Stellen: in der Regalwand im eigenen Büro, wo man die Lage
+ * überblickt, und im Filmregal der Agentur, wo der Rat „günstig einkaufen, wenn
+ * es unten ist" tatsächlich zu einer Entscheidung führt. Deshalb ist es eine
+ * eigene Funktion — zwei Abschriften derselben Tabelle wären ein sicherer Weg,
+ * dass sie irgendwann verschiedene Zahlen behaupten.
+ */
+export function genreKonjunktur(): string {
   const g = G();
-  let h = '';
-  // Genre-Konjunktur
   const trends = (Object.keys(GENRES) as GenreId[])
     .map((k) => ({ g: k, v: trendOf(g, k) }))
     .sort((a, b) => b.v - a.v);
-  h += '<div class="card"><h3>Genre-Konjunktur</h3><div class="btnrow">' +
+  return '<div class="card"><h3>Genre-Konjunktur</h3><div class="btnrow">' +
     trends.slice(0, 4).map((t) =>
       `<span class="tag g">${icon(GENRES[t.g].ico)} ${GENRES[t.g].name} ` +
       `<span class="trend up">▲${Math.round((t.v - 1) * 100)}</span></span>`).join('') +
@@ -196,6 +202,12 @@ export function bueroLage(): string {
       `<span class="trend dn">▼${Math.round((1 - t.v) * 100)}</span></span>`).join('') +
     '</div><div class="hint">Der Publikumsgeschmack verschiebt sich täglich. Ein Genre im Aufwind bringt ' +
     'bis zu einem Drittel mehr Zuschauer — günstig einkaufen, wenn es unten ist.</div></div>';
+}
+
+/** Konjunktur, Quotenverlauf und Protokoll — was im Regal stünde. */
+export function bueroLage(): string {
+  const g = G();
+  let h = genreKonjunktur();
 
   // Quotenverlauf
   h += '<div class="card"><h3>Quotenverlauf gestern</h3><div class="chart">';
@@ -272,13 +284,15 @@ function filmBox(g: ReturnType<typeof G>, m: Licence, owned: boolean): string {
     '</div></div>';
 }
 
-function film(): string {
+/**
+ * Die laufende Versteigerung.
+ *
+ * Leer, solange keine läuft — das durchgehende Panel lässt den Abschnitt dann
+ * einfach weg, das Fenster am Auktionsmonitor schreibt hin, warum nichts da ist.
+ */
+export function filmAuktion(): string {
   const g = G();
-  const s = S();
-  const p = g.player;
-  const owned = new Set(p.licences.map((l) => l.title));
-  let h = '<div class="room">' + head('flr-film', 'Filmagentur', 'Regalwand — die Breite einer Schachtel ist ihre Sendelänge');
-
+  let h = '';
   if (g.auction && !g.auction.closed) {
     const a = g.auction;
     h += `<div class="card" style="border-color:var(--gold)"><h3>${icon('ui-hammer')} Auktion läuft</h3>` +
@@ -295,15 +309,27 @@ function film(): string {
       `<span class="dim" style="font-size:11px">Richtpreis ${money(a.guide)} · Zuschlag zum Sendeschluss</span></div>` +
       '<div class="hint">Die Konkurrenz steigert stündlich mit — wer wartet, zahlt drauf oder geht leer aus.</div></div>';
   }
+  return h;
+}
 
-  if (!g.packageTaken) {
-    h += `<div class="card" style="border-color:var(--acc2)"><h3>${icon('ui-karton')} Exklusivpaket</h3>` +
-      '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Fünf Spitzentitel aus dem Verleihkatalog, ' +
-      'gebündelt und ohne Auktion. Der Preis ist unverschämt — aber die Konkurrenz kommt an keinen davon heran.</p>' +
-      `<div class="btnrow"><button class="btn" data-act="package" ${p.money < PACKAGE_COST ? 'disabled' : ''}>` +
-      `Paket kaufen · ${money(PACKAGE_COST)}</button>` +
-      '<span class="dim" style="font-size:11px">5 Titel der Güteklassen 4–5</span></div></div>';
-  }
+/** Das Bündel beim Verleih. Nach dem Kauf gibt es nichts mehr zu zeigen. */
+export function filmPaket(): string {
+  const g = G();
+  if (g.packageTaken) return '';
+  return `<div class="card" style="border-color:var(--acc2)"><h3>${icon('ui-karton')} Exklusivpaket</h3>` +
+    '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Fünf Spitzentitel aus dem Verleihkatalog, ' +
+    'gebündelt und ohne Auktion. Der Preis ist unverschämt — aber die Konkurrenz kommt an keinen davon heran.</p>' +
+    `<div class="btnrow"><button class="btn" data-act="package" ${g.player.money < PACKAGE_COST ? 'disabled' : ''}>` +
+    `Paket kaufen · ${money(PACKAGE_COST)}</button>` +
+    '<span class="dim" style="font-size:11px">5 Titel der Güteklassen 4–5</span></div></div>';
+}
+
+/** Der Katalog: Genre-Filter und die Regalwand mit den Schachteln. */
+export function filmKatalog(): string {
+  const g = G();
+  const s = S();
+  const owned = new Set(g.player.licences.map((l) => l.title));
+  let h = '';
 
   const present = ['alle', ...new Set(g.market.map((m) => m.genre))];
   // Bei über einem Dutzend Genres bricht die Reihe auf dem Handy in vier
@@ -326,9 +352,13 @@ function film(): string {
   regale.forEach((r) => {
     const items = list.filter(r.test);
     if (!items.length) return;
-    h += '<div class="wall-shelf">' +
-      `<div class="wall-label">${esc(r.label)} · ${items.length} Titel</div>` +
-      '<div class="wall-row">' +
+    // Die Pfeile fehlten hier, obwohl das Filmregal die längste Reihe im
+    // Haus ist: Neunzehn Abendfüller passen nie nebeneinander, und wer mit
+    // der Maus spielt, sah acht davon und ahnte den Rest nicht.
+    h += `<div class="wall-shelf" ${RAILBOX}>` +
+      `<div class="wall-label">${esc(r.label)} · ${items.length} Titel` +
+      `${railNav(r.label)}</div>` +
+      '<div class="wall-row" data-scroll>' +
       items.map((m) => filmBox(g, m, owned.has(m.title))).join('') +
       '</div><div class="wall-board"></div></div>';
   });
@@ -337,8 +367,20 @@ function film(): string {
 
   h += '<div class="hint">Ein Klick auf eine Schachtel zeigt die Kennzahlen und kauft sie. Sendezeit ist die ' +
     'eigentliche Ware: Ein Dreistünder füllt einen halben Abend, ein Magazin nur eine halbe Stunde — ' +
-    'entsprechend fällt der Preis aus.</div></div>';
+    'entsprechend fällt der Preis aus.</div>';
   return h;
+}
+
+/**
+ * Das durchgehende Panel der Filmagentur.
+ *
+ * Es setzt dieselben Teile zusammen, die auch hinter den Gegenständen im Raum
+ * stecken — Katalog, Auktion, Paket und die Genre-Konjunktur aus dem Büro.
+ */
+function film(): string {
+  return '<div class="room">'
+    + head('flr-film', 'Filmagentur', 'Regalwand — die Breite einer Schachtel ist ihre Sendelänge')
+    + filmAuktion() + filmPaket() + filmKatalog() + '</div>';
 }
 
 /* ─────────── Werbeagentur ─────────── */

@@ -27,10 +27,10 @@ npm run build:single   # dist-single/  — eine einzige HTML-Datei
 ```
 
 `npm run build:single` erzeugt weiterhin eine selbstständige Datei zum
-Doppelklicken oder Verschicken. Sie ist mit den beiden Raumbildern von 271 auf
-**599 KB** gewachsen — die Bilder stecken als Daten-URI mit drin. Das trägt noch;
-bei dreizehn Räumen wären es grob zwei Megabyte, und dann muss entschieden
-werden, ob die Einzeldatei die Bilder weiter mitschleppt.
+Doppelklicken oder Verschicken. Sie ist mit den drei Raumbildern von 271 KB auf
+**913 KB** gewachsen — die Bilder stecken als Daten-URI mit drin. Bei dreizehn
+Räumen liefe das auf gut zwei Megabyte hinaus; ob die Einzeldatei die Bilder
+weiter mitschleppt, ist zu entscheiden, bevor die nächsten dazukommen.
 
 ## Aufbau
 
@@ -87,7 +87,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 140 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 159 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -132,9 +132,24 @@ Ein paar Dinge sind daran wichtiger als die Zeichnung selbst:
 **Die Klickpunkte liegen im Raster, nicht im Bild.** Die Szenenschicht kennt
 zwei Sorten Hintergrund und behandelt sie gleich: eine gezeichnete Vektorszene
 oder ein fertiges Bild über `bild:`. Beides liegt hinter derselben Karte aus
-Punkten, auf 1600 Punkte Breite normiert. Dein Büro und das Chefbüro sind
-inzwischen beide Bilder — der Tausch war jeweils eine Zeile, und an der
-Bedienung hat sich nichts geändert. Genau dafür war die Schicht gebaut.
+Punkten, auf 1600 Punkte Breite normiert. Dein Büro, das Chefbüro und die
+Filmagentur sind inzwischen alle drei Bilder — der Tausch war jeweils eine
+Zeile, und an der Bedienung hat sich nichts geändert. Genau dafür war die
+Schicht gebaut.
+
+**Die Filmagentur ist der erste Raum ohne Tür im Bild.** Der Laptop öffnet den
+Katalog, der Monitor die laufende Auktion, das Rollenbündel auf dem Tisch das
+Exklusivpaket, das Regal dahinter die Genre-Konjunktur — die steht seither auch
+im eigenen Büro und ist deshalb eine eigene Funktion, `genreKonjunktur()`, statt
+zweier Abschriften. Hinaus geht es über den Sessel: aufstehen und gehen. Ein
+gemalter Ausgang, den es im Bild nicht gibt, wäre die schlechtere Lösung
+gewesen.
+
+Die Reihenfolge der Klickpunkte ist die der Wichtigkeit — sie bestimmt auch die
+Knopfleiste unter dem Bild, und dort gehört der Laptop nach vorn. Damit das frei
+wählbar bleibt, überschneiden sich die Rechtecke nicht: Bei Überlappung gewönne
+der später stehende Punkt, und die Anordnung im Bild wäre heimlich an die
+Anordnung in der Leiste gekoppelt. Eine Prüfung im Browser hält das fest.
 
 **Die Form des Platzes entscheidet, nicht die des Bildes.** Beide gelieferten
 Bilder sind hochformatig (926×1010 und 930×787). Wohin Sendekonsole und
@@ -209,6 +224,20 @@ oben), dort wo man ohnehin hinsieht. Das Gerüst
 entsteht beim Zeichnen der Ansicht, die Zahlen schreibt `updateKonsole()` im
 Minutentakt hinein — hinge sie am Neuzeichnen der Panels, ginge die Uhr bis zu
 zwölf Spielminuten nach.
+
+**Escape ging eine Stufe zu weit.** Seit es Fenster über der Szene gibt, kennt
+die Ansicht drei Ebenen: Dialog, Fenster, Raum. Die Escape-Taste kannte nur
+zwei — sie schloss einen offenen Dialog, und sonst verließ sie den Raum. Wer
+also den Sendeplan aufhatte und die Taste drückte, stand statt im Büro plötzlich
+im Flur. Jetzt räumt sie von innen nach außen ab. Aufgefallen ist das beim Bau
+der Filmagentur, an einem Prüfskript, das nach jedem Fenster ein Escape schickte
+und danach keine Klickpunkte mehr fand.
+
+**Das Filmregal hatte als einzige lange Reihe keine Pfeile.** Die Kundenkartei,
+das Drehbuchregal, der Garderobengang, die Tasche und die Kioskvitrine hatten
+sie längst; ausgerechnet die längste Reihe im Haus — dreiundzwanzig Abendfüller
+nebeneinander — war übersehen worden. Mit dem Finger wischt man da einfach
+weiter, mit der Maus sah man neun davon und ahnte den Rest nicht.
 
 **Das Fenster füllt die Inhaltsfläche.** Bezugspunkt ist `#main`, also der
 Bereich zwischen Kopfzeile und Etagenleiste; damit braucht es keine gemessenen

@@ -58,7 +58,12 @@ document.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement) return;
 
   if (e.key === 'Escape') {
+    // Von innen nach außen: erst der Dialog, dann das Fenster über der Szene,
+    // erst zuletzt der Raum. Ohne die mittlere Stufe warf ein Escape bei
+    // offenem Sendeplan einen gleich bis in den Flur — man wollte nur das
+    // Fenster zumachen und stand plötzlich draußen.
     if (modalOpen()) closeDialog();
+    else if (S().fenster) { S().fenster = null; renderView(); }
     else if (S().room) leaveRoom();
     return;
   }

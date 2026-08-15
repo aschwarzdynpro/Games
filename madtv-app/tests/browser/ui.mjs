@@ -534,6 +534,136 @@ async function main() {
     await c.close();
   }
 
+  /* ── Filmagentur ── */
+  console.log('\nFilmagentur');
+  {
+    const mm = [];
+    const f = await browser.newPage({ viewport: { width: 1320, height: 980 } });
+    f.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    f.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(f);
+    await f.keyboard.press('Escape');
+    await f.waitForTimeout(200);
+    await f.click('[data-go="4"]');
+    await angekommen(f);
+
+    pruefe('die Filmagentur ist eine Szene',
+      await f.evaluate(() => !!document.querySelector('.raum-svg')));
+    pruefe('mit fünf Klickpunkten',
+      (await f.evaluate(() => document.querySelectorAll('.hs').length)) === 5);
+
+    // Überlappungsfrei, damit die Leiste unter dem Bild nach Wichtigkeit
+    // sortiert werden darf, ohne dass ein Punkt einen anderen verdeckt.
+    const doppelt = await f.evaluate(() => {
+      const r = [...document.querySelectorAll('.hs-feld')].map((e) => ({
+        n: e.parentElement.getAttribute('aria-label').split(' —')[0],
+        x: +e.getAttribute('x'), y: +e.getAttribute('y'),
+        w: +e.getAttribute('width'), h: +e.getAttribute('height'),
+      }));
+      const treffer = [];
+      for (let i = 0; i < r.length; i++) {
+        for (let j = i + 1; j < r.length; j++) {
+          const a = r[i]; const b = r[j];
+          if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) {
+            treffer.push(`${a.n}/${b.n}`);
+          }
+        }
+      }
+      return treffer;
+    });
+    pruefe('keine zwei Klickpunkte überlappen sich', doppelt.length === 0, doppelt.join(', '));
+
+    // Auktion und Paket dürfen leer sein — es läuft nicht immer eine
+    // Versteigerung. Leer heißt hier trotzdem: ein Fenster mit einer Erklärung
+    // darin, nicht eine weiße Fläche.
+    for (const [welches, erwartet, mindestens] of [
+      ['katalog', 'Filmkatalog', 200],
+      ['auktion', 'Auktion', 20],
+      ['paket', 'Exklusivpaket', 20],
+      ['trend', 'Genre-Konjunktur', 20],
+    ]) {
+      await f.click(`[data-f="${welches}"].hs`);
+      await f.waitForTimeout(300);
+      const w = await f.evaluate(() => ({
+        titel: document.querySelector('.fenster-kopf h2')?.textContent ?? '',
+        zeichen: (document.querySelector('.fenster-inhalt')?.textContent ?? '').trim().length,
+      }));
+      pruefe(`«${erwartet}» öffnet sich mit Inhalt`,
+        w.titel === erwartet && w.zeichen >= mindestens, `${w.titel} · ${w.zeichen} Zeichen`);
+      await f.click('.fenster-zu');
+      await f.waitForTimeout(180);
+    }
+
+    // Der Katalog ist der Grund, warum es diesen Raum gibt: Ohne die Schachteln
+    // im Fenster kann man nichts kaufen.
+    await f.click('[data-f="katalog"].hs');
+    await f.waitForTimeout(300);
+    pruefe('im Katalog stehen Filmschachteln',
+      (await f.evaluate(() => document.querySelectorAll('.fenster .boxcase').length)) > 3);
+    pruefe('und der Genre-Filter ist dabei',
+      (await f.evaluate(() => document.querySelectorAll('.fenster [data-act="filmfilter"]').length)) > 1);
+
+    // Das Filmregal ist die längste Reihe im Haus und hatte als einzige keine
+    // Pfeile — mit der Maus sah man acht Abendfüller von neunzehn.
+    const bretter = await f.evaluate(() => [...document.querySelectorAll('.wall-shelf')].map((s) => {
+      const r = s.querySelector('.wall-row');
+      const kn = [...s.querySelectorAll('[data-rail]')];
+      return { ueber: r.scrollWidth > r.clientWidth + 4, pfeile: kn.length, rechtsAn: !kn[1]?.disabled };
+    }));
+    pruefe('jedes Regalbrett hat zwei Pfeile',
+      bretter.length > 0 && bretter.every((b) => b.pfeile === 2), JSON.stringify(bretter));
+    pruefe('ein überlaufendes Brett bietet den rechten Pfeil an',
+      bretter.filter((b) => b.ueber).every((b) => b.rechtsAn), JSON.stringify(bretter));
+    pruefe('ein Brett, das hineinpasst, schaltet beide ab',
+      bretter.filter((b) => !b.ueber).every((b) => !b.rechtsAn), JSON.stringify(bretter));
+
+    const langes = bretter.findIndex((b) => b.ueber);
+    if (langes >= 0) {
+      await f.evaluate((i) => document.querySelectorAll('.wall-shelf')[i]
+        .querySelector('[data-rail="1"]').click(), langes);
+      await f.waitForTimeout(700);
+      const nach = await f.evaluate((i) => {
+        const s = document.querySelectorAll('.wall-shelf')[i];
+        return { pos: Math.round(s.querySelector('.wall-row').scrollLeft),
+          linksAn: !s.querySelector('[data-rail="-1"]').disabled };
+      }, langes);
+      pruefe('der rechte Pfeil schiebt das Filmregal', nach.pos > 20, `scrollLeft ${nach.pos}`);
+      pruefe('und der linke schaltet sich danach frei', nach.linksAn);
+    }
+
+    // Escape ging vorher eine Stufe zu weit: Bei offenem Fenster warf es einen
+    // gleich aus dem Raum in den Flur.
+    await f.keyboard.press('Escape');
+    await f.waitForTimeout(250);
+    const nachEsc = await f.evaluate(() => ({
+      raum: window.madtv.session().room,
+      fenster: !!document.querySelector('.fenster'),
+    }));
+    pruefe('Escape schließt erst das Fenster', !nachEsc.fenster && nachEsc.raum === 'film',
+      `Raum ${nachEsc.raum}, Fenster ${nachEsc.fenster}`);
+    await f.keyboard.press('Escape');
+    await f.waitForTimeout(250);
+    pruefe('und erst das zweite verlässt den Raum',
+      (await f.evaluate(() => window.madtv.session().room)) === null);
+
+    await f.click('[data-go="4"]');
+    await angekommen(f);
+    const grundF = await f.evaluate(() => {
+      const i = document.querySelector('.raum-grund image');
+      if (!i) return null;
+      const r = i.getBoundingClientRect();
+      return { breit: Math.round(r.width), hoch: Math.round(r.height),
+        art: (i.getAttribute('href') ?? '').slice(0, 11) };
+    });
+    pruefe('der Hintergrund ist ein eingebettetes Bild',
+      grundF?.art === 'data:image/', grundF?.art ?? '—');
+    pruefe('und es ist tatsächlich aufgezogen',
+      (grundF?.breit ?? 0) > 300 && (grundF?.hoch ?? 0) > 300,
+      `${grundF?.breit}×${grundF?.hoch}`);
+    pruefe('Filmagentur ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await f.close();
+  }
+
   /* ── Freier Aufbau: die Uhr darf einen nicht mehr festhalten ── */
   console.log('\nFreier Aufbau');
   {
@@ -593,9 +723,14 @@ async function main() {
     pruefe('die Fahrt kostet keine Sendezeit',
       (await t.evaluate(() => window.madtv.session().g.time)) === vorher);
 
+    // Seit die Filmagentur eine Szene ist, liegen die Schachteln nicht mehr
+    // offen im Panel, sondern im Laptop. Der Weg zum Kauf ist damit einen
+    // Klick länger — und genau der muss bei stehender Uhr auch gehen.
+    await t.click('[data-f="katalog"].hs');
+    await t.waitForTimeout(300);
     const lizenzen = await t.evaluate(() => {
       const vor = window.madtv.session().g.player.licences.length;
-      document.querySelector('.boxcase:not(.owned)')?.click();
+      document.querySelector('.fenster .boxcase:not(.owned)')?.click();
       return vor;
     });
     await t.waitForTimeout(500);
