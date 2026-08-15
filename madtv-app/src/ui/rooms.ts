@@ -934,7 +934,28 @@ function figur(opts: {
   talk: Talk; extra?: string;
   /** Setzt den Schreibtisch als Ablageziel — bei Betty landen dort Geschenke. */
   drop?: string;
+  /**
+   * Die Person ist im Raumbild schon zu sehen.
+   *
+   * Dann wäre diese Box eine Doppelung, und zwar die schlechtere: Betty sitzt
+   * gemalt hinter dem Fenster, und davor stünde sie noch einmal als Symbol auf
+   * einem gezeichneten Tisch unter einer gezeichneten Lampe. Übrig bleibt, was
+   * das Fenster wirklich hergeben soll — was sie sagt.
+   */
+  imRaum?: boolean;
 }): string {
+  if (opts.imRaum) {
+    // Die ganze Karte ist das Ablageziel: «gib es ihr» ist die Geste, nicht
+    // «triff den Tisch».
+    return `<div class="gespraech st-${opts.talk.mood}"` +
+      `${opts.drop ? ` data-drop="${opts.drop}"` : ''}>` +
+      `<div class="ge-blase">${esc(opts.talk.text)}</div>` +
+      '<div class="ge-fuss">' +
+      `<div class="ge-wer"><b>${esc(opts.name)}</b><span>${esc(opts.rolle)}</span></div>` +
+      (opts.extra ?? '') +
+      '</div></div>';
+  }
+
   return `<div class="szene ${opts.klasse} st-${opts.talk.mood}">` +
     '<div class="sz-lampe"><i></i></div>' +
     `<div class="sz-blase">${esc(opts.talk.text)}</div>` +
@@ -954,13 +975,14 @@ function figur(opts: {
  */
 
 /** Herr Raffer selbst — und die Frist, wenn eine läuft. */
-export function chefRaffer(): string {
+export function chefRaffer(imRaum = false): string {
   const g = G();
   const p = g.player;
   const talk = speak(g, 'raffer');
   let h = '';
   h += figur({
     name: 'Herr Raffer', rolle: 'Generalintendant', ico: 'flr-chef', klasse: 'sz-chef', talk,
+    imRaum,
     extra: p.lowImageDays > 0
       ? `<div class="sz-frist">Tag ${p.lowImageDays} von 3 unter ${g.D.fireImage} %</div>`
       : '',
@@ -1019,14 +1041,14 @@ function chef(): string {
  * einem geschlossenen Fenster zieht man in kein offenes, dieselbe Regel wie
  * bei der Kundenkartei in der Werbeagentur.
  */
-export function bettyGespraech(): string {
+export function bettyGespraech(imRaum = false): string {
   const g = G();
   // Die Vase füllt sich mit dem, was schon überreicht wurde — bis zu sieben Halme
   const halme = Math.min(7, Math.round(g.player.love / 12));
   return figur({
     name: 'Betty Botterbloom', rolle: 'Kulturredaktion', ico: 'ui-tanz', klasse: 'sz-betty',
     talk: speak(g, 'betty'),
-    drop: 'tisch',
+    drop: 'tisch', imRaum,
     extra: `<div class="vase">${'<i></i>'.repeat(halme)}<div class="va-glas"></div></div>`,
   });
 }
@@ -1057,7 +1079,10 @@ export function bettyMitbringsel(): string {
   const g = G();
   const p = g.player;
   let h = `<div class="mitbringsel" ${RAILBOX}><div class="mi-kopf">Mitgebracht` +
-    `<span>${g.gifts.length ? 'auf den Schreibtisch ziehen' : 'der Kiosk im Foyer hat geöffnet'}</span>` +
+    // «Auf den Schreibtisch ziehen» stimmte, solange darunter ein gezeichneter
+    // Tisch lag. Im begehbaren Raum ist das Ziel die Gesprächskarte, und
+    // anklicken geht ohnehin auch — beides deckt dieselbe Formulierung ab.
+    `<span>${g.gifts.length ? 'ziehen oder anklicken' : 'der Kiosk im Foyer hat geöffnet'}</span>` +
     `${g.gifts.length ? railNav('Tasche') : ''}</div>`;
   h += g.gifts.length
     ? '<div class="mi-reihe" data-scroll>' + g.gifts.map((gift, i) => {

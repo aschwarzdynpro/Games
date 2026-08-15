@@ -1301,6 +1301,41 @@ body.dragging .tresen-kante{pointer-events:auto;}
   background:#1b1409;border:1px solid #6b5236;
 }
 
+/* ─────────── Gespräch im begehbaren Raum ───────────
+   Wenn die Person im Raumbild sitzt, braucht das Fenster kein zweites Abbild
+   von ihr. Es zeigt, was sie sagt — groß genug, dass man es liest, und mit dem
+   Namen darunter statt daneben. Die Stimmung färbt weiterhin, aber nur noch
+   die Kante und den Grund der Blase. */
+.gespraech{
+  border:1px solid var(--line2);border-left:3px solid var(--dim2);
+  border-radius:12px;margin-bottom:14px;padding:14px 16px 12px;
+  background:linear-gradient(180deg,#1c2430,#151b24);
+}
+.gespraech.st-gut{border-left-color:var(--ok);}
+.gespraech.st-schlecht{border-left-color:var(--bad);}
+.gespraech.drop-ok{outline:2px dashed var(--ok);outline-offset:4px;}
+/* Keine Anführungszeichen aus dem Stilblatt: Die Sätze bringen ihre eigenen
+   mit, wo welche hingehören. Raffer spricht in Guillemets, Bettys Zeilen sind
+   Erzählung («Sie blickt kaum auf») und hätten in Anführungszeichen behauptet,
+   jemand sage das laut. */
+.ge-blase{font-size:15.5px;line-height:1.5;color:#eef2f7;}
+.ge-fuss{
+  display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;
+  margin-top:12px;padding-top:10px;border-top:1px solid var(--line);
+}
+.ge-wer{display:flex;flex-direction:column;gap:1px;}
+.ge-wer b{font-size:13px;}
+.ge-wer span{font-size:10.5px;color:var(--dim2);letter-spacing:.04em;text-transform:uppercase;}
+/* Vase, Frist und Werte kommen aus derselben Quelle wie in der Panel-Fassung
+   und dürfen hier einfach mitlaufen. */
+/* Die Vase stand in der Panel-Fassung auf der Tischplatte. Hier gibt es keine,
+   also bekommt sie eine eigene kleine Ablage — sonst schwebt das Glas. */
+.ge-fuss .vase{
+  margin-left:auto;align-self:center;
+  padding:0 10px;border-bottom:3px solid #4a3a26;border-radius:0 0 3px 3px;
+}
+.ge-fuss .sz-frist,.ge-fuss .sz-werte{margin-left:auto;align-self:center;}
+
 /* ─────────── Figuren: Schreibtisch mit Sprechblase ─────────── */
 /* Die Stimmung kommt aus dem Kern und färbt hier Lampe, Blase und Rahmen —
    man sieht die Laune, bevor man den Satz gelesen hat. */
@@ -1841,7 +1876,12 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
    Balkenhöhen, und Uhr und Kennzahlen oben bleiben sichtbar. */
 .fenster-grund{position:absolute;inset:0;background:rgba(6,9,13,.62);}
 .fenster{
-  position:absolute;inset:8px;
+  /* Höhe nach Inhalt, gedeckelt auf die Inhaltsfläche. Vorher stand hier
+     `inset:8px`, also immer volle Höhe — für den Sendeplan richtig, für einen
+     zweizeiligen Dialog ein leerer Kasten von einem Meter. Lange Inhalte
+     stoßen weiterhin an den Deckel und scrollen dann in sich. */
+  position:absolute;top:8px;left:8px;right:8px;
+  max-height:calc(100% - 16px);
   display:flex;flex-direction:column;min-height:0;
   background:var(--panel);border:1px solid var(--line2);border-radius:12px;
   box-shadow:0 22px 60px rgba(0,0,0,.62);
@@ -1878,7 +1918,9 @@ body.fenster-offen #main{overflow:hidden;}
    Kopfzeile zweizeilig und die Konsole gestapelt, zusammen rund 360 Punkte. */
 @media (max-width:700px){
   .raum-svg{max-height:calc(100dvh - 360px);}
-  .fenster{inset:4px;}
+  /* Nur die Ränder enger, nicht die Unterkante festnageln — sonst stünde der
+     Deckel wieder auf voller Höhe und ein Zweizeiler füllte das Telefon. */
+  .fenster{top:4px;left:4px;right:4px;max-height:calc(100% - 8px);}
   /* Die Beschriftung bleibt. Ein hochformatiges Bild kann die Breite eines
      Telefons nicht ausfüllen, ohne oben und unten anzustoßen — die Zeilen, die
      dadurch frei bleiben, sind hier besser in Wörtern angelegt als in Luft.

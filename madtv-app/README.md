@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 200 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 206 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -171,6 +171,25 @@ Betty und die freie Schreibunterlage in dasselbe Fenster.
 Das Kaffeegedeck ist dort die Ausnahme von der Regel «Klickpunkt öffnet
 Fenster»: Es löst unmittelbar «Auf einen Kaffee bleiben» aus. Ein Fenster mit
 einem einzigen Knopf darin wäre eine Tür vor einer Tür.
+
+**Die Figurenbox war für eine Welt ohne Raumbilder gebaut.** Sie zeigt die
+Person als Symbol auf einem gezeichneten Schreibtisch, unter einer gezeichneten
+Hängelampe — und war richtig, solange das Panel der ganze Raum war. Vor einem
+gemalten Zimmer, in dem Betty sichtbar sitzt, ist sie eine Doppelung, und zwar
+die schlechtere. `figur({imRaum: true})` zeigt deshalb nur noch, was sie sagt:
+der Satz groß, Name und Ressort darunter, die Stimmung als farbige Kante. Die
+ganze Karte ist das Ablageziel für Geschenke — «gib es ihr» ist die Geste,
+nicht «triff den Tisch». Wo kein Bild hängt, bei den Rivalenbüros und in der
+Einzeldatei, bleibt die alte Box; dort ist sie das einzige Abbild und trägt den
+Raum. Eine Prüfung hält beide Fälle fest.
+
+Zwei Fehler fielen dabei auf. Das Stilblatt setzte Anführungszeichen um jeden
+Satz, aber die Sätze bringen ihre eigenen mit, wo welche hingehören: Raffer
+sprach plötzlich in `„«…»"`, und Bettys Zeilen sind Erzählung, die gar nicht in
+Anführungszeichen gehört. Und das Fenster stand auf `inset`, also immer auf
+voller Höhe — für den Sendeplan richtig, für einen Zweizeiler ein leerer Kasten
+über den halben Bildschirm. Es misst sich jetzt am Inhalt und stößt erst dann
+an den Deckel, wenn es ihn braucht.
 
 **Die Filmagentur ist der erste Raum ohne Tür im Bild.** Der Laptop öffnet den
 Katalog, der Monitor die laufende Auktion, das Rollenbündel auf dem Tisch das

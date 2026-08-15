@@ -65,7 +65,7 @@ export function fensterInhalt(room: RoomId, welches: string): Fensterinhalt | nu
   if (room === 'chef') {
     switch (welches) {
       case 'raffer':
-        return bau('Herr Raffer', 'flr-chef', chefRaffer(), 'Er sagt gerade nichts.');
+        return bau('Herr Raffer', 'flr-chef', chefRaffer(true), 'Er sagt gerade nichts.');
       case 'ranking':
         return bau('Senderanking', 'ui-diagramm', chefAushang(), 'Der Aushang ist leer.');
       case 'sammy':
@@ -117,7 +117,7 @@ export function fensterInhalt(room: RoomId, welches: string): Fensterinhalt | nu
       // man in kein offenes. Deshalb führen beide Klickpunkte hierher.
       case 'betty':
         return bau('Betty Botterbloom', 'flr-betty',
-          bettyGespraech() + bettyMitbringsel(), 'Sie ist gerade nicht da.');
+          bettyGespraech(true) + bettyMitbringsel(), 'Sie ist gerade nicht da.');
       case 'zuneigung':
         return bau('Wie es um euch steht', 'ui-herz', bettyZuneigung(), 'Noch nichts passiert.');
       case 'konkurrenz':

@@ -950,6 +950,31 @@ async function main() {
     pruefe('es öffnet dafür kein Fenster',
       await bt.evaluate(() => !document.querySelector('.fenster')));
 
+    // Im begehbaren Raum sitzt Betty schon gemalt hinter dem Fenster. Ein
+    // zweites Abbild von ihr — Symbol auf gezeichnetem Tisch unter gezeichneter
+    // Lampe — war die Doppelung, die den Dialog hässlich machte.
+    await bt.click('[data-f="betty"].hs');
+    await bt.waitForTimeout(350);
+    const rede = await bt.evaluate(() => {
+      const g = document.querySelector('.fenster .gespraech');
+      return {
+        gespraech: !!g,
+        alteFigur: !!document.querySelector('.fenster .szene'),
+        text: (g?.querySelector('.ge-blase')?.textContent ?? '').trim(),
+        wer: (g?.querySelector('.ge-wer b')?.textContent ?? ''),
+      };
+    });
+    pruefe('das Gespräch steht ohne zweites Abbild da',
+      rede.gespraech && !rede.alteFigur, JSON.stringify(rede));
+    pruefe('mit dem, was sie sagt', rede.text.length > 10, rede.text);
+    pruefe('und mit ihrem Namen', rede.wer === 'Betty Botterbloom', rede.wer);
+    // Anführungszeichen kommen aus dem Text, nicht aus dem Stilblatt — sonst
+    // stünden bei Raffer welche um seine Guillemets herum.
+    pruefe('keine doppelten Anführungszeichen',
+      !/^[„"»«].*[„"»«]$/.test(rede.text) || !/[«»]/.test(rede.text), rede.text.slice(0, 40));
+    await bt.click('.fenster-zu');
+    await bt.waitForTimeout(200);
+
     for (const [welches, erwartet] of [
       ['betty', 'Betty Botterbloom'],
       ['zuneigung', 'Wie es um euch steht'],
@@ -1013,6 +1038,29 @@ async function main() {
     const grundB = await hintergrundBild(bt);
     pruefe('die Bildquelle lässt sich wirklich holen',
       grundB?.geladen === true, JSON.stringify(grundB));
+
+    // Gegenprobe: Wo *kein* Bild hängt, bleibt die alte Figurenbox mit
+    // Hängelampe und Sprechblase — sie ist dort das einzige Abbild und trägt
+    // den Raum. Die Rivalenbüros sind noch Panels.
+    const rivalEtage = await bt.evaluate(() =>
+      window.madtv.core.FLOORS.findIndex((f) => f.id === 'rival1'));
+    // Über das Hochhaus statt über Escape: Escape räumt seit dem Umbau von
+    // innen nach außen ab, und ob hier noch ein Fenster offen steht, hängt am
+    // Verlauf darüber.
+    await bt.click('#bottom [data-f="-1"]');
+    await bt.waitForTimeout(400);
+    await bt.click(`[data-go="${rivalEtage}"]`);
+    await angekommen(bt);
+    const rival = await bt.evaluate(() => ({
+      panel: !!document.querySelector('#view .room'),
+      figur: !!document.querySelector('#view .szene .sz-person'),
+      lampe: !!document.querySelector('#view .szene .sz-lampe'),
+      blase: !!document.querySelector('#view .szene .sz-blase'),
+    }));
+    pruefe('das Rivalenbüro ist weiterhin ein Panel', rival.panel);
+    pruefe('und behält dort seine Figurenbox',
+      rival.figur && rival.lampe && rival.blase, JSON.stringify(rival));
+
     pruefe('Bettys Büro ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
     await bt.close();
   }
