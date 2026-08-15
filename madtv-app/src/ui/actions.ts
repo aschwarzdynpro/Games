@@ -10,14 +10,15 @@ import {
   PACKAGE_COST, PRICE_SATELLITE, PRICE_TRANSMITTER, PRODUCTIONS, STARS, STUDIO_RENT,
   buyLicence, clearProgramme, closeAuction, copyLicence, esc, estimateBlock, getDay,
   lengthLabel, money, moneyShort, nextUid, placeProgramme, removeFromSchedules,
-  slotHour, slotLabel, trendOf, viewers,
+  slotLabel, trendOf, viewers,
 } from '../core';
 import type { Channel, GenreId, Licence, RessortId } from '../core';
 import { G, S, markDirty } from './session';
-import { chooser, dialog, toast } from './overlay';
+import { dialog, toast } from './overlay';
 import { playSfx } from './sfx';
 import { addTime, leaveRoom } from './loop';
-import { bar, fskTag, licMeta } from './rooms';
+import { bar, licMeta } from './rooms';
+import { legeProgramm, legeWerbung } from './board';
 import { registerDrag } from './drag';
 
 type Data = Record<string, string | undefined>;
@@ -65,108 +66,72 @@ const ACTIONS: Record<string, (d: Data) => void> = {
 
   /* ── Sendeplan ── */
 
-  pickprog(d) {
-    const g = G();
-    const day = Number(d.day);
-    const b = Number(d.b);
-    const slots = getDay(g.player, day);
-
-    const items: { label: string; sub: string; right?: string; value: { clear?: boolean; lic?: Licence } }[] = [];
-    if (slots[b]!.prog) {
-      items.push({ label: '⌫ Sendeplatz leeren', sub: 'Testbild senden', value: { clear: true } });
-    }
-    const hour = slotHour(b);
-    [...g.player.licences]
-      .sort((a, x) => estimateBlock(g, day, b, x).total - estimateBlock(g, day, b, a).total)
-      .forEach((l) => {
-        const passt = b + l.lenSlots <= SLOTS;
-        const est = estimateBlock(g, day, b, l);
-        const gd = GENRES[l.genre];
-        const warn = l.fsk >= 18 && hour < 22 && hour >= 6
-          ? ' <span class="tag b">zu früh!</span>' : '';
-        const zuLang = passt ? '' : ' <span class="tag b">passt nicht mehr</span>';
-        const used = slots.some((s, i) => i !== b && s.prog?.uid === l.uid)
-          ? ' <span class="tag w">läuft heute schon</span>' : '';
-        items.push({
-          label: `${esc(l.title)} ${fskTag(l.fsk)}${warn}${zuLang}${used}`,
-          sub: `${icon(gd.ico)} ${gd.name} · ${lengthLabel(l.lenSlots)} · ` +
-            `Frische ${Math.round(l.fresh * 100)}% · Zuschauerwert ${l.qual}`,
-          right: `<b>${viewers(est.total)}</b>`,
-          value: { lic: l },
-        });
-      });
-
-    chooser(
-      `${slotLabel(b)} — Sendung wählen`, 'Sendeplan', 'gen-serie',
-      items,
-      (v) => {
-        if (!slotEditable(day, b)) return;
-        if (v.clear) {
-          const cur = slots[b]!.prog;
-          if (cur) clearProgramme(slots, cur.uid);
-        } else if (v.lic) {
-          if (b + v.lic.lenSlots > SLOTS) {
-            toast('warn', 'Zu lang',
-              `${lengthLabel(v.lic.lenSlots)} passen ab ${slotLabel(b)} nicht mehr in den Abend.`);
-            return;
-          }
-          const weg = placeProgramme(slots, b, v.lic).filter((w) => w.uid !== v.lic!.uid);
-          if (weg.length) {
-            toast('info', 'Umgeplant', `${weg.map((w) => `«${w.title}»`).join(', ')} zurück in den Ordner.`);
-          }
-          playSfx('buy');
-        }
-      },
-      { emptyText: 'Dein Archiv ist leer. Kauf erst Lizenzen in der Filmagentur.', pause: !g.opt.timePressure },
-    );
+  /**
+   * Eine Karte in die Hand nehmen — oder wieder hinlegen.
+   *
+   * Das ersetzt zusammen mit `ablegen` die beiden Auswahldialoge, die bisher
+   * über dem Fenster aufgingen. Sie gab es nur, weil die Ablage unter dem
+   * sichtbaren Bereich lag: Wer seine Kassetten nicht sieht, braucht eine
+   * Liste. Jetzt sieht man sie, und der Umweg entfällt.
+   */
+  nimm(d) {
+    const s = S();
+    const art = d.art === 'ad' ? 'ad' : 'prog';
+    const id = Number(d.id);
+    // Nochmal antippen legt sie zurück — sonst käme man aus der Hand nicht raus.
+    s.hand = s.hand && s.hand.art === art && s.hand.id === id ? null : { art, id };
+    markDirty();
   },
 
-  pickad(d) {
+  /**
+   * Auf einen Platz legen, was in der Hand liegt.
+   *
+   * Mit leerer Hand ist es der umgekehrte Griff: Was auf dem Platz liegt,
+   * kommt in die Hand und der Platz wird frei. Damit deckt der Klickweg auch
+   * das Leeren ab, das vorher nur der Dialog konnte.
+   */
+  ablegen(d) {
     const g = G();
+    const s = S();
     const day = Number(d.day);
     const b = Number(d.b);
+    const werbeplatz = d.drop === 'ad';
+    if (!slotEditable(day, b)) return;
     const slots = getDay(g.player, day);
-    const est = estimateBlock(g, day, b);
+    const slot = slots[b]!;
 
-    const items: { label: string; sub: string; right?: string; value: { clear?: boolean; ad?: number; brand?: string; trail?: Licence } }[] = [];
-    if (slots[b]!.ad || slots[b]!.trailer) {
-      items.push({ label: '⌫ Werbeplatz leeren', sub: 'nichts senden', value: { clear: true } });
+    if (!s.hand) {
+      // Aufnehmen: erst die Werbung, dann der Trailer, dann die Sendung —
+      // in der Reihenfolge, in der sie auf dem Platz liegen.
+      if (werbeplatz && slot.ad) {
+        const ct = g.player.contracts.find((c) => c.id === slot.ad!.id);
+        slot.ad = null;
+        if (ct) s.hand = { art: 'ad', id: ct.id };
+      } else if (werbeplatz && slot.trailer) {
+        slot.trailer = null;
+      } else if (!werbeplatz && slot.prog) {
+        const uid = slot.prog.uid;
+        clearProgramme(slots, uid);
+        s.hand = { art: 'prog', id: uid };
+      } else {
+        toast('info', 'Nichts in der Hand',
+          werbeplatz
+            ? 'Nimm einen Vertrag aus dem Werbekoffer unten.'
+            : 'Nimm eine Kassette aus dem Programmordner unten.');
+        return;
+      }
+      markDirty();
+      return;
     }
-    g.player.contracts.forEach((c) => {
-      if (c.done >= c.spots) return;
-      const reached = c.group ? est.groups[c.gi]! : est.total;
-      const ok = reached >= c.minAud;
-      items.push({
-        label: `${icon('flr-werbe')} ${esc(c.brand)} ` +
-          (ok ? '<span class="tag g">Quote reicht</span>' : '<span class="tag b">zu wenig</span>'),
-        sub: `Braucht ${viewers(c.minAud)}${c.group ? ` ${GROUPS[c.gi]!.name}` : ''} · ` +
-          `Prognose ${viewers(reached)} · ${c.done}/${c.spots} Spots`,
-        right: `<b class="ok">${moneyShort(c.perSpot)}</b>`,
-        value: { ad: c.id, brand: c.brand },
-      });
-    });
-    slots.forEach((s, i) => {
-      if (i <= b || !s.prog || !s.start) return;
-      if (items.some((x) => x.value.trail?.uid === s.prog!.uid)) return;
-      items.push({
-        label: `${icon('ui-trailer')} Trailer: ${esc(s.prog.title)}`,
-        sub: `Bewirbt die Sendung um ${slotLabel(i)} (+13% Zuschauer)`,
-        value: { trail: s.prog },
-      });
-    });
 
-    chooser(
-      `${slotLabel(b)} — Werbeblock`, 'Sendeplan', 'flr-werbe',
-      items,
-      (v) => {
-        if (!slotEditable(day, b)) return;
-        slots[b]!.ad = null;
-        slots[b]!.trailer = null;
-        if (v.ad !== undefined) { slots[b]!.ad = { id: v.ad, brand: v.brand! }; playSfx('buy'); }
-        else if (v.trail) slots[b]!.trailer = v.trail;
-      },
-      { emptyText: 'Kein Vertrag im Koffer und keine spätere Sendung zum Bewerben.', pause: !g.opt.timePressure },
-    );
+    if (s.hand.art === 'prog') {
+      const lic = g.player.licences.find((l) => l.uid === s.hand!.id);
+      if (legeProgramm(b, werbeplatz, lic, null)) s.hand = null;
+    } else {
+      const ct = g.player.contracts.find((c) => c.id === s.hand!.id);
+      if (legeWerbung(b, werbeplatz, ct, null)) s.hand = null;
+    }
+    markDirty();
   },
 
   showres(d) {
@@ -273,46 +238,33 @@ const ACTIONS: Record<string, (d: Data) => void> = {
   },
 
   /** Schachtel aus dem Regal ziehen und ansehen. */
-  inspect(d) {
+  /**
+   * Einen Titel im Katalog auswählen — die Kennzahlen erscheinen darunter.
+   *
+   * Das ersetzt den Dialog, der bisher über dem Fenster aufging. Ohne `u`
+   * hebt es die Auswahl wieder auf; so schließt der kleine Knopf im Streifen.
+   */
+  waehle(d) {
+    const s = S();
+    const uid = d.u ? Number(d.u) : null;
+    s.filmWahl = uid !== null && s.filmWahl === uid ? null : uid;
+    markDirty();
+  },
+
+  kaufe(d) {
     const g = G();
     const m = g.market.find((x) => x.uid === Number(d.u));
     if (!m) return;
-    const gd = GENRES[m.genre];
-    const afford = g.player.money >= m.price;
-    const tv = Math.round(trendOf(g, m.genre) * 100);
-    const staffel = m.isSerie
-      ? `<tr><td>Staffel</td><td class="right num">${m.eps} Folgen à ${lengthLabel(m.lenSlots)}</td></tr>` +
-        `<tr><td>Sendezeit gesamt</td><td class="right num">${(m.eps * m.lenSlots) / 2} Stunden</td></tr>`
-      : '';
-
-    dialog(gd.ico, m.title, 'Filmagentur',
-      '<table class="tbl">' +
-      `<tr><td>Genre</td><td class="right">${gd.name}${m.isSerie ? ' · Serie' : ''}</td></tr>` +
-      `<tr><td>Jahr</td><td class="right num">${m.year}</td></tr>` +
-      `<tr><td>Sendelänge</td><td class="right num"><b>${lengthLabel(m.lenSlots)}</b>` +
-      `${m.isSerie ? ' je Folge' : ''}</td></tr>` +
-      staffel +
-      `<tr><td>Altersfreigabe</td><td class="right">${m.fsk === 0 ? 'ohne' : `ab ${m.fsk}`}</td></tr>` +
-      `<tr><td>Zuschauerwert</td><td class="right num">${m.qual}</td></tr>` +
-      `<tr><td>Kritikerurteil</td><td class="right num">${m.critic}</td></tr>` +
-      `<tr><td>Kinokasse</td><td class="right num">${m.box}</td></tr>` +
-      `<tr><td>Genre-Konjunktur</td><td class="right num ${tv > 106 ? 'ok' : tv < 94 ? 'bad' : ''}">${tv}%</td></tr>` +
-      `<tr><td>Preis</td><td class="right num ${afford ? '' : 'bad'}"><b>${money(m.price)}</b></td></tr>` +
-      '</table>',
-      [
-        {
-          t: afford ? `Kaufen · ${moneyShort(m.price)}` : 'Zu teuer',
-          cls: afford ? 'btn' : 'btn ghost',
-          fn: afford ? () => {
-            buyLicence(g, g.player, m);
-            addTime(3);
-            playSfx('buy');
-            toast('good', 'Gekauft', `«${m.title}» liegt im Archiv.`);
-            markDirty();
-          } : undefined,
-        },
-        { t: 'Zurückstellen', cls: 'btn ghost' },
-      ]);
+    if (g.player.money < m.price) {
+      toast('warn', 'Zu teuer', `«${m.title}» kostet ${money(m.price)}.`);
+      return;
+    }
+    buyLicence(g, g.player, m);
+    addTime(3);
+    playSfx('buy');
+    toast('good', 'Gekauft', `«${m.title}» liegt im Archiv.`);
+    S().filmWahl = null;
+    markDirty();
   },
 
   bid() {

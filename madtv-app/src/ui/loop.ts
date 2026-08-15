@@ -58,8 +58,26 @@ export function stopLoop(): void {
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
 }
 
+/**
+ * Wie lange eine Spielminute dauert.
+ *
+ * Während einer Fahrt läuft die Uhr schneller. Der Fahrstuhl zählt in
+ * Spielminuten herunter, und das ist auch richtig so — Wege sind die Ressource,
+ * um die gespielt wird. Nur *abgesessen* werden müssen sie nicht: Eine Fahrt
+ * quer durchs Haus kostet bei Zeitdruck 24 Minuten, und die standen zuletzt als
+ * dreizehn Sekunden Zusehen auf der Uhr.
+ *
+ * Verkürzt wird deshalb nur die Echtzeit, nie der Preis. Es werden dieselben
+ * Minuten verbraucht, dieselben Ereignisse ausgelöst, dieselbe Sendung
+ * ausgestrahlt — sie laufen bloß zügiger ab. Der Deckel greift nur nach oben:
+ * Wer ohnehin schnell spielt, merkt nichts davon.
+ */
+const FAHRT_MS = 110;
+
 function msPerMinute(): number {
-  return SPEEDS[S().speed] ?? SPEEDS[2]!;
+  const s = S();
+  const normal = SPEEDS[s.speed] ?? SPEEDS[2]!;
+  return s.elevBusy > 0 ? Math.min(normal, FAHRT_MS) : normal;
 }
 
 export function setSpeed(v: number): void {

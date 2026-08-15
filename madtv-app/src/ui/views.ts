@@ -195,6 +195,8 @@ export function renderView(): void {
   setWorldVisible(S().g.opt.world && !imRaum);
   document.body.classList.toggle('im-raum', imRaum);
   document.body.classList.toggle('fenster-offen', imRaum && !!s.fenster);
+  // Freie Plätze zeigen an, dass sie nehmen würden, was in der Hand liegt.
+  document.body.classList.toggle('hat-hand', !!s.hand);
 
   if (s.elevBusy > 0) view.innerHTML = viewElevator();
   else if (!s.room) view.innerHTML = viewTower();

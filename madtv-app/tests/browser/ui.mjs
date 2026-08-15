@@ -779,8 +779,11 @@ async function main() {
       document.querySelector('.fenster .boxcase:not(.owned)')?.click();
       return vor;
     });
+    await t.waitForTimeout(400);
+    // Gekauft wird seit dem Umbau im Kennzahlenstreifen unter dem Regal, nicht
+    // mehr in einem Dialog darüber.
+    await t.click('.filmdetail [data-act="kaufe"]');
     await t.waitForTimeout(500);
-    if (await t.isVisible('#modal.on')) { await t.click('#mbox .mf button:first-child'); await t.waitForTimeout(400); }
     pruefe('und organisieren geht bei stehender Uhr auch',
       (await t.evaluate(() => window.madtv.session().g.player.licences.length)) > lizenzen);
     pruefe('Freier Aufbau ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
@@ -1065,6 +1068,111 @@ async function main() {
     await bt.close();
   }
 
+  /* ── Zwei Ebenen, nicht drei ──
+     Gemessen war der Weg zu einer Sendung: Raum › Fenster › Dialog. Der Dialog
+     listete die eigenen Kassetten auf — und existierte nur, weil die Ablage
+     268 Punkte unterhalb des sichtbaren Bereichs lag. Sichtbar gemacht, ist er
+     überflüssig; hier steht, dass er nicht zurückkommt. */
+  console.log('\nZwei Ebenen, nicht drei');
+  {
+    const mm = [];
+    const e = await browser.newPage({ viewport: { width: 1320, height: 980 } });
+    e.on('pageerror', (x) => mm.push('Ausnahme: ' + x.message));
+    e.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(e);
+    const ebenen = () => e.evaluate(() => [
+      !!document.querySelector('.raum-svg') && 'Raum',
+      !!document.querySelector('.fenster') && 'Fenster',
+      !!document.querySelector('#modal.on') && 'Dialog',
+    ].filter(Boolean).join(' › '));
+
+    // Film kaufen
+    await e.keyboard.press('Escape');
+    await e.waitForTimeout(200);
+    await e.click('[data-go="4"]');
+    await angekommen(e);
+    await e.click('[data-f="katalog"].hs');
+    await e.waitForTimeout(350);
+    await e.click('.fenster .boxcase:not(.owned)');
+    await e.waitForTimeout(400);
+    pruefe('Kennzahlen erscheinen ohne dritte Ebene',
+      (await ebenen()) === 'Raum › Fenster', await ebenen());
+    const streifen = await e.evaluate(() => {
+      const d = document.querySelector('.filmdetail');
+      const inhalt = document.querySelector('.fenster-inhalt');
+      if (!d || !inhalt) return null;
+      const r = d.getBoundingClientRect(); const i = inhalt.getBoundingClientRect();
+      return { titel: d.querySelector('.fd-kopf b')?.textContent ?? '',
+        werte: d.querySelectorAll('.fd-wert').length,
+        sichtbar: r.top >= i.top && r.bottom <= i.bottom + 2 };
+    });
+    pruefe('der Kennzahlenstreifen steht im Fenster',
+      !!streifen && streifen.werte >= 5 && streifen.sichtbar, JSON.stringify(streifen));
+    const vorKauf = await e.evaluate(() => window.madtv.session().g.player.licences.length);
+    await e.click('.filmdetail [data-act="kaufe"]');
+    await e.waitForTimeout(500);
+    pruefe('und man kauft von dort aus',
+      (await e.evaluate(() => window.madtv.session().g.player.licences.length)) > vorKauf);
+    pruefe('auch beim Kaufen bleibt es bei zwei Ebenen',
+      (await ebenen()) === 'Raum › Fenster', await ebenen());
+
+    // Sendung einplanen
+    await e.click('.fenster-zu');
+    await e.waitForTimeout(200);
+    await e.click('#bottom [data-f="6"]');
+    await angekommen(e);
+    await e.click('[data-f="sendeplan"].hs');
+    await e.waitForTimeout(400);
+
+    const ablage = await e.evaluate(() => {
+      const inhalt = document.querySelector('.fenster-inhalt').getBoundingClientRect();
+      const k = document.querySelector('.shelf .cass')?.getBoundingClientRect();
+      return k ? { sichtbar: k.top >= inhalt.top && k.bottom <= inhalt.bottom + 2 } : null;
+    });
+    pruefe('die Ablage ist ohne Scrollen sichtbar',
+      ablage?.sichtbar === true, JSON.stringify(ablage));
+
+    const belegt = () => e.evaluate(() => window.madtv.core
+      .getDay(window.madtv.session().g.player, window.madtv.session().g.day)
+      .filter((f) => f.prog).length);
+
+    await e.click('.shelf .cass');
+    await e.waitForTimeout(300);
+    pruefe('eine Kassette antippen legt sie in die Hand',
+      await e.evaluate(() => !!window.madtv.session().hand));
+    pruefe('sie ist dabei sichtbar markiert',
+      await e.evaluate(() => !!document.querySelector('.cass.inhand')));
+    pruefe('und es geht ohne dritte Ebene',
+      (await ebenen()) === 'Raum › Fenster', await ebenen());
+
+    const vorLegen = await belegt();
+    await e.click('.fenster [data-drop="prog"]');
+    await e.waitForTimeout(500);
+    pruefe('der Sendeplatz nimmt sie an', (await belegt()) > vorLegen,
+      `belegt ${vorLegen} → ${await belegt()}`);
+    pruefe('die Hand ist danach leer',
+      await e.evaluate(() => window.madtv.session().hand === null));
+
+    // Der umgekehrte Griff — das konnte vorher nur der Dialog.
+    const vorNehmen = await belegt();
+    const gefuellt = await e.$('.fenster .pocket[data-drop="prog"]:has(.cass)');
+    if (gefuellt) {
+      await gefuellt.click();
+      await e.waitForTimeout(500);
+      pruefe('ein belegter Platz gibt die Sendung zurück in die Hand',
+        (await belegt()) < vorNehmen && await e.evaluate(() => !!window.madtv.session().hand),
+        `belegt ${vorNehmen} → ${await belegt()}`);
+    }
+    await e.keyboard.press('Escape');
+    await e.waitForTimeout(300);
+    pruefe('Escape leert erst die Hand, nicht das Fenster',
+      await e.evaluate(() => window.madtv.session().hand === null
+        && !!document.querySelector('.fenster')));
+
+    pruefe('zwei Ebenen ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await e.close();
+  }
+
   /* ── Ziehen im Fenster ──
      Für die Räume, die noch Szenen werden sollen, hängt der Zuschnitt daran:
      Die Werbeagentur lebt davon, eine Karte aus der Kartei in den Koffer zu
@@ -1090,10 +1198,8 @@ async function main() {
     await d.waitForTimeout(350);
     await d.click('.fenster .boxcase:not(.owned)');
     await d.waitForTimeout(400);
-    if (await d.isVisible('#modal.on')) {
-      await d.click('#mbox .mf button:first-child');
-      await d.waitForTimeout(400);
-    }
+    await d.click('.filmdetail [data-act="kaufe"]');
+    await d.waitForTimeout(500);
     pruefe('eine Lizenz liegt im Regal',
       (await d.evaluate(() => window.madtv.session().g.player.licences.length)) > 0);
 

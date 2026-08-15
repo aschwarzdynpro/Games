@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 206 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 219 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -316,6 +316,35 @@ keiner war: Quelle und Ziel passten nicht gleichzeitig ins Fenster, das
 Einscrollen der Quelle schob das Ziel hinaus, und der Zeiger landete auf der
 Kopfzeile. Die Prüfung misst deshalb ausdrücklich mit, ob beide sichtbar sind,
 bevor sie das Ergebnis glaubt.
+
+**Zwei Ebenen statt drei.** Gemessen war der Weg zu einer Sendung: Raum ›
+Fenster › Dialog. Der Dialog listete die eigenen Kassetten auf, sortiert nach
+erwarteten Zuschauern — und existierte nur, weil die Ablage 268 Punkte
+unterhalb des sichtbaren Bereichs lag. Wer seine Kassetten nicht sieht, braucht
+eine Liste.
+
+Die Ablage klebt jetzt am unteren Rand des Fensters, während die Tafel darüber
+scrollt. Damit ist der Dialog überflüssig, und an seine Stelle tritt ein Griff:
+Kassette antippen — sie liegt in der Hand und ist markiert —, Sendeplatz
+antippen. Ein belegter Platz gibt bei leerer Hand seine Sendung zurück in die
+Hand; damit deckt der Klickweg auch das Leeren ab, das vorher nur der Dialog
+konnte. Escape räumt die Hand vor dem Fenster.
+
+Ziehen bleibt daneben bestehen. Beide Wege benutzen dieselbe Ablegelogik —
+`legeProgramm()` und `legeWerbung()` sind dafür aus dem Ziehen herausgelöst, denn
+zwei Abschriften der Regeln («passt das noch in den Abend») wären ein sicherer
+Weg, dass die Wege irgendwann verschieden urteilen.
+
+Beim Bauen fiel eine Falle auf: Die Kassette im Sendeplatz trug erst dasselbe
+«nimm» wie die in der Ablage — ein Klick nahm sie dann und legte sie im selben
+Wimpernschlag zurück, weil auch das Fach darunter hörte. Im Sendeplatz nimmt
+jetzt das Fach, nicht die Karte.
+
+Derselbe Schnitt im Filmkatalog: Die Kennzahlen eines Titels standen in einem
+Dialog über dem Fenster. Ein Dialog ist die richtige Form für «bestätige das»
+— hier ging es ums Nachschlagen, und dafür muss man das Regal nicht verlassen.
+Sie stehen jetzt als Streifen unter dem Regal, der beim Blättern stehen bleibt,
+mit dem Kaufknopf darin.
 
 **Das Fenster füllt die Inhaltsfläche.** Bezugspunkt ist `#main`, also der
 Bereich zwischen Kopfzeile und Etagenleiste; damit braucht es keine gemessenen

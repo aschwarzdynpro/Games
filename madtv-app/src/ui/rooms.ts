@@ -273,9 +273,10 @@ function filmBox(g: ReturnType<typeof G>, m: Licence, owned: boolean): string {
       `<span class="box-sub">${icon(gd.ico)} ${gd.name} · ${m.year}${trend}</span></div>`
     : `<div class="box-spine">${esc(m.title)}</div>`;
 
-  return `<div class="boxcase${owned ? ' owned' : ''}${afford && !owned ? ' cheap' : ''}" ` +
+  return `<div class="boxcase${owned ? ' owned' : ''}${afford && !owned ? ' cheap' : ''}` +
+    `${S().filmWahl === m.uid ? ' gewaehlt' : ''}" ` +
     `style="--h:${BOX_HUE[m.genre] ?? 210};width:${w}px" ` +
-    `${owned ? '' : `data-act="inspect" data-u="${m.uid}" role="button" tabindex="0"`} ` +
+    `${owned ? '' : `data-act="waehle" data-u="${m.uid}" role="button" tabindex="0"`} ` +
     `title="${esc(m.title)} — ${gd.name}, ${lengthLabel(m.lenSlots)}, ${money(m.price)}">` +
     body +
     '<div class="box-foot">' +
@@ -365,10 +366,54 @@ export function filmKatalog(): string {
   if (!list.length) h += '<div class="wall-empty">Das Regal ist leer.</div>';
   h += '</div></div>';
 
-  h += '<div class="hint">Ein Klick auf eine Schachtel zeigt die Kennzahlen und kauft sie. Sendezeit ist die ' +
+  h += filmDetail();
+  h += '<div class="hint">Ein Klick auf eine Schachtel zeigt die Kennzahlen darunter. Sendezeit ist die ' +
     'eigentliche Ware: Ein Dreistünder füllt einen halben Abend, ein Magazin nur eine halbe Stunde — ' +
     'entsprechend fällt der Preis aus.</div>';
   return h;
+}
+
+/**
+ * Die Kennzahlen des gewählten Titels — als Streifen unter dem Regal.
+ *
+ * Vorher war das ein Dialog über dem Fenster, also die dritte Ebene über dem
+ * Raum. Ein Dialog ist die richtige Form für «bestätige das» — hier ging es
+ * aber ums Nachschlagen, und dafür muss man das Regal nicht verlassen. Der
+ * Streifen bleibt am unteren Rand stehen, damit man weiterblättern kann,
+ * während die Zahlen daneben stehen bleiben.
+ */
+export function filmDetail(): string {
+  const g = G();
+  const uid = S().filmWahl;
+  if (uid === null) return '';
+  const m = g.market.find((x) => x.uid === uid);
+  if (!m) return '';
+
+  const gd = GENRES[m.genre];
+  const afford = g.player.money >= m.price;
+  const tv = Math.round(trendOf(g, m.genre) * 100);
+  const wert = (k: string, v: string, cls = ''): string =>
+    `<div class="fd-wert"><span>${k}</span><b class="${cls}">${v}</b></div>`;
+
+  return '<div class="filmdetail">' +
+    `<div class="fd-kopf">${icon(gd.ico)}<b>${esc(m.title)}</b>` +
+    `<span>${gd.name}${m.isSerie ? ' · Serie' : ''} · ${m.year}</span>` +
+    `<button class="fd-zu" data-act="waehle" data-u="" aria-label="Auswahl aufheben">` +
+    `${icon('ui-schliessen')}</button></div>` +
+    '<div class="fd-werte">' +
+    wert('Sendelänge', lengthLabel(m.lenSlots) + (m.isSerie ? ' je Folge' : '')) +
+    (m.isSerie ? wert('Staffel', `${m.eps} Folgen`) : '') +
+    wert('Freigabe', m.fsk === 0 ? 'ohne' : `ab ${m.fsk}`) +
+    wert('Zuschauerwert', String(m.qual)) +
+    wert('Kritik', String(m.critic)) +
+    wert('Kinokasse', String(m.box)) +
+    wert('Konjunktur', `${tv}%`, tv > 106 ? 'ok' : tv < 94 ? 'bad' : '') +
+    '</div>' +
+    '<div class="fd-fuss">' +
+    `<div class="fd-preis${afford ? '' : ' bad'}">${money(m.price)}</div>` +
+    `<button class="btn${afford ? '' : ' ghost'}" data-act="kaufe" data-u="${m.uid}"` +
+    `${afford ? '' : ' disabled'}>${afford ? 'Kaufen' : 'Zu teuer'}</button>` +
+    '</div></div>';
 }
 
 /**

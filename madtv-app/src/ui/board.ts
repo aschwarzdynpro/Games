@@ -9,8 +9,10 @@
  * Filmtitel, und Text ist genau das, was SVG schlechter kann als DOM — kein
  * Umbruch, kein Auslassungszeichen, keine Vorlesbarkeit.
  *
- * Ziehen ist eine Zugabe, kein Ersatz: Ein Klick auf einen Sendeplatz öffnet
- * weiterhin die Auswahlliste, damit die Tafel mit der Tastatur bedienbar bleibt.
+ * Ziehen ist eine Zugabe, kein Ersatz: Man kann eine Kassette auch antippen —
+ * sie liegt dann in der Hand — und dann den Sendeplatz antippen. Damit bleibt
+ * die Tafel mit der Tastatur bedienbar, und der Weg kommt ohne einen Dialog
+ * über dem Fenster aus.
  */
 import { icon } from './icons';
 import {
@@ -43,23 +45,37 @@ function hue(g: string): number {
  * Ein Halbstundenfeld ist 34 Pixel hoch, da passt eine Zeile — ein Dreistünder
  * hat Raum für Spulen, Untertitel und Frischebalken.
  */
-export function progCard(l: Licence, opts: { grabbable?: boolean; span?: number } = {}): string {
+export function progCard(
+  l: Licence,
+  opts: { grabbable?: boolean; span?: number; ablage?: boolean } = {},
+): string {
   const gd = GENRES[l.genre];
   const wear = Math.round(l.fresh * 100);
   const span = opts.span ?? 2;
   const sz = span <= 1 ? 'sz1' : span === 2 ? 'sz2' : 'sz3';
-  const grab = opts.grabbable ? ` data-drag="prog" data-lic="${l.uid}" tabindex="0" role="button"` : '';
+  const hand = S().hand;
+  const inHand = opts.grabbable && hand?.art === 'prog' && hand.id === l.uid;
+  // Anklickbar *und* ziehbar: Der Zug bleibt für alle, die ihn mögen; das
+  // Antippen ist der Weg, der ohne sichtbare Ablage gar nicht ging.
+  // `nimm` nur in der Ablage. Eine Kassette im Sendeplatz liegt in einem Fach,
+  // das selbst auf Klick hört — beide zu belegen hieße, dass ein einziger Klick
+  // erst nimmt und dann sofort wieder ablegt.
+  const grab = opts.grabbable
+    ? ` data-drag="prog" data-lic="${l.uid}"`
+      + (opts.ablage ? ` data-act="nimm" data-art="prog" data-id="${l.uid}"` : '')
+      + ' tabindex="0" role="button"'
+    : '';
   const title = `title="${esc(l.title)} — ${gd.name}, ${lengthLabel(l.lenSlots)}, Frische ${wear}%"`;
 
   if (sz === 'sz1') {
     // Eine Zeile: Titel, Freigabe, Länge — mehr ist nicht drin
-    return `<div class="cass sz1" style="--h:${hue(l.genre)}"${grab} ${title}>` +
+    return `<div class="cass sz1${inHand ? ' inhand' : ''}" style="--h:${hue(l.genre)}"${grab} ${title}>` +
       `<span class="cass-title">${esc(l.title)}</span>` +
       `<span class="cass-fsk${l.fsk >= 18 ? ' hot' : ''}">${l.fsk === 0 ? 'o.A.' : l.fsk}</span>` +
       `<span class="cass-len">${lengthLabel(l.lenSlots)}</span></div>`;
   }
 
-  return `<div class="cass ${sz}" style="--h:${hue(l.genre)}"${grab} ${title}>` +
+  return `<div class="cass ${sz}${inHand ? ' inhand' : ''}" style="--h:${hue(l.genre)}"${grab} ${title}>` +
     (sz === 'sz3' ? '<div class="cass-reels" aria-hidden="true"><i></i><i></i></div>' : '') +
     `<div class="cass-label"><span class="cass-title">${esc(l.title)}</span>` +
     `<span class="cass-meta">${icon(gd.ico)} ${gd.name}${l.isSerie ? ` · Folge ${l.ep}/${l.eps}` : ''}</span></div>` +
@@ -77,7 +93,7 @@ export function progCard(l: Licence, opts: { grabbable?: boolean; span?: number 
  */
 function adCard(
   c: Contract,
-  opts: { grabbable?: boolean; res?: BlockResult | null; laeuft?: boolean } = {},
+  opts: { grabbable?: boolean; res?: BlockResult | null; laeuft?: boolean; ablage?: boolean } = {},
 ): string {
   const left = c.spots - c.done;
   const erreicht = opts.res ? (c.group ? opts.res.groups[c.gi]! : opts.res.total) : null;
@@ -90,8 +106,11 @@ function adCard(
 
   return (
     `<div class="spot${erreicht !== null ? (geschafft ? ' geschafft' : ' verfehlt') : ''}` +
-    `${opts.laeuft ? ' laeuft' : ''}"` +
-    `${opts.grabbable ? ` data-drag="ad" data-ad="${c.id}" tabindex="0" role="button"` : ''}` +
+    `${opts.laeuft ? ' laeuft' : ''}${
+      opts.grabbable && S().hand?.art === 'ad' && S().hand?.id === c.id ? ' inhand' : ''}"` +
+    `${opts.grabbable ? ` data-drag="ad" data-ad="${c.id}"`
+      + (opts.ablage ? ` data-act="nimm" data-art="ad" data-id="${c.id}"` : '')
+      + ' tabindex="0" role="button"' : ''}` +
     ` title="${esc(c.brand)} — mindestens ${viewers(c.minAud)}">` +
     `<div class="spot-brand">${esc(c.brand)}</div>` +
     `<div class="spot-need">${viewers(c.minAud)}${c.group ? ` · ${icon(GROUPS[c.gi]!.ico)}` : ''}</div>` +
@@ -201,7 +220,7 @@ export function renderBoard(day: number): string {
 
     const act = aired
       ? (s.res ? `data-act="showres" data-b="${i}" data-day="${day}"` : '')
-      : `data-act="pickprog" data-b="${i}" data-day="${day}" data-drop="prog"`;
+      : `data-act="ablegen" data-b="${i}" data-day="${day}" data-drop="prog"`;
 
     cells += `<div class="${cls}" style="grid-row:${i + 1}/span ${span};grid-column:2" ${act} ` +
       `${aired ? '' : 'role="button" tabindex="0"'} aria-label="${slotLabel(i)}, Sendung">${inner}</div>`;
@@ -234,7 +253,7 @@ export function renderBoard(day: number): string {
 
     if (laeuft) cls += ' jetzt';
 
-    const act = aired ? '' : `data-act="pickad" data-b="${i}" data-day="${day}" data-drop="ad"`;
+    const act = aired ? '' : `data-act="ablegen" data-b="${i}" data-day="${day}" data-drop="ad"`;
     cells += `<div class="${cls}" style="grid-row:${b * 2 + 1}/span 2;grid-column:3" ${act} ` +
       `${aired ? '' : 'role="button" tabindex="0"'} aria-label="${slotLabel(i)}, Werbung">${inner}</div>`;
   }
@@ -246,12 +265,12 @@ export function renderBoard(day: number): string {
   const shelf = [...p.licences]
     .sort((a, b) => Number(used.has(a.uid)) - Number(used.has(b.uid)) || b.qual - a.qual)
     .map((l) => `<div class="shelf-item${used.has(l.uid) ? ' used' : ''}">` +
-      `${progCard(l, { grabbable: true, span: 3 })}</div>`)
+      `${progCard(l, { grabbable: true, span: 3, ablage: true })}</div>`)
     .join('');
 
   const open = p.contracts.filter((c) => c.done < c.spots);
   const koffer = open.length
-    ? open.map((c) => `<div class="shelf-item">${adCard(c, { grabbable: true })}</div>`).join('')
+    ? open.map((c) => `<div class="shelf-item">${adCard(c, { grabbable: true, ablage: true })}</div>`).join('')
     : '<div class="shelf-none">Kein offener Vertrag — ab in die Werbeagentur.</div>';
 
   const frei = slots.filter((s) => !s.prog && !s.aired).length;
@@ -343,6 +362,87 @@ function putBack(card: HTMLElement, kind: 'prog' | 'ad'): void {
   markDirty();
 }
 
+/**
+ * Eine Sendung auf einen Platz legen.
+ *
+ * Herausgelöst, weil es zwei Wege dorthin gibt: das Ziehen und — seit die
+ * Ablage immer sichtbar ist — das Antippen. Zwei Abschriften derselben Regeln
+ * («passt das noch in den Abend», «läuft der Platz schon») wären ein sicherer
+ * Weg, dass die beiden Wege irgendwann verschieden urteilen.
+ *
+ * `herkunft` ist die Karte, aus der gezogen wurde, oder null beim Antippen aus
+ * der Ablage — davon hängt nur ab, ob ein alter Platz geräumt werden muss.
+ */
+export function legeProgramm(
+  at: number, alsTrailer: boolean, lic: Licence | undefined, herkunft: HTMLElement | null,
+): boolean {
+  const g = G();
+  const s = S();
+  const day = shownDay();
+  const slots = getDay(g.player, day);
+  const slot = slots[at];
+  if (!slot || slot.aired) {
+    toast('warn', 'Zu spät', `${slotLabel(at)} läuft bereits.`);
+    return false;
+  }
+  if (!lic) return false;
+
+  if (alsTrailer) {
+    if (herkunft) clearOrigin(slots, herkunft, 'prog');
+    slot.ad = null;
+    slot.trailer = lic;
+    playSfx('buy');
+  } else {
+    if (at + lic.lenSlots > SLOTS) {
+      toast('warn', 'Zu lang',
+        `${lengthLabel(lic.lenSlots)} passen ab ${slotLabel(at)} nicht mehr in den Abend.`);
+      return false;
+    }
+    if (herkunft) clearOrigin(slots, herkunft, 'prog');
+    const weg = placeProgramme(slots, at, lic);
+    if (!slots[at]!.prog) {
+      toast('warn', 'Geht nicht', 'In diesem Bereich läuft schon gesendetes Programm.');
+      return false;
+    }
+    const verdraengt = weg.filter((w) => w.uid !== lic.uid);
+    if (verdraengt.length) {
+      toast('info', 'Umgeplant',
+        `${verdraengt.map((w) => `«${w.title}»`).join(', ')} zurück in den Ordner.`);
+    }
+    playSfx('buy');
+  }
+  s.viewDay = Math.max(0, Math.min(3, day - g.day));
+  markDirty();
+  return true;
+}
+
+/** Einen Werbespot auf einen Werbeplatz legen — dieselbe Teilung wie oben. */
+export function legeWerbung(
+  at: number, aufWerbeplatz: boolean, ct: Contract | undefined, herkunft: HTMLElement | null,
+): boolean {
+  const g = G();
+  const s = S();
+  if (!aufWerbeplatz) {
+    toast('warn', 'Falscher Platz', 'Werbespots gehören auf den Werbeplatz rechts.');
+    return false;
+  }
+  const day = shownDay();
+  const slots = getDay(g.player, day);
+  const slot = slots[at];
+  if (!slot || slot.aired) {
+    toast('warn', 'Zu spät', `${slotLabel(at)} läuft bereits.`);
+    return false;
+  }
+  if (!ct) return false;
+  if (herkunft) clearOrigin(slots, herkunft, 'ad');
+  slot.trailer = null;
+  slot.ad = { id: ct.id, brand: ct.brand };
+  playSfx('buy');
+  s.viewDay = Math.max(0, Math.min(3, day - g.day));
+  markDirty();
+  return true;
+}
+
 registerDrag('prog', {
   accepts: (target, card) => {
     const t = target.dataset.drop;
@@ -355,77 +455,19 @@ registerDrag('prog', {
     return !lic || at + lic.lenSlots <= SLOTS;
   },
   drop: (target, card) => {
-    const g = G();
-    const s = S();
     if (!target || target.dataset.drop === 'shelf') { putBack(card, 'prog'); return; }
     if (target.dataset.drop === 'news') return;
-
-    const day = shownDay();
-    const slots = getDay(g.player, day);
-    const at = Number(target.dataset.b);
-    const slot = slots[at];
-    if (!slot || slot.aired) {
-      toast('warn', 'Zu spät', `${slotLabel(at)} läuft bereits.`);
-      return;
-    }
-    const lic = g.player.licences.find((l) => l.uid === Number(card.dataset.lic));
-    if (!lic) return;
-
-    if (target.dataset.drop === 'ad') {
-      clearOrigin(slots, card, 'prog');
-      slot.ad = null;
-      slot.trailer = lic;
-      playSfx('buy');
-    } else {
-      if (at + lic.lenSlots > SLOTS) {
-        toast('warn', 'Zu lang',
-          `${lengthLabel(lic.lenSlots)} passen ab ${slotLabel(at)} nicht mehr in den Abend.`);
-        return;
-      }
-      clearOrigin(slots, card, 'prog');
-      const weg = placeProgramme(slots, at, lic);
-      if (!slots[at]!.prog) {
-        toast('warn', 'Geht nicht', 'In diesem Bereich läuft schon gesendetes Programm.');
-        return;
-      }
-      const verdraengt = weg.filter((w) => w.uid !== lic.uid);
-      if (verdraengt.length) {
-        toast('info', 'Umgeplant',
-          `${verdraengt.map((w) => `«${w.title}»`).join(', ')} zurück in den Ordner.`);
-      }
-      playSfx('buy');
-    }
-    s.viewDay = Math.max(0, Math.min(3, day - g.day));
-    markDirty();
+    const lic = G().player.licences.find((l) => l.uid === Number(card.dataset.lic));
+    legeProgramm(Number(target.dataset.b), target.dataset.drop === 'ad', lic, card);
   },
 });
 
 registerDrag('ad', {
   accepts: (target) => target.dataset.drop === 'ad' || target.dataset.drop === 'shelf',
   drop: (target, card) => {
-    const g = G();
-    const s = S();
     if (!target || target.dataset.drop === 'shelf') { putBack(card, 'ad'); return; }
-    if (target.dataset.drop !== 'ad') {
-      toast('warn', 'Falscher Platz', 'Werbespots gehören auf den Werbeplatz rechts.');
-      return;
-    }
-    const day = shownDay();
-    const slots = getDay(g.player, day);
-    const at = Number(target.dataset.b);
-    const slot = slots[at];
-    if (!slot || slot.aired) {
-      toast('warn', 'Zu spät', `${slotLabel(at)} läuft bereits.`);
-      return;
-    }
-    const ct = g.player.contracts.find((c) => c.id === Number(card.dataset.ad));
-    if (!ct) return;
-    clearOrigin(slots, card, 'ad');
-    slot.trailer = null;
-    slot.ad = { id: ct.id, brand: ct.brand };
-    playSfx('buy');
-    s.viewDay = Math.max(0, Math.min(3, day - g.day));
-    markDirty();
+    const ct = G().player.contracts.find((c) => c.id === Number(card.dataset.ad));
+    legeWerbung(Number(target.dataset.b), target.dataset.drop === 'ad', ct, card);
   },
 });
 

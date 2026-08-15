@@ -29,6 +29,23 @@ export interface Session {
    * damit im offenen Fenster dieselben Zahlen stehen wie überall sonst.
    */
   fenster: string | null;
+  /**
+   * Was gerade in der Hand liegt.
+   *
+   * Bis eben führte der Weg zu einer Sendung über einen Dialog über dem
+   * Fenster: Raum, Fenster, Dialog — drei Ebenen für einen Handgriff. Der
+   * Dialog gab es nur, weil die Ablage unter dem sichtbaren Bereich lag und man
+   * seine Kassetten nicht sah. Jetzt nimmt man eine in die Hand und tippt den
+   * Sendeplatz an; dieselbe Ablegelogik wie beim Ziehen.
+   */
+  hand: { art: 'prog' | 'ad'; id: number } | null;
+  /**
+   * Welcher Titel im Filmkatalog gerade ausgewählt ist.
+   *
+   * Aus demselben Grund wie `hand`: Die Kennzahlen standen in einem Dialog
+   * über dem Fenster. Jetzt stehen sie im Fenster, unter dem Regal.
+   */
+  filmWahl: number | null;
   dirty: boolean;
   tickCount: number;
 }
@@ -45,6 +62,8 @@ export function startSession(g: Game): Session {
     viewDay: 0,
     filmFilter: 'alle',
     fenster: null,
+    hand: null,
+    filmWahl: null,
     dirty: true,
     tickCount: 0,
   };

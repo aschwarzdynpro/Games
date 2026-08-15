@@ -63,6 +63,9 @@ document.addEventListener('keydown', (e) => {
     // offenem Sendeplan einen gleich bis in den Flur — man wollte nur das
     // Fenster zumachen und stand plötzlich draußen.
     if (modalOpen()) closeDialog();
+    // Die Hand ist die innerste Ebene: Wer eine Kassette hält und abbrechen
+    // will, meint sie — nicht das Fenster und erst recht nicht den Raum.
+    else if (S().hand) { S().hand = null; renderView(); }
     else if (S().fenster) { S().fenster = null; renderView(); }
     else if (S().room) leaveRoom();
     return;

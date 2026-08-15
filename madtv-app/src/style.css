@@ -635,7 +635,30 @@ table.tbl tr:last-child td{border-bottom:none;}
 }
 
 /* Ablagen */
-.shelf{margin-top:10px;}
+/* Die Ablagen bleiben am unteren Rand stehen, während die Tafel darüber
+   scrollt. Vorher lagen sie 268 Punkte unterhalb des sichtbaren Bereichs: Man
+   öffnete den Sendeplan und sah seine eigenen Kassetten nicht — daher rührte
+   der Auswahldialog, der sie noch einmal auflistete. Sichtbar gemacht, ist der
+   Dialog überflüssig. */
+.shelf{
+  margin-top:10px;
+  position:sticky;bottom:0;z-index:3;
+  background:var(--panel);
+  padding:8px 0 2px;
+  box-shadow:0 -10px 18px -8px rgba(0,0,0,.55);
+}
+.shelf + .shelf{margin-top:0;padding-top:2px;}
+/* Was in der Hand liegt, hebt sich ab und bleibt es auch über das
+   Neuzeichnen hinweg — der Zustand steht in der Sitzung, nicht im DOM. */
+.cass.inhand,.spot.inhand{
+  outline:2px solid var(--acc);outline-offset:2px;
+  box-shadow:0 0 0 4px rgba(90,169,255,.18),0 6px 16px rgba(0,0,0,.5);
+}
+/* Solange etwas in der Hand liegt, zeigen die freien Plätze, dass sie es
+   nehmen würden. */
+body.hat-hand .pocket:not(.aired) .pocket-empty{
+  border-color:var(--acc);color:var(--acc);
+}
 .shelf-head{
   font-size:11px;font-weight:700;color:var(--dim);margin-bottom:5px;
   display:flex;align-items:center;gap:8px;
@@ -697,6 +720,37 @@ body.dragging .pocket{transition:none;}
      Breite — gequetscht auf 40 Punkte sagt er nichts mehr. */
   .zg-bahn{grid-column:1/-1;order:9;}
 }
+
+/* ─────────── Kennzahlenstreifen im Filmkatalog ───────────
+   Steht dort, wo vorher ein Dialog aufging. Er bleibt am unteren Rand kleben,
+   damit man weiterblättern kann, während die Zahlen stehen bleiben. */
+.filmdetail{
+  position:sticky;bottom:0;z-index:3;margin-top:10px;
+  background:linear-gradient(180deg,#222b38,#1a212b);
+  border:1px solid var(--line2);border-radius:11px;padding:10px 12px;
+  box-shadow:0 -10px 20px -10px rgba(0,0,0,.6);
+}
+.fd-kopf{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.fd-kopf .ic{width:1.3em;height:1.3em;color:var(--acc);flex-shrink:0;}
+.fd-kopf b{font-size:14px;}
+.fd-kopf>span{font-size:11px;color:var(--dim2);}
+.fd-zu{
+  margin-left:auto;width:26px;height:26px;border-radius:7px;flex-shrink:0;
+  background:var(--panel2);border:1px solid var(--line2);color:var(--dim);
+  display:flex;align-items:center;justify-content:center;
+}
+.fd-zu:hover{border-color:var(--acc);color:var(--acc);}
+.fd-werte{display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:9px;}
+.fd-wert{display:flex;flex-direction:column;gap:1px;}
+.fd-wert span{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim2);}
+.fd-wert b{font-size:13px;font-variant-numeric:tabular-nums;}
+.fd-fuss{display:flex;align-items:center;gap:12px;}
+.fd-preis{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+.fd-preis.bad{color:var(--bad);}
+.fd-fuss .btn{margin-left:auto;}
+/* Die gewählte Schachtel steht sichtbar heraus — sonst weiß man beim Blättern
+   nicht mehr, wozu die Zahlen unten gehören. */
+.boxcase.gewaehlt{outline:2px solid var(--acc);outline-offset:2px;}
 
 /* ═══════════════════════════════════════════════════════════════════
    Filmagentur — Regalwand
