@@ -11,15 +11,18 @@ import {
   bueroBilanz, bueroKoffer, bueroLage, bueroQuote, bueroSendeplan,
   chefAushang, chefKalender, chefRaffer,
   filmAuktion, filmKatalog, filmPaket, genreKonjunktur,
+  werbeArbeitsplatz, zielgruppen,
 } from '../rooms';
 import { BUERO } from './buero';
 import { CHEF } from './chef';
 import { FILM } from './film';
+import { WERBE } from './werbe';
 
 const ALLE: Partial<Record<RoomId, Raumszene>> = {
   office: BUERO,
   chef: CHEF,
   film: FILM,
+  werbe: WERBE,
 };
 
 /**
@@ -82,6 +85,23 @@ export function fensterInhalt(room: RoomId, welches: string): Fensterinhalt | nu
           'Das Paket ist verkauft — die fünf Titel stehen in deinem Archiv.');
       case 'trend':
         return bau('Genre-Konjunktur', 'ui-diagramm', genreKonjunktur(), 'Noch keine Bewegung.');
+      default:
+        return null;
+    }
+  }
+
+  if (room === 'werbe') {
+    switch (welches) {
+      // Kartei und Koffer in *einem* Fenster: Zwischen ihnen läuft die
+      // Ziehgeste, und aus einem geschlossenen Fenster zieht man in kein
+      // offenes. Deshalb führen beide Klickpunkte hierher.
+      case 'kartei':
+        return bau('Kundenkartei', 'flr-werbe', werbeArbeitsplatz(),
+          'Die Kartei ist leer. Morgen liegen neue Karten da.');
+      case 'zielgruppen':
+        return bau('Zielgruppen', 'ui-diagramm', zielgruppen(), 'Noch keine Zahlen.');
+      case 'vertraege':
+        return bau('Laufende Verträge', 'ui-buch', bueroKoffer(), 'Kein Vertrag im Koffer.');
       default:
         return null;
     }

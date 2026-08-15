@@ -671,6 +671,33 @@ table.tbl tr:last-child td{border-bottom:none;}
 body.dragging{cursor:grabbing;user-select:none;}
 body.dragging .pocket{transition:none;}
 
+/* ─────────── Zielgruppen-Tafel ───────────
+   Nach dem Vorbild des Monitors im Raum: Name, Balken, Zahl. Als Raster statt
+   als Tabelle, damit die Spalten auf dem Telefon umbrechen dürfen. */
+.zg{display:flex;flex-direction:column;gap:6px;}
+.zg-zeile{
+  display:grid;gap:4px 10px;align-items:center;
+  grid-template-columns:minmax(120px,1fr) minmax(80px,2fr) auto auto auto;
+  padding:6px 8px;border-radius:8px;background:var(--panel2);
+}
+.zg-name{display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;}
+.zg-name .ic{width:1.2em;height:1.2em;color:var(--dim);}
+.zg-bahn{height:9px;border-radius:5px;background:#0e131b;overflow:hidden;min-width:60px;}
+.zg-bahn i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--acc2),var(--acc));}
+.zg-wert{font-weight:800;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.zg-anteil{font-size:11px;color:var(--dim2);white-space:nowrap;}
+.zg-karten{
+  font-size:11px;font-weight:700;white-space:nowrap;
+  padding:2px 7px;border-radius:999px;background:#2a3341;color:var(--acc);
+}
+.zg-karten.still{background:transparent;color:var(--dim2);font-weight:400;}
+@media (max-width:560px){
+  .zg-zeile{grid-template-columns:1fr auto auto;}
+  /* Der Balken bekommt auf dem Telefon eine eigene Zeile über die volle
+     Breite — gequetscht auf 40 Punkte sagt er nichts mehr. */
+  .zg-bahn{grid-column:1/-1;order:9;}
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    Filmagentur — Regalwand
    ═══════════════════════════════════════════════════════════════════ */

@@ -346,6 +346,10 @@ async function main() {
   await seite.waitForTimeout(150);
   await seite.click('[data-go="5"]');                      // Werbeagentur
   await angekommen(seite);
+  // Seit der Raum eine Szene ist, liegt die Kartei im Karteikasten und nicht
+  // mehr offen im Panel — der Weg dorthin ist einen Klick länger.
+  await seite.click('[data-f="kartei"].hs');
+  await seite.waitForTimeout(350);
   const regal = await seite.evaluate(() => {
     const r = document.querySelector('.kartei');
     const kasten = r?.closest('[data-railbox]');
@@ -378,6 +382,11 @@ async function main() {
   const ueberlebt = await seite.evaluate(() => document.querySelector('.kartei').scrollLeft);
   pruefe('die gescrollte Stelle überlebt das Neuzeichnen', Math.abs(ueberlebt - nachher.pos) < 5,
     `${nachher.pos} → ${ueberlebt}`);
+
+  // Das Fenster steht noch offen. Escape räumt seit dem Umbau von innen nach
+  // außen ab — der Rundgang beginnt aber im Flur, also erst zumachen.
+  await seite.click('.fenster-zu');
+  await seite.waitForTimeout(200);
 
   await raumRundgang(seite, meldungen);
   await seite.close();
@@ -776,6 +785,105 @@ async function main() {
       (await t.evaluate(() => window.madtv.session().g.player.licences.length)) > lizenzen);
     pruefe('Freier Aufbau ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
     await t.close();
+  }
+
+  /* ── Werbeagentur ── */
+  console.log('\nWerbeagentur');
+  {
+    const mm = [];
+    const w = await browser.newPage({ viewport: { width: 1320, height: 1600 } });
+    w.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    w.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(w);
+    await w.keyboard.press('Escape');
+    await w.waitForTimeout(200);
+    await w.click('[data-go="5"]');
+    await angekommen(w);
+
+    pruefe('die Werbeagentur ist eine Szene',
+      await w.evaluate(() => !!document.querySelector('.raum-svg')));
+    pruefe('mit fünf Klickpunkten',
+      (await w.evaluate(() => document.querySelectorAll('.hs').length)) === 5);
+    const wDoppelt = await w.evaluate(() => {
+      const r = [...document.querySelectorAll('.hs-feld')].map((e) => ({
+        n: e.parentElement.getAttribute('aria-label').split(' —')[0],
+        x: +e.getAttribute('x'), y: +e.getAttribute('y'),
+        w: +e.getAttribute('width'), h: +e.getAttribute('height'),
+      }));
+      const t = [];
+      for (let i = 0; i < r.length; i++) {
+        for (let j = i + 1; j < r.length; j++) {
+          const a = r[i]; const b = r[j];
+          if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) {
+            t.push(`${a.n}/${b.n}`);
+          }
+        }
+      }
+      return t;
+    });
+    pruefe('keine zwei Klickpunkte überlappen sich', wDoppelt.length === 0, wDoppelt.join(', '));
+
+    // Kartei und Koffer öffnen dasselbe Fenster — sonst wäre die Ziehgeste
+    // zwischen ihnen nicht mehr fahrbar.
+    for (const welches of ['kartei', 'koffer']) {
+      const knopf = await w.$(`[data-f="kartei"].hs`);
+      pruefe(`«${welches}» führt zur Kundenkartei`, knopf !== null);
+    }
+    await w.click('[data-f="kartei"].hs');
+    await w.waitForTimeout(350);
+    const arbeit = await w.evaluate(() => ({
+      titel: document.querySelector('.fenster-kopf h2')?.textContent ?? '',
+      karten: document.querySelectorAll('.fenster [data-drag="kunde"]').length,
+      faecher: document.querySelectorAll('.fenster [data-drop="koffer"]').length,
+    }));
+    pruefe('Kundenkartei öffnet sich', arbeit.titel === 'Kundenkartei', arbeit.titel);
+    pruefe('Karten und Kofferfächer liegen im selben Fenster',
+      arbeit.karten > 0 && arbeit.faecher > 0, JSON.stringify(arbeit));
+
+    // Der Kern des Raums: eine Karte in ein Fach ziehen.
+    const karte = await w.$('.fenster [data-drag="kunde"]');
+    const fach = await w.$('.fenster [data-drop="koffer"]');
+    if (karte && fach) {
+      await karte.scrollIntoViewIfNeeded();
+      await w.waitForTimeout(200);
+      const ka = await karte.boundingBox();
+      const fa = await fach.boundingBox();
+      const vertraege = () => w.evaluate(() => window.madtv.session().g.player.contracts.length);
+      const vorher = await vertraege();
+      pruefe('Karte und Fach sind gleichzeitig sichtbar', ka.y > 60 && fa.y > 60,
+        `Karte y=${Math.round(ka.y)}, Fach y=${Math.round(fa.y)}`);
+      await w.mouse.move(ka.x + ka.width / 2, ka.y + ka.height / 2);
+      await w.mouse.down();
+      await w.mouse.move(ka.x + ka.width / 2 + 30, ka.y + ka.height / 2 + 10, { steps: 8 });
+      await w.mouse.move(fa.x + fa.width / 2, fa.y + fa.height / 2, { steps: 14 });
+      pruefe('das Kofferfach meldet sich als Ziel',
+        (await w.evaluate(() => document.querySelectorAll('.drop-ok').length)) > 0);
+      await w.mouse.up();
+      await w.waitForTimeout(600);
+      pruefe('und der Vertrag liegt danach im Koffer',
+        (await vertraege()) > vorher, `Verträge ${vorher} → ${await vertraege()}`);
+    }
+    await w.click('.fenster-zu');
+    await w.waitForTimeout(200);
+
+    await w.click('[data-f="zielgruppen"].hs');
+    await w.waitForTimeout(350);
+    const zg = await w.evaluate(() => ({
+      titel: document.querySelector('.fenster-kopf h2')?.textContent ?? '',
+      zeilen: document.querySelectorAll('.fenster .zg-zeile').length,
+      werte: [...document.querySelectorAll('.fenster .zg-wert')].map((e) => e.textContent),
+    }));
+    pruefe('der Monitor zeigt alle sechs Zielgruppen', zg.zeilen === 6, String(zg.zeilen));
+    pruefe('und für jede eine Zuschauerzahl',
+      zg.werte.length === 6 && zg.werte.every((t) => /\d/.test(t)), zg.werte.join(' · '));
+    await w.click('.fenster-zu');
+    await w.waitForTimeout(200);
+
+    const grundW = await hintergrundBild(w);
+    pruefe('die Bildquelle lässt sich wirklich holen',
+      grundW?.geladen === true, JSON.stringify(grundW));
+    pruefe('Werbeagentur ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await w.close();
   }
 
   /* ── Ziehen im Fenster ──

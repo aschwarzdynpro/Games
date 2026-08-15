@@ -477,6 +477,56 @@ export function werbeArbeitsplatz(): string {
   return h;
 }
 
+/**
+ * Die Zielgruppen-Tafel — was deine beste Sendezeit welcher Gruppe bringt.
+ *
+ * Ein Werbevertrag mit Zielgruppe zahlt nur, wenn genau diese Gruppe im Block
+ * sitzt. Bisher stand das nur als Satz im Hinweis unter der Kartei, und ob man
+ * eine Forderung erfüllen kann, musste man raten. Hier stehen die Zahlen:
+ * Bevölkerungsanteil, was der beste Abendblock derzeit liefert, und wie viele
+ * Karten in der Kartei gerade nach dieser Gruppe fragen.
+ *
+ * Gerechnet wird mit dem besten eigenen Titel im besten Abendblock — also
+ * «was ginge, wenn ich gut plane», nicht «was mein halb leerer Plan gerade
+ * hergibt». Sonst stünde an Tag 1 überall eine Null.
+ */
+export function zielgruppen(): string {
+  const g = G();
+  const beste = [...g.player.licences].sort((a, b) => b.qual - a.qual)[0] ?? null;
+
+  // Den Block mit der höchsten Gesamtzuschauerzahl suchen — das ist die
+  // Sendezeit, an der sich ein Vertrag messen lassen muss.
+  let bester = { total: 0, groups: GROUPS.map(() => 0) };
+  for (let b = 4; b <= 7; b++) {
+    const r = estimateBlock(g, g.day, b, beste);
+    if (r.total > bester.total) bester = r;
+  }
+
+  const gefragt = (i: number): number =>
+    g.adMarket.filter((c) => c.group && c.gi === i).length;
+  const hoechste = Math.max(1, ...bester.groups);
+
+  let h = '<div class="card"><h3>Zielgruppen zur besten Sendezeit</h3><div class="zg">';
+  GROUPS.forEach((grp, i) => {
+    const wert = bester.groups[i] ?? 0;
+    const karten = gefragt(i);
+    h += '<div class="zg-zeile">' +
+      `<div class="zg-name">${icon(grp.ico)} ${esc(grp.name)}</div>` +
+      `<div class="zg-bahn"><i style="width:${Math.round((wert / hoechste) * 100)}%"></i></div>` +
+      `<div class="zg-wert">${viewers(wert)}</div>` +
+      `<div class="zg-anteil">${pct(grp.share, 0)} der Leute</div>` +
+      `<div class="zg-karten${karten ? '' : ' still'}">${
+        karten ? `${karten} ${karten === 1 ? 'Karte' : 'Karten'}` : '—'}</div>` +
+      '</div>';
+  });
+  h += '</div><div class="hint">Die Balken zeigen, wie viele aus jeder Gruppe ' +
+    (beste ? 'bei deinem stärksten Titel' : 'ohne eigenen Titel') +
+    ' zur besten Zeit zusähen. Rechts steht, wie viele Karten in der Kartei gerade ' +
+    'nach dieser Gruppe fragen — viele Karten bei wenig Zuschauern sind die teure Falle.' +
+    '</div></div>';
+  return h;
+}
+
 function werbe(): string {
   return '<div class="room">'
     + head('flr-werbe', 'Werbeagentur',

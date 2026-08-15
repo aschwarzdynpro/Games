@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 172 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 186 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -264,11 +264,21 @@ nebeneinander — war übersehen worden. Mit dem Finger wischt man da einfach
 weiter, mit der Maus sah man neun davon und ahnte den Rest nicht.
 
 **Ziehen geht auch im Fenster.** Das war die offene Frage für die
-Werbeagentur, die als nächste eine Szene werden soll: Dort wandert eine Karte
-aus der Kundenkartei per Zug in ein Kofferfach. Lägen Kartei und Koffer in zwei
-Fenstern, wäre die Geste kaputt — man kann nicht aus einem geschlossenen
-Fenster in ein offenes ziehen. Sie gehören deshalb in eines, und `rooms.ts`
-hält sie in `werbeArbeitsplatz()` zusammen.
+Werbeagentur: Dort wandert eine Karte aus der Kundenkartei per Zug in ein
+Kofferfach. Lägen Kartei und Koffer in zwei Fenstern, wäre die Geste kaputt —
+man kann nicht aus einem geschlossenen Fenster in ein offenes ziehen. Sie
+gehören deshalb in eines, und `rooms.ts` hält sie in `werbeArbeitsplatz()`
+zusammen. Im Raum führen **zwei** Klickpunkte dorthin, Karteikasten und Koffer:
+Es ist dieselbe Arbeitsfläche, im Bild wie im Spiel — man nimmt eine Karte aus
+dem Kasten und legt sie in den Koffer daneben.
+
+Der Zielgruppenmonitor im Bild hat dabei etwas Neues erzwungen. Er verspricht
+eine Aufschlüsselung nach Zielgruppen, und die gab es nirgends: Ob man eine
+Forderung erfüllen kann, musste man raten. `zielgruppen()` rechnet jetzt aus,
+was der beste Abendblock jeder Gruppe bringt, und stellt daneben, wie viele
+Karten gerade nach ihr fragen — viele Karten bei wenig Zuschauern sind die
+teure Falle. Ein Gegenstand im Bild ohne Funktion wäre eine Lüge gewesen; hier
+hat das Bild die Funktion nachgezogen.
 
 Dass Ziehen im Fenster überhaupt funktioniert, ist jetzt geprüft — vorher gab
 es zum Ziehen gar keine Prüfung. Der erste Anlauf meldete einen Fehlschlag, der
