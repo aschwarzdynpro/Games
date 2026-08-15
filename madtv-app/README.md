@@ -84,7 +84,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 99 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 106 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -180,7 +180,24 @@ aber aus wie ein graues Brett, das quer über dem Laptop lehnt. Was funktioniert
 ist die Wirkung statt des Strahls: eine warme Pfütze auf der Platte und ein
 Schein um die Leuchte.
 
-Die übrigen zwölf Räume zeigen weiterhin ihr Panel. Ein Raum wandert um, sobald
+### Chefbüro
+
+Der zweite begehbare Raum, und bewusst gegen das eigene Büro gesetzt: Dort
+Jalousien und kühles Blau, hier Vertäfelung, Vorhänge und dunkles Holz. Der
+Schreibtisch steht quer im Bild, Raffer sitzt dahinter, die Besucherstühle sind
+am unteren Rand angeschnitten — man steht davor, nicht dahinter. Das ist der
+einzige Raum im Haus, in dem nicht man selbst der Chef ist.
+
+Anfassen kann man Raffer (was er zu sagen hat), den Aushang (Senderanking) und
+das Kalenderblatt (Sammy-Termin).
+
+Das Kalenderblatt **rechnet**, statt eine Zahl zu malen: Es liest den Spieltag
+und zeigt die echten Tage bis zur Verleihung. Ein Kalender an der Wand, der
+immer dasselbe zeigt, wäre eine Lüge im Bild — und eine, die man beim Vorbeigehen
+glaubt. Geprüft wird das, indem die Zahl im Bild gegen dieselbe Rechnung gehalten
+wird.
+
+Die übrigen elf Räume zeigen weiterhin ihr Panel. Ein Raum wandert um, sobald
 er eine Szene hat — zwischen zwei Ständen ist nie etwas kaputt.
 
 ## Bedienbarkeit

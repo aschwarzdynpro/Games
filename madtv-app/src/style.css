@@ -1715,6 +1715,16 @@ body.im-raum .wrap{max-width:1420px;padding-bottom:74px;}
   font-family:Inter,system-ui,sans-serif;}
 .b-mark{fill:#e33c3c;font-size:38px;font-weight:900;letter-spacing:.06em;text-anchor:middle;
   font-family:Inter,system-ui,sans-serif;}
+.c-schild{fill:#e0c98a;font-size:19px;font-weight:800;letter-spacing:.11em;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
+.c-schild-klein{fill:#8a7a55;font-size:10px;letter-spacing:.13em;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
+.c-aushang{fill:#5c5340;font-size:19px;font-weight:800;letter-spacing:.13em;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
+.c-kal-kopf{fill:#f3e6d8;font-size:17px;font-weight:800;letter-spacing:.14em;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
+.c-kal-tag{fill:#33241f;font-size:74px;font-weight:900;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
 
 .szene-leiste{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
 .szene-knopf{

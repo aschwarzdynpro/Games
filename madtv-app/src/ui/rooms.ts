@@ -839,22 +839,35 @@ function figur(opts: {
     '</div><div class="sz-platte"></div></div>';
 }
 
-function chef(): string {
+/* ─────────── Chefbüro ─────────── */
+
+/**
+ * Auch das Chefbüro steht in Teilen da, seit es ein begehbarer Raum ist: Was
+ * Raffer sagt, hängt an ihm; das Ranking am Aushang; der Termin am
+ * Kalenderblatt. Gebaut wird beides aus denselben Zeilen.
+ */
+
+/** Herr Raffer selbst — und die Frist, wenn eine läuft. */
+export function chefRaffer(): string {
   const g = G();
   const p = g.player;
-  const rank = [...g.ch].sort((a, b) => b.image - a.image);
   const talk = speak(g, 'raffer');
-  const bisSammy = 7 - (g.day % 7 || 7) + (g.day % 7 === 0 ? 7 : 0);
-
-  let h = '<div class="room">' + head('flr-chef', 'Chefbüro', 'Herr Raffer, Generalintendant');
-
+  let h = '';
   h += figur({
     name: 'Herr Raffer', rolle: 'Generalintendant', ico: 'flr-chef', klasse: 'sz-chef', talk,
     extra: p.lowImageDays > 0
       ? `<div class="sz-frist">Tag ${p.lowImageDays} von 3 unter ${g.D.fireImage} %</div>`
       : '',
   });
+  return h;
+}
 
+/** Der Aushang der Intendanz: wer wo steht und was zum Sieg fehlt. */
+export function chefAushang(): string {
+  const g = G();
+  const p = g.player;
+  const rank = [...g.ch].sort((a, b) => b.image - a.image);
+  let h = '';
   // Das Ranking hängt als Aushang an der Wand, nicht in einer Tabellenkarte
   h += '<div class="aushang"><div class="au-nadel"></div>' +
     '<div class="au-titel">Senderanking · Aushang der Intendanz</div><table class="tbl">' +
@@ -868,13 +881,26 @@ function chef(): string {
     '</table>' +
     `<div class="au-fuss">Sieg: mindestens <b>${g.D.winImage} %</b> Marktanteil <b>und</b> ` +
     `${g.D.winImage} Zuneigungspunkte. Unter ${g.D.fireImage} % ist nach drei Tagen Schluss.</div></div>`;
+  return h;
+}
 
+/** Das Kalenderblatt mit dem Sammy-Termin. */
+export function chefKalender(): string {
+  const g = G();
+  const bisSammy = 7 - (g.day % 7 || 7) + (g.day % 7 === 0 ? 7 : 0);
+  let h = '';
   // Der Sammy-Termin als abgerissenes Kalenderblatt
   h += '<div class="kalender"><div class="ka-tag">' + bisSammy + '</div>' +
     `<div class="ka-text"><b>Tag${bisSammy === 1 ? '' : 'e'} bis zur Sammy-Verleihung</b>` +
     '<span>Kategorien: beste Nachrichtensendung, beste Kultursendung, beste Primetime-Quote</span></div></div>';
+  return h;
+}
 
-  return h + '</div>';
+function chef(): string {
+  return '<div class="room">'
+    + head('flr-chef', 'Chefbüro', 'Herr Raffer, Generalintendant')
+    + chefRaffer() + chefAushang() + chefKalender()
+    + '</div>';
 }
 
 /* ─────────── Bettys Büro ─────────── */

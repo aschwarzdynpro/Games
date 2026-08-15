@@ -464,6 +464,51 @@ async function main() {
     await r.close();
   }
 
+  /* ── Chefbüro: der zweite begehbare Raum ── */
+  console.log('\nChefbüro');
+  {
+    const mm = [];
+    const c = await browser.newPage({ viewport: { width: 1320, height: 980 } });
+    c.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    c.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(c);
+    await c.keyboard.press('Escape');
+    await c.waitForTimeout(200);
+    await c.click('[data-go="11"]');
+    await angekommen(c);
+
+    pruefe('das Chefbüro ist eine Szene',
+      await c.evaluate(() => !!document.querySelector('.szene-svg')));
+    pruefe('mit vier Klickpunkten',
+      (await c.evaluate(() => document.querySelectorAll('.hs').length)) === 4);
+
+    for (const [f, erwartet] of [['raffer', 'Herr Raffer'], ['ranking', 'Senderanking'],
+      ['sammy', 'Sammy-Verleihung']]) {
+      await c.click(`[data-f="${f}"].hs`);
+      await c.waitForTimeout(300);
+      const w = await c.evaluate(() => ({
+        titel: document.querySelector('.fenster-kopf h2')?.textContent ?? '',
+        zeichen: (document.querySelector('.fenster-inhalt')?.textContent ?? '').trim().length,
+      }));
+      pruefe(`«${erwartet}» öffnet sich mit Inhalt`,
+        w.titel === erwartet && w.zeichen > 20, `${w.titel} · ${w.zeichen} Zeichen`);
+      await c.click('.fenster-zu');
+      await c.waitForTimeout(180);
+    }
+
+    // Das Kalenderblatt an der Wand rechnet mit, statt eine Zahl zu malen.
+    const gemalt = await c.evaluate(() =>
+      document.querySelector('.c-kal-tag')?.textContent ?? '');
+    const gerechnet = await c.evaluate(() => {
+      const d = window.madtv.session().g.day;
+      return String(7 - (d % 7 || 7) + (d % 7 === 0 ? 7 : 0));
+    });
+    pruefe('das Kalenderblatt zeigt den echten Termin', gemalt === gerechnet,
+      `${gemalt} statt ${gerechnet}`);
+    pruefe('Chefbüro ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await c.close();
+  }
+
   /* ── Freier Aufbau: die Uhr darf einen nicht mehr festhalten ── */
   console.log('\nFreier Aufbau');
   {
