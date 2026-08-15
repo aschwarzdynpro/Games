@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 163 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 172 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -262,6 +262,20 @@ das Drehbuchregal, der Garderobengang, die Tasche und die Kioskvitrine hatten
 sie längst; ausgerechnet die längste Reihe im Haus — dreiundzwanzig Abendfüller
 nebeneinander — war übersehen worden. Mit dem Finger wischt man da einfach
 weiter, mit der Maus sah man neun davon und ahnte den Rest nicht.
+
+**Ziehen geht auch im Fenster.** Das war die offene Frage für die
+Werbeagentur, die als nächste eine Szene werden soll: Dort wandert eine Karte
+aus der Kundenkartei per Zug in ein Kofferfach. Lägen Kartei und Koffer in zwei
+Fenstern, wäre die Geste kaputt — man kann nicht aus einem geschlossenen
+Fenster in ein offenes ziehen. Sie gehören deshalb in eines, und `rooms.ts`
+hält sie in `werbeArbeitsplatz()` zusammen.
+
+Dass Ziehen im Fenster überhaupt funktioniert, ist jetzt geprüft — vorher gab
+es zum Ziehen gar keine Prüfung. Der erste Anlauf meldete einen Fehlschlag, der
+keiner war: Quelle und Ziel passten nicht gleichzeitig ins Fenster, das
+Einscrollen der Quelle schob das Ziel hinaus, und der Zeiger landete auf der
+Kopfzeile. Die Prüfung misst deshalb ausdrücklich mit, ob beide sichtbar sind,
+bevor sie das Ergebnis glaubt.
 
 **Das Fenster füllt die Inhaltsfläche.** Bezugspunkt ist `#main`, also der
 Bereich zwischen Kopfzeile und Etagenleiste; damit braucht es keine gemessenen

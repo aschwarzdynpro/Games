@@ -778,6 +778,87 @@ async function main() {
     await t.close();
   }
 
+  /* ── Ziehen im Fenster ──
+     Für die Räume, die noch Szenen werden sollen, hängt der Zuschnitt daran:
+     Die Werbeagentur lebt davon, eine Karte aus der Kartei in den Koffer zu
+     ziehen. Lägen die beiden in getrennten Fenstern, wäre die Geste kaputt —
+     und die Frage, ob sie im Fenster überhaupt geht, war unbeantwortet.
+
+     Das Fenster ist hier absichtlich hoch: Quelle und Ziel müssen gleichzeitig
+     sichtbar sein, sonst misst man das Scrollen statt des Ziehens. */
+  console.log('\nZiehen im Fenster');
+  {
+    const mm = [];
+    const d = await browser.newPage({ viewport: { width: 1320, height: 1600 } });
+    d.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    d.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(d);
+
+    // Eine Lizenz besorgen — ohne Kassette gibt es nichts zu ziehen.
+    await d.keyboard.press('Escape');
+    await d.waitForTimeout(200);
+    await d.click('[data-go="4"]');
+    await angekommen(d);
+    await d.click('[data-f="katalog"].hs');
+    await d.waitForTimeout(350);
+    await d.click('.fenster .boxcase:not(.owned)');
+    await d.waitForTimeout(400);
+    if (await d.isVisible('#modal.on')) {
+      await d.click('#mbox .mf button:first-child');
+      await d.waitForTimeout(400);
+    }
+    pruefe('eine Lizenz liegt im Regal',
+      (await d.evaluate(() => window.madtv.session().g.player.licences.length)) > 0);
+
+    await d.keyboard.press('Escape');
+    await d.waitForTimeout(200);
+    await d.click('#bottom [data-f="6"]');
+    await angekommen(d);
+    await d.click('[data-f="sendeplan"].hs');
+    await d.waitForTimeout(400);
+
+    const quelle = await d.$('.fenster [data-drag="prog"]');
+    const ziel = await d.$('.fenster [data-drop="prog"]');
+    pruefe('im Sendeplan-Fenster liegt eine Kassette', quelle !== null);
+    pruefe('und ein freier Sendeplatz', ziel !== null);
+
+    if (quelle && ziel) {
+      await quelle.scrollIntoViewIfNeeded();
+      await d.waitForTimeout(250);
+      const a = await quelle.boundingBox();
+      const z = await ziel.boundingBox();
+      const belegt = () => d.evaluate(() => window.madtv.core
+        .getDay(window.madtv.session().g.player, window.madtv.session().g.day)
+        .filter((f) => f.prog).length);
+      const vorher = await belegt();
+
+      // Beide müssen im Bild sein, sonst prüft man die eigene Messung.
+      pruefe('Kassette und Sendeplatz sind gleichzeitig sichtbar',
+        a.y > 60 && z.y > 60, `Kassette y=${Math.round(a.y)}, Platz y=${Math.round(z.y)}`);
+
+      await d.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+      await d.mouse.down();
+      // Erst ein Stück, damit der Zug überhaupt anspringt (er braucht > 6 px),
+      // dann zum Ziel.
+      await d.mouse.move(a.x + a.width / 2 + 30, a.y + a.height / 2 + 10, { steps: 8 });
+      pruefe('der Zug springt an',
+        await d.evaluate(() => document.body.classList.contains('dragging')));
+      await d.mouse.move(z.x + z.width / 2, z.y + z.height / 2, { steps: 14 });
+      pruefe('der Sendeplatz meldet sich als gültiges Ziel',
+        (await d.evaluate(() => document.querySelectorAll('.drop-ok').length)) > 0);
+      await d.mouse.up();
+      await d.waitForTimeout(600);
+
+      pruefe('und die Sendung liegt danach im Plan',
+        (await belegt()) > vorher, `belegt ${vorher} → ${await belegt()}`);
+      pruefe('der Geist ist wieder weg',
+        await d.evaluate(() => !document.querySelector('.drag-ghost')
+          && !document.body.classList.contains('dragging')));
+    }
+    pruefe('Ziehen im Fenster ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await d.close();
+  }
+
   /* ── Hoch- und Querformat ──
      Der begehbare Raum ordnet sich nach der Form des Fensters: quer wandern
      Konsole und Knopfleiste neben das Bild, hochkant darunter. Beide Male gilt

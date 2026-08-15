@@ -431,7 +431,17 @@ function kofferfach(g: ReturnType<typeof G>, c: Contract | undefined): string {
     `<span class="ok">${moneyShort(c.perSpot)}/Spot</span></div></div>`;
 }
 
-function werbe(): string {
+/**
+ * Koffer und Kundenkartei — der Arbeitsplatz der Werbeagentur.
+ *
+ * Die beiden stehen bewusst in *einer* Funktion und gehören später in *ein*
+ * Fenster. Zwischen ihnen läuft eine Ziehgeste: Eine Karte aus der Kartei
+ * wandert in ein Kofferfach. Auf zwei Fenster verteilt wäre das nicht mehr
+ * bedienbar — man kann nicht aus einem geschlossenen Fenster in ein offenes
+ * ziehen. Dass Ziehen innerhalb eines Fensters überhaupt geht, hält eine
+ * eigene Prüfung in `tests/browser/ui.mjs` fest.
+ */
+export function werbeArbeitsplatz(): string {
   const g = G();
   const p = g.player;
   const voll = p.contracts.length >= MAX_CONTRACTS;
@@ -442,12 +452,9 @@ function werbe(): string {
   let est = 0;
   for (let i = 4; i <= 7; i++) est = Math.max(est, estimateBlock(g, g.day, i, beste).total);
 
-  let h = '<div class="room">' + head('flr-werbe', 'Werbeagentur',
-    'Kundenkartei — Karte in den Koffer ziehen, dann steht der Vertrag');
-
   // Der Koffer liegt oben und bleibt sichtbar: Man muss beim Blättern wissen,
   // wie viel Platz noch da ist.
-  h += `<div class="koffer${voll ? ' voll' : ''}">` +
+  let h = `<div class="koffer${voll ? ' voll' : ''}">` +
     `<div class="koffer-kopf">Dein Koffer <span>${p.contracts.length}/${MAX_CONTRACTS} Verträge` +
     (voll ? ' · voll' : '') + '</span></div><div class="faecher">' +
     Array.from({ length: MAX_CONTRACTS }, (_, i) => kofferfach(g, p.contracts[i])).join('') +
@@ -466,8 +473,15 @@ function werbe(): string {
 
   h += '<div class="hint">Ein Spot zählt nur, wenn der Sendeblock die Mindestquote wirklich erreicht. ' +
     'Verfällt der Vertrag, wird die volle Strafe fällig. Rot hinterlegte Karten fordern mehr, ' +
-    'als deine Primetime derzeit hergibt.</div></div>';
+    'als deine Primetime derzeit hergibt.</div>';
   return h;
+}
+
+function werbe(): string {
+  return '<div class="room">'
+    + head('flr-werbe', 'Werbeagentur',
+      'Kundenkartei — Karte in den Koffer ziehen, dann steht der Vertrag')
+    + werbeArbeitsplatz() + '</div>';
 }
 
 /* ─────────── Nachrichtenstudio ─────────── */
