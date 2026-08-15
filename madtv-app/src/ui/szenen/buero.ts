@@ -40,12 +40,12 @@ function defs(): string {
     '<stop offset=".78" stop-color="#c4653f"/><stop offset="1" stop-color="#f0a24d"/></linearGradient>' +
     '<linearGradient id="bTisch" x1="0" y1="0" x2="0" y2="1">' +
     '<stop offset="0" stop-color="#7a5636"/><stop offset="1" stop-color="#4a3220"/></linearGradient>' +
-    '<linearGradient id="bLicht" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0" stop-color="rgba(255,224,160,.13)"/>' +
-    '<stop offset="1" stop-color="rgba(255,224,160,0)"/></linearGradient>' +
     '<radialGradient id="bPfuetze">' +
     '<stop offset="0" stop-color="rgba(255,226,166,.30)"/>' +
     '<stop offset="1" stop-color="rgba(255,226,166,0)"/></radialGradient>' +
+    '<radialGradient id="bSchein">' +
+    '<stop offset="0" stop-color="rgba(255,232,180,.22)"/>' +
+    '<stop offset="1" stop-color="rgba(255,232,180,0)"/></radialGradient>' +
     '<linearGradient id="bRegal" x1="0" y1="0" x2="0" y2="1">' +
     '<stop offset="0" stop-color="rgba(255,214,150,.20)"/>' +
     '<stop offset="1" stop-color="rgba(255,214,150,0)"/></linearGradient>' +
@@ -239,15 +239,17 @@ function lampe(): string {
 }
 
 /**
- * Das Licht der Lampe: ein schmaler Kegel in der Luft und eine warme Pfütze auf
- * der Platte. Beides wird vor den Gegenständen gezeichnet — läge der Kegel über
- * dem Laptop, sähe er aus wie ein graues Brett und nicht wie Licht.
+ * Das Licht der Lampe.
+ *
+ * Der naheliegende Weg wäre ein Kegel von der Leuchte zur Platte — nur sieht
+ * der in einer flach angelegten Szene aus wie ein graues Brett, das quer über
+ * dem Laptop lehnt. Was funktioniert, ist die Wirkung statt des Strahls: eine
+ * warme Pfütze auf der Platte und ein Schein um die Leuchte.
  */
 function licht(): string {
   const x = 900;
-  return `<ellipse cx="${x}" cy="${PLATTE + 4}" rx="330" ry="46" fill="url(#bPfuetze)"/>` +
-    `<path d="M${x - 74} ${PLATTE - 151} L${x - 210} ${PLATTE + 16} L${x + 210} ${PLATTE + 16} ` +
-    `L${x + 74} ${PLATTE - 151} Z" fill="url(#bLicht)"/>`;
+  return `<ellipse cx="${x}" cy="${PLATTE + 4}" rx="330" ry="48" fill="url(#bPfuetze)"/>` +
+    `<ellipse cx="${x}" cy="${PLATTE - 152}" rx="150" ry="52" fill="url(#bSchein)"/>`;
 }
 
 /** Notizblock mit Stift. */

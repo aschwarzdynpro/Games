@@ -61,6 +61,9 @@ Sendeplan, Koffer für die Verträge, Regalwand für die Marktlage, Tür zurück
 den Flur. Das Panel öffnet sich als Fenster darüber. Die Klickpunkte liegen in
 einem festen Raster, damit sich der gezeichnete Hintergrund später gegen ein
 fertiges Bild tauschen lässt, ohne dass sich an der Bedienung etwas ändert.
+Solange man im Raum steht, weicht die Flurszene darüber; unter dem Bild steht
+stattdessen eine Sendekonsole mit Marktanteil, Konto, Uhr, einem
+Vorschaumonitor und der Zuschauercouch.
 
 Und die Figuren reden mit: Betty schaut zur besten Zeit selbst zu und nimmt
 Reißerisches übel, Herr Raffer wird bei fallender Quote persönlich, und die

@@ -1607,12 +1607,82 @@ body.dragging .tresen-kante{pointer-events:auto;}
 
 /* Die Szene füllt die Ansicht, die Leiste darunter zählt dieselben Punkte als
    Knöpfe auf. Beides zusammen ist der Raum; das Fenster legt sich darüber. */
-.raum-szene{position:relative;}
+/* Im begehbaren Raum ist das Bild der Inhalt — die Spalte für Fließtext wäre
+   dafür zu schmal. */
+body.im-raum .wrap{max-width:1420px;padding-bottom:74px;}
+
+/* Ohne Flur darüber hat der Raum die Höhe, die er braucht. Der Deckel liegt
+   trotzdem fest: Darunter müssen Konsole und Leiste noch hinpassen. */
+.raum-szene{position:static;}
 .szene{
   position:relative;border:1px solid var(--line2);border-radius:12px;overflow:hidden;
   background:#0d1219;box-shadow:0 8px 26px rgba(0,0,0,.42);
 }
-.szene-svg{display:block;width:100%;height:auto;max-height:62vh;}
+.szene-svg{display:block;width:100%;height:auto;max-height:min(74vh,720px);}
+
+/* ─────────── Sendekonsole ─────────── */
+
+/* Ein Instrumentenbrett, kein Formular: eingelassene Anzeigen in einer
+   Metallschiene, so wie das Gerät, das im Spiel darüber gemeint ist. */
+.konsole{
+  display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-top:10px;
+  padding:9px 10px;border-radius:11px;
+  background:linear-gradient(180deg,#2a3341,#1b222d);
+  border:1px solid var(--line2);
+  box-shadow:inset 0 1px rgba(255,255,255,.07),0 5px 16px rgba(0,0,0,.35);
+}
+.ko-feld{
+  display:flex;align-items:center;gap:9px;flex:1 1 168px;min-width:0;
+  padding:7px 11px;border-radius:8px;
+  background:#0e131b;border:1px solid #10151d;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.55);
+}
+.ko-ico{color:var(--dim);display:flex;flex-shrink:0;}
+.ko-ico .ic{width:1.5em;height:1.5em;}
+.ko-ico.gold{color:var(--gold);}
+.ko-feld.couch .ko-ico{color:#7fa88c;}
+.ko-werte{min-width:0;}
+.ko-k{
+  font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ko-v{
+  font-size:17px;font-weight:800;line-height:1.15;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+
+/* Der Vorschaumonitor */
+.ko-tv{
+  flex:2 1 240px;min-width:0;display:flex;flex-direction:column;gap:4px;
+  padding:7px 9px;border-radius:8px;
+  background:#0e131b;border:1px solid #10151d;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.55);
+}
+.ko-tv-schirm{
+  border-radius:5px;padding:5px 8px;min-width:0;
+  background:linear-gradient(180deg,#121b26,#0a0f16);
+  border:1px solid #223046;
+}
+.ko-tv.laeuft .ko-tv-schirm{border-color:#2f4b6b;background:linear-gradient(180deg,#14202e,#0b1119);}
+.ko-tv-genre{
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--dim2);display:flex;align-items:center;gap:4px;
+}
+.ko-tv-genre .ic{width:1.05em;height:1.05em;}
+.ko-tv-titel{
+  font-size:13px;font-weight:700;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ko-tv-fuss{
+  display:flex;align-items:center;gap:6px;
+  font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim2);
+}
+.ko-lampe{
+  width:7px;height:7px;border-radius:50%;background:var(--line2);flex-shrink:0;
+}
+.ko-tv.laeuft .ko-lampe{
+  background:var(--bad);animation:onairBlink 1.6s ease-in-out infinite;
+}
 
 /* Klickpunkt: unsichtbar, bis man ihn sucht. Ein Raum, in dem alles umrandet
    ist, sieht aus wie ein Formular — einer ohne jeden Hinweis wie ein Rätsel. */
@@ -1657,16 +1727,20 @@ body.dragging .tresen-kante{pointer-events:auto;}
 
 /* Das Fenster über der Szene. Der Raum bleibt sichtbar — man soll nie
    vergessen, wo man gerade steht. */
-.fenster-grund{position:absolute;inset:0;background:rgba(6,9,13,.55);border-radius:12px;}
+/* Das Fenster füllt die ganze Inhaltsfläche zwischen Kopfzeile und
+   Etagenleiste. Bezugspunkt ist #main — damit braucht es keine gemessenen
+   Balkenhöhen, und Uhr und Kennzahlen oben bleiben sichtbar. */
+.fenster-grund{position:absolute;inset:0;background:rgba(6,9,13,.62);}
 .fenster{
-  position:absolute;left:50%;top:14px;transform:translateX(-50%);
-  width:min(1000px,96%);max-height:calc(62vh - 28px);
-  display:flex;flex-direction:column;
+  position:absolute;inset:8px;
+  display:flex;flex-direction:column;min-height:0;
   background:var(--panel);border:1px solid var(--line2);border-radius:12px;
   box-shadow:0 22px 60px rgba(0,0,0,.62);
   animation:fensterAuf .16s ease;
 }
-@keyframes fensterAuf{from{opacity:0;transform:translateX(-50%) translateY(-10px);}}
+@keyframes fensterAuf{from{opacity:0;transform:translateY(-10px);}}
+/* Solange ein Fenster offen ist, scrollt der Raum dahinter nicht mit. */
+body.fenster-offen #main{overflow:hidden;}
 .fenster-kopf{
   display:flex;align-items:center;gap:9px;flex-shrink:0;
   padding:10px 12px;border-bottom:1px solid var(--line);
@@ -1679,17 +1753,24 @@ body.dragging .tresen-kante{pointer-events:auto;}
   display:flex;align-items:center;justify-content:center;
 }
 .fenster-zu:hover{border-color:var(--bad);color:var(--bad);}
-.fenster-inhalt{overflow:auto;padding:12px;}
+/* min-height:0 ist hier das Entscheidende: Ohne das weigert sich ein
+   Flex-Kind, unter seine Inhaltshöhe zu schrumpfen, und overflow:auto greift
+   nie — das Fenster wuchs, statt zu scrollen. */
+.fenster-inhalt{flex:1 1 auto;min-height:0;overflow:auto;padding:12px;}
 .fenster-inhalt>.card:last-child{margin-bottom:0;}
+/* Im großen Fenster scrollt nur das Fenster. Zwei Bildlaufleisten übereinander
+   — eine für die Tafel, eine fürs Fenster — sind eine Falle: Man scrollt die
+   falsche und hält die Ablage darunter für nicht vorhanden. */
+.fenster .board-grid{max-height:none;overflow-y:visible;}
 
 /* Schmal: Die Szene wird flacher, das Fenster nimmt die ganze Fläche. */
 @media (max-width:700px){
-  .szene-svg{max-height:34vh;}
-  .fenster{
-    left:0;right:0;top:0;transform:none;width:100%;
-    max-height:none;height:100%;border-radius:12px;
-  }
-  @keyframes fensterAuf{from{opacity:0;transform:translateY(12px);}}
+  .szene-svg{max-height:40vh;}
+  .fenster{inset:4px;}
   .szene-knopf span{display:none;}
   .szene-knopf{padding:9px 12px;}
+  .konsole{gap:6px;padding:7px;}
+  .ko-feld{flex:1 1 132px;padding:6px 8px;gap:7px;}
+  .ko-v{font-size:15px;}
+  .ko-tv{flex:1 1 100%;order:-1;}
 }

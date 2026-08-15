@@ -40,7 +40,8 @@ src/
   ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
     szene.ts      Räume als begehbares Bild mit Klickpunkten
     szenen/       je Raum: Zeichnung und Karte der Klickpunkte
-  assets/icons/   97 Symbole, je eine SVG-Datei
+    konsole.ts    Marktanteil, Konto, Uhr, Vorschaumonitor, Zuschauercouch
+  assets/icons/   98 Symbole, je eine SVG-Datei
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figuren, Balancing
@@ -83,14 +84,14 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 89 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 99 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
 | Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
-| Symbole | Emoji aus der Schriftart | 97 gezeichnete Vektorsymbole aus dem eigenen Satz |
+| Symbole | Emoji aus der Schriftart | 98 gezeichnete Vektorsymbole aus dem eigenen Satz |
 | Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
 | Figuren | je vier feste Sätze nach einer Zahl | Sätze mit Bedingung und Rang, abhängig vom Spielverlauf |
 
@@ -148,6 +149,36 @@ Konjunktur, Quotenverlauf und Sendeprotokoll hingen nur am durchgehenden Panel.
 Sobald das Büro eine Szene war, hätte sie niemand mehr erreicht — sie sind jetzt
 das, was in der Regalwand steht. Ein Gegenstand im Bild ohne Funktion wäre eine
 Lüge; eine Funktion ohne Gegenstand ist ein Verlust.
+
+**Der Flur weicht dem Raum.** Solange man drinsteht, verschwindet die
+Flurszene über den Panels — man steht ja im Zimmer und nicht davor. Das Bild
+bekommt damit die Höhe, die es braucht, und die Etagenleiste unten bleibt der
+Weg hinaus.
+
+**Darunter steht die Sendekonsole**: Marktanteil, Konto, Uhr, ein
+Vorschaumonitor mit dem, was gerade über den Sender geht, und die Couch mit den
+Zuschauern davor. Fünf Anzeigen, dort wo man ohnehin hinsieht. Das Gerüst
+entsteht beim Zeichnen der Ansicht, die Zahlen schreibt `updateKonsole()` im
+Minutentakt hinein — hinge sie am Neuzeichnen der Panels, ginge die Uhr bis zu
+zwölf Spielminuten nach.
+
+**Das Fenster füllt die Inhaltsfläche.** Bezugspunkt ist `#main`, also der
+Bereich zwischen Kopfzeile und Etagenleiste; damit braucht es keine gemessenen
+Balkenhöhen, und Uhr und Kennzahlen oben bleiben sichtbar. Gemessen: 99 % der
+Breite, 98 % der Höhe.
+
+Dass es vorher nicht scrollte, lag an einer einzigen fehlenden Zeile:
+`min-height:0`. Ohne die weigert sich ein Flex-Kind, unter seine Inhaltshöhe zu
+schrumpfen — `overflow:auto` greift dann nie, und das Fenster wächst, statt zu
+scrollen. Die Steckwand hat im Fenster ihre eigene Bildlaufleiste abgegeben:
+Zwei übereinander sind eine Falle, man scrollt die falsche und hält die Ablage
+darunter für nicht vorhanden.
+
+Zwei Anläufe brauchte das Licht der Schreibtischlampe. Der naheliegende Weg ist
+ein Kegel von der Leuchte zur Platte — der sieht in einer flach angelegten Szene
+aber aus wie ein graues Brett, das quer über dem Laptop lehnt. Was funktioniert,
+ist die Wirkung statt des Strahls: eine warme Pfütze auf der Platte und ein
+Schein um die Leuchte.
 
 Die übrigen zwölf Räume zeigen weiterhin ihr Panel. Ein Raum wandert um, sobald
 er eine Szene hat — zwischen zwei Ständen ist nie etwas kaputt.

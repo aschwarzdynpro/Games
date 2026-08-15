@@ -399,15 +399,59 @@ async function main() {
     pruefe('geschlossen ist geschlossen',
       !(await r.evaluate(() => !!document.querySelector('.fenster'))));
 
+    // Im Raum ist der Flur überflüssig — man steht ja drin.
+    pruefe('der Flur weicht dem Raum',
+      !(await r.evaluate(() => document.getElementById('world').offsetParent !== null)));
+
+    // Die Konsole unter dem Bild: fünf Anzeigen, gefüllt
+    const ko = await r.evaluate(() => ({
+      da: !!document.querySelector('.konsole'),
+      uhr: document.getElementById('k-uhr')?.textContent ?? '',
+      quote: document.getElementById('k-quote')?.textContent ?? '',
+      geld: document.getElementById('k-geld')?.textContent ?? '',
+      tv: document.getElementById('k-tv-titel')?.textContent ?? '',
+      couch: document.getElementById('k-couch')?.textContent ?? '',
+    }));
+    pruefe('die Sendekonsole steht unter dem Raum', ko.da);
+    pruefe('ihre Uhr geht', /^\d\d:\d\d$/.test(ko.uhr), ko.uhr);
+    pruefe('Marktanteil und Konto stehen darin',
+      /%$/.test(ko.quote) && ko.geld.length > 1, `${ko.quote} · ${ko.geld}`);
+    pruefe('der Vorschaumonitor sagt, was läuft', ko.tv.length > 3, ko.tv);
+    pruefe('die Couch ist beschriftet', ko.couch.length > 0, ko.couch);
+
     // Der Sendeplan im Fenster ist derselbe wie vorher — samt Steckwand
     await r.click('[data-f="sendeplan"].hs');
-    await r.waitForTimeout(300);
-    const tafel = await r.evaluate(() => ({
-      werbung: document.querySelectorAll('.fenster .pocket.ad').length,
-      gegen: document.querySelectorAll('.fenster .gegen').length,
-    }));
+    await r.waitForTimeout(350);
+    const tafel = await r.evaluate(() => {
+      const f = document.querySelector('.fenster');
+      const i = document.querySelector('.fenster-inhalt');
+      const m = document.getElementById('main').getBoundingClientRect();
+      const fr = f.getBoundingClientRect();
+      return {
+        werbung: document.querySelectorAll('.fenster .pocket.ad').length,
+        gegen: document.querySelectorAll('.fenster .gegen').length,
+        breitAnteil: fr.width / m.width,
+        hochAnteil: fr.height / m.height,
+        scrollWeg: i.scrollHeight - i.clientHeight,
+        tafelEigenerLauf: (() => {
+          const g = document.querySelector('.fenster .board-grid');
+          return g.scrollHeight > g.clientHeight + 2;
+        })(),
+      };
+    });
     pruefe('die Steckwand im Fenster ist vollständig',
-      tafel.werbung === 7 && tafel.gegen === 14, JSON.stringify(tafel));
+      tafel.werbung === 7 && tafel.gegen === 14,
+      `${tafel.werbung} Werbeplätze, ${tafel.gegen} Gegenüber-Zeilen`);
+    pruefe('das Fenster füllt die Inhaltsfläche',
+      tafel.breitAnteil > 0.9 && tafel.hochAnteil > 0.9,
+      `${Math.round(tafel.breitAnteil * 100)}×${Math.round(tafel.hochAnteil * 100)} %`);
+    pruefe('und es lässt sich scrollen', tafel.scrollWeg > 40, `${tafel.scrollWeg} px Weg`);
+    pruefe('nur eine Bildlaufleiste, nicht zwei', !tafel.tafelEigenerLauf);
+
+    await r.evaluate(() => { document.querySelector('.fenster-inhalt').scrollTop = 99999; });
+    await r.waitForTimeout(200);
+    pruefe('das Scrollen kommt auch an',
+      (await r.evaluate(() => document.querySelector('.fenster-inhalt').scrollTop)) > 40);
     await r.click('.fenster-zu');
     await r.waitForTimeout(200);
 

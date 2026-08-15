@@ -17,6 +17,8 @@ import { bindBoard } from './board';
 import { scrollMerken, scrollZurueck } from './rail';
 import { renderSzene, renderSzeneLeiste } from './szene';
 import { SZENEN, fensterInhalt } from './szenen';
+import { renderKonsole, updateKonsole } from './konsole';
+import { setWorldVisible } from '../world/world';
 import { goFloor, leaveRoom, setSpeed, togglePause } from './loop';
 import { openMenu } from './screens';
 
@@ -114,6 +116,9 @@ function updateTop(): void {
     const v = Number(b.dataset.sp);
     b.classList.toggle('on', v === 0 ? s.paused : !s.paused && s.speed === v);
   });
+
+  // Die Konsole unter einem begehbaren Raum hängt am selben Takt.
+  updateKonsole();
 }
 
 /** Nach dem Laden eines Spielstands muss die Kopfzeile neu entstehen. */
@@ -184,6 +189,13 @@ export function renderView(): void {
   // Wo der Spieler in den Regalwänden gerade steht, überlebt das Neuschreiben.
   const gescrollt = scrollMerken(view);
 
+  // Ein begehbarer Raum braucht die Höhe: Der Flur darüber verschwindet, solange
+  // man drin ist — man steht ja im Zimmer und nicht davor.
+  const imRaum = !!s.room && !!SZENEN[s.room] && s.elevBusy === 0;
+  setWorldVisible(S().g.opt.world && !imRaum);
+  document.body.classList.toggle('im-raum', imRaum);
+  document.body.classList.toggle('fenster-offen', imRaum && !!s.fenster);
+
   if (s.elevBusy > 0) view.innerHTML = viewElevator();
   else if (!s.room) view.innerHTML = viewTower();
   else if (SZENEN[s.room]) view.innerHTML = viewRaumszene(s.room);
@@ -225,7 +237,7 @@ function bindView(): void {
 function viewRaumszene(room: RoomId): string {
   const s = S();
   const sz = SZENEN[room]!;
-  let h = `<div class="raum-szene">${renderSzene(sz)}${renderSzeneLeiste(sz)}`;
+  let h = `<div class="raum-szene">${renderSzene(sz)}${renderKonsole()}${renderSzeneLeiste(sz)}`;
 
   if (s.fenster) {
     const inhalt = fensterInhalt(room, s.fenster);
