@@ -210,6 +210,8 @@ export function deserialize(json: string): Game {
       timePressure: s.opt?.timePressure ?? true,
       sound: s.opt?.sound ?? true,
       world: s.opt?.world ?? true,
+      // Ältere Spielstände kennen den Schalter nicht — dort bleibt er aus.
+      godMode: s.opt?.godMode ?? false,
     },
     day: s.day, weekday: s.weekday, week: s.week, time: s.time,
     rng, seed: s.seed,

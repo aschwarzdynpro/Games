@@ -342,6 +342,78 @@ async function main() {
     await s.close();
   }
 
+  /* ── Freier Aufbau: die Uhr darf einen nicht mehr festhalten ── */
+  console.log('\nFreier Aufbau');
+  {
+    const mm = [];
+    const s = await browser.newPage({ viewport: { width: 1240, height: 950 } });
+    s.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    s.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+
+    // Erst die Gegenprobe: ohne den Schalter bleibt der Fahrstuhl stehen.
+    await starte(s);
+    pruefe('Freier Aufbau ist nicht vorbelegt',
+      !(await s.evaluate(() => window.madtv.session().g.opt.godMode)));
+    pruefe('ohne ihn bleibt die Kopfzeile still',
+      !(await s.evaluate(() => document.querySelector('#t-freibau')?.offsetParent !== null)));
+    await s.keyboard.press(' ');
+    await s.waitForTimeout(250);
+    await s.keyboard.press('Escape');
+    await s.waitForTimeout(200);
+    await s.click('[data-go="4"]');
+    await s.waitForTimeout(1200);
+    pruefe('bei stehender Uhr fährt der Fahrstuhl sonst nicht',
+      (await s.evaluate(() => window.madtv.session().elevBusy)) > 0);
+    await s.close();
+
+    const t = await browser.newPage({ viewport: { width: 1240, height: 950 } });
+    t.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    t.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await t.goto(`http://localhost:${PORT}/`);
+    await t.waitForSelector('#gobtn');
+    pruefe('der Schalter steht auf dem Startbildschirm', await t.isVisible('[data-o="godMode"]'));
+    await t.click('[data-o="godMode"]');
+    await t.click('#gobtn');
+    await t.waitForTimeout(400);
+    for (let i = 0; i < 5; i++) {
+      if (await t.isVisible('#modal.on')) await t.click('#mbox .mf button:last-child');
+      await t.waitForTimeout(150);
+    }
+    pruefe('die Kopfzeile sagt, dass er an ist',
+      await t.evaluate(() => document.querySelector('#t-freibau')?.offsetParent !== null));
+
+    await t.keyboard.press(' ');
+    await t.waitForTimeout(250);
+    const vorher = await t.evaluate(() => window.madtv.session().g.time);
+    pruefe('die Uhr steht', await t.evaluate(() => window.madtv.session().paused));
+
+    await t.keyboard.press('Escape');
+    await t.waitForTimeout(200);
+    await t.click('[data-go="4"]');
+    let kam = true;
+    await t.waitForFunction(() => window.madtv.session().elevBusy === 0, { timeout: 8000 })
+      .catch(() => { kam = false; });
+    await t.waitForTimeout(300);
+    pruefe('man kommt trotzdem an', kam
+      && (await t.evaluate(() => window.madtv.session().room)) === 'film');
+    pruefe('die Uhr steht danach immer noch',
+      await t.evaluate(() => window.madtv.session().paused));
+    pruefe('die Fahrt kostet keine Sendezeit',
+      (await t.evaluate(() => window.madtv.session().g.time)) === vorher);
+
+    const lizenzen = await t.evaluate(() => {
+      const vor = window.madtv.session().g.player.licences.length;
+      document.querySelector('.boxcase:not(.owned)')?.click();
+      return vor;
+    });
+    await t.waitForTimeout(500);
+    if (await t.isVisible('#modal.on')) { await t.click('#mbox .mf button:first-child'); await t.waitForTimeout(400); }
+    pruefe('und organisieren geht bei stehender Uhr auch',
+      (await t.evaluate(() => window.madtv.session().g.player.licences.length)) > lizenzen);
+    pruefe('Freier Aufbau ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await t.close();
+  }
+
   await browser.close();
   srv.close();
 

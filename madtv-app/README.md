@@ -38,7 +38,7 @@ src/
     talk.ts       was Betty, Raffer und die Konkurrenz sagen
   world/          gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
   ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
-  assets/icons/   95 Symbole, je eine SVG-Datei
+  assets/icons/   96 Symbole, je eine SVG-Datei
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figuren, Balancing
@@ -81,14 +81,14 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 65 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 76 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
 | Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
-| Symbole | Emoji aus der Schriftart | 95 gezeichnete Vektorsymbole aus dem eigenen Satz |
+| Symbole | Emoji aus der Schriftart | 96 gezeichnete Vektorsymbole aus dem eigenen Satz |
 | Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
 | Figuren | je vier feste Sätze nach einer Zahl | Sätze mit Bedingung und Rang, abhängig vom Spielverlauf |
 
@@ -132,6 +132,24 @@ Geprüft wird das ab jetzt mit — die Kontrastmessung überspringt Flächen mit
 Farbverlauf, weil deren Grundfarbe nirgends als einzelner Wert steht und Raten
 schlechter wäre als Nichtprüfen. Der Tabulator erreicht 20 Stationen, alle
 sichtbar umrandet.
+
+## Freier Aufbau
+
+Ein zweiter Schalter neben dem Echtzeitdruck, auf dem Startbildschirm und im
+Menü. Er nimmt die Uhr als Hindernis heraus: Der Fahrstuhl zählt sonst in
+Spielminuten herunter — steht die Uhr, kommt man nie an und sitzt bis zum
+Fortsetzen im Schacht fest. Mit dem Schalter fährt er an der Bildschleife statt
+an der Spieluhr, unabhängig von Pause und Geschwindigkeit, und keine Handlung
+kostet mehr Minuten. Damit lässt sich ein Abend in Ruhe einrichten.
+
+Am Spiel selbst ändert er nichts: Quote, Verträge, Konkurrenz und Betty rechnen
+weiter nach denselben Regeln — er sitzt vollständig in der Oberflächenschicht,
+der Kern kennt ihn nicht. Deshalb bleiben auch die Balancing-Messungen davon
+unberührt.
+
+Weil ein Schalter, der die Regeln lockert, nicht still wirken darf, steht bei
+eingeschaltetem Freien Aufbau ein Hinweis in der Kopfzeile, und der Fahrstuhl
+verspricht keine Minuten mehr, die er nicht nimmt.
 
 ## Schwierigkeitskurve
 

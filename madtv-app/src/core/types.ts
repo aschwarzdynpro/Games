@@ -275,6 +275,17 @@ export interface Options {
   sound: boolean;
   /** Gezeichneter Flur über den Panels. */
   world: boolean;
+  /**
+   * Die Uhr hält einen nicht mehr auf.
+   *
+   * Normalerweise zählt der Fahrstuhl in Spielminuten herunter — steht die Uhr,
+   * kommt man nie an und sitzt bis zum Fortsetzen fest. Mit dieser Einstellung
+   * läuft die Fahrt in Echtzeit weiter und kostet keine Sendezeit, und auch
+   * alles andere, was sonst Minuten kostet, ist umsonst. Zum Ausprobieren und
+   * Einrichten gedacht, nicht zum Messen: Der Sendetag ist die Ressource, um
+   * die das Spiel eigentlich gespielt wird.
+   */
+  godMode: boolean;
 }
 
 export interface ProductionRun {

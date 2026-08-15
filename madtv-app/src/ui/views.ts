@@ -43,6 +43,8 @@ function buildTop(): void {
   el('topbar').innerHTML =
     '<div class="brand">MAD<span>TV</span></div>' +
     '<div class="clock" id="t-clock" aria-label="Uhrzeit">--:--</div>' +
+    // Ein Schalter, der die Regeln lockert, darf nicht still wirken.
+    `<div class="freibau" id="t-freibau" hidden>${icon('ui-zeitfrei')} Freier Aufbau</div>` +
     '<div class="stat"><div class="k">Tag</div><div class="v" id="t-day"></div></div>' +
     '<div class="stat live" id="t-livebox"><div class="k" id="t-livek">Zuschauer</div>' +
     '<div class="v" id="t-live">—</div></div>' +
@@ -80,6 +82,8 @@ function updateTop(): void {
   const clock = el('t-clock');
   clock.textContent = hhmm(g.time);
   clock.className = `clock ${g.time >= 24 * 60 ? 'late' : g.time >= 18 * 60 ? 'onair' : ''}`;
+
+  el('t-freibau').hidden = !g.opt.godMode;
 
   el('t-day').textContent = `${g.day} · ${WEEKDAYS[g.weekday]!.slice(0, 2)}`;
   el('t-money').textContent = moneyShort(p.money);
@@ -212,15 +216,22 @@ function bindView(): void {
 
 function viewElevator(): string {
   const s = S();
+  const g = G();
   const t = s.elevTarget !== null ? FLOORS[s.elevTarget] : null;
   const done = Math.max(4, Math.min(100, (1 - s.elevBusy / (s.elevTotal || 8)) * 100));
+  // Im Freien Aufbau zählt die Fahrt nicht in Spielminuten herunter — dann
+  // stünde dort eine Einheit, die es gerade nicht gibt.
+  const frei = g.opt.godMode;
   return '<div class="room" style="text-align:center;padding:60px 0">' +
     `<div class="bigico">${icon('ui-fahrstuhl')}</div>` +
     '<h2 style="margin:10px 0 4px">Der Fahrstuhl fährt…</h2>' +
-    `<p class="dim" style="font-size:12.5px">Ziel: ${t ? esc(t.name) : '—'} · noch ${s.elevBusy} Minuten</p>` +
+    `<p class="dim" style="font-size:12.5px">Ziel: ${t ? esc(t.name) : '—'}` +
+    `${frei ? '' : ` · noch ${s.elevBusy} Minuten`}</p>` +
     `<div class="bar" style="max-width:240px;margin:16px auto;height:7px"><i style="width:${done}%"></i></div>` +
-    '<p class="hint" style="max-width:380px;margin:0 auto">Zeit ist im Sendehochhaus die knappste Ressource. ' +
-    'Wer unnötig Etagen wechselt, verpasst den Werbeblock.</p></div>';
+    `<p class="hint" style="max-width:380px;margin:0 auto">${frei
+      ? 'Freier Aufbau: Die Fahrt kostet keine Sendezeit und läuft auch bei angehaltener Uhr weiter.'
+      : 'Zeit ist im Sendehochhaus die knappste Ressource. '
+        + 'Wer unnötig Etagen wechselt, verpasst den Werbeblock.'}</p></div>`;
 }
 
 function viewTower(): string {

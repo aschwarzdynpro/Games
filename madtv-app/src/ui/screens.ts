@@ -24,7 +24,7 @@ export function wireScreens(fns: { gameStarted: () => void }): void {
 }
 
 let startDiff: DifficultyId = 'normal';
-let startOpt: Options = { timePressure: true, sound: true, world: true, ...loadOptions() };
+let startOpt: Options = { timePressure: true, sound: true, world: true, godMode: false, ...loadOptions() };
 
 /* ─────────── Startbildschirm ─────────── */
 
@@ -52,6 +52,8 @@ export function showStart(): void {
     `${icon(startOpt.sound ? 'ui-ton' : 'ui-tonaus')} Ton<small>${startOpt.sound ? 'an' : 'aus'}</small></button>` +
     `<button class="opt ${startOpt.world ? 'on' : ''}" data-o="world" aria-pressed="${startOpt.world}">` +
     `${icon('ui-hochhaus')} Flurgrafik<small>${startOpt.world ? 'an' : 'aus'}</small></button>` +
+    `<button class="opt ${startOpt.godMode ? 'on' : ''}" data-o="godMode" aria-pressed="${startOpt.godMode}">` +
+    `${icon('ui-zeitfrei')} Freier Aufbau<small>${startOpt.godMode ? 'Uhr hält dich nie auf' : 'Zeit kostet, wie sie soll'}</small></button>` +
     '</div>' +
     '<button class="go" id="gobtn">Sendebetrieb aufnehmen</button>' +
     (anySave() ? `<div style="margin-top:12px"><button class="opt" id="loadbtn">${icon('ui-diskette')} Spielstand laden</button></div>` : '') +
@@ -228,6 +230,9 @@ function optionsMenu(): void {
       row('sound', 'Ton', 'Kurze Signale bei Sendestart, Werbeerlös und Quotenalarm.') +
       row('world', 'Flurgrafik',
         'Der gezeichnete Flur über den Panels — Fahrstuhl, Türschild und laufende Figur.') +
+      row('godMode', 'Freier Aufbau',
+        'Der Fahrstuhl fährt auch bei angehaltener Uhr, und nichts kostet mehr Sendezeit. '
+        + 'Zum Ausprobieren und Einrichten — die Quote zählt weiter.') +
       `<div class="buildinfo">${esc(buildInfo())}</div>`,
     buttons: [{ t: 'Fertig', cls: 'btn', fn: () => { saveOptions(g.opt); togglePause(false); } }],
     onShow: (box) => {
@@ -265,6 +270,9 @@ function showRules(): void {
     `<b>Gefahr:</b> Drei Tage unter ${g.D.fireImage}% Marktanteil und Herr Raffer wirft dich raus. ` +
     'Filme ab 18 vor 22 Uhr rufen den Gerichtsvollzieher.<br><br>' +
     '<b>Zeit:</b> Bei aktivem Echtzeitdruck läuft die Uhr auch während der Programmauswahl weiter, und jede ' +
-    'Fahrstuhlfahrt kostet Sendetag. Im Menü unter Einstellungen lässt sich das abschalten.',
+    'Fahrstuhlfahrt kostet Sendetag. Im Menü unter Einstellungen lässt sich das abschalten.<br><br>' +
+    '<b>Freier Aufbau:</b> Hält die Uhr einen ganz aus dem Weg — der Fahrstuhl fährt auch angehalten, und ' +
+    'keine Handlung kostet noch Minuten. Damit lässt sich ein Abend in Ruhe einrichten. Gesendet wird trotzdem ' +
+    'nach denselben Regeln: Quote, Verträge und Betty merken nichts davon.',
     [{ t: 'Alles klar', cls: 'btn', fn: () => togglePause(false) }]);
 }

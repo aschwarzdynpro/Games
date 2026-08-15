@@ -361,7 +361,7 @@ export function newGame(o: NewGameOpts = {}): Game {
 
   const g: Game = {
     diff, D,
-    opt: { timePressure: true, sound: true, world: true, ...(o.opt ?? {}) },
+    opt: { timePressure: true, sound: true, world: true, godMode: false, ...(o.opt ?? {}) },
     day: 1, weekday: 0, week: 1, time: DAY_START,
     rng, seed,
     catalog, market: [], adMarket: [],

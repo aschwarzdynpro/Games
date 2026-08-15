@@ -101,5 +101,9 @@ Enter bedienbar.
 **Echtzeitdruck** lässt sich im Menü abschalten: dann halten Auswahldialoge die Uhr an
 und der Fahrstuhl kostet kaum Sendetag.
 
+**Freier Aufbau** geht einen Schritt weiter und nimmt die Uhr ganz aus dem Weg: Der
+Fahrstuhl fährt auch bei angehaltener Uhr, und keine Handlung kostet mehr Minuten — zum
+Einrichten und Ausprobieren. Gesendet wird trotzdem nach denselben Regeln.
+
 Alle Filmtitel, Marken und Personen sind frei erfunden — es handelt sich um eine
 eigenständige Nachbildung der Spielmechanik, nicht um eine Portierung.

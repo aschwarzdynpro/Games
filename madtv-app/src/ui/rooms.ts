@@ -863,7 +863,10 @@ function betty(): string {
     `<div class="me-fuss">Ihre Zuneigung überflügelt dein Image nie — derzeit gedeckelt bei ` +
     `<b>${deckel}</b>. Kultursendungen und Geschenke helfen, Reißerisches zur besten Zeit schadet.</div>` +
     '<div class="btnrow" style="margin-top:10px">' +
-    '<button class="btn love" data-act="visit">Auf einen Kaffee bleiben (15 Min)</button></div></div>';
+    // Im Freien Aufbau kostet der Besuch nichts — dann darf da auch kein
+    // Preis stehen.
+    `<button class="btn love" data-act="visit">Auf einen Kaffee bleiben${
+      g.opt.godMode ? '' : ' (15 Min)'}</button></div></div>`;
 
   // Die Tasche mit den mitgebrachten Stücken, ziehbar auf den Schreibtisch
   h += `<div class="mitbringsel" ${RAILBOX}><div class="mi-kopf">Mitgebracht` +

@@ -76,6 +76,17 @@ input,select{font:inherit;color:inherit;}
 .clock.late{color:var(--warn);border-color:#4a3d1c;}
 .clock.onair{color:var(--bad);}
 
+/* Der Freie Aufbau lockert die Regeln — das gehört sichtbar in die Kopfzeile,
+   damit niemand eine so entstandene Partie für eine normale hält. */
+.freibau{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--warn);background:#2a2210;border:1px solid #4a3d1c;
+  border-radius:7px;padding:3px 8px;white-space:nowrap;
+}
+.freibau[hidden]{display:none;}
+.freibau .ic{width:1.2em;height:1.2em;}
+
 /* ─────────── Weltschicht ─────────── */
 #world{
   flex-shrink:0;

@@ -80,6 +80,8 @@ export function togglePause(force?: boolean): void {
 }
 
 export function addTime(minutes: number): void {
+  // Im Freien Aufbau ist Zeit keine Ressource — dann kostet nichts Minuten.
+  if (G().opt.godMode) return;
   G().time += minutes;
 }
 
@@ -97,12 +99,53 @@ export function goFloor(f: number): void {
   }
   const dist = Math.abs(f - s.floor);
   // Bei aktivem Zeitdruck kostet jede Fahrt spürbar Sendetag — ohne ihn bleibt
-  // es beim symbolischen Aufenthalt im Fahrstuhl.
-  s.elevBusy = g.opt.timePressure ? dist * 3 + 3 : dist + 2;
+  // es beim symbolischen Aufenthalt im Fahrstuhl. Im Freien Aufbau zählt die
+  // Fahrt nicht in Spielminuten, sondern in Echtzeit herunter (siehe
+  // `fahrstuhlEchtzeit`); die Länge ist dann nur noch die der Animation.
+  s.elevBusy = g.opt.godMode ? dist + 2 : g.opt.timePressure ? dist * 3 + 3 : dist + 2;
   s.elevTotal = s.elevBusy;
   s.elevTarget = f;
   s.room = null;
+  elevMs = 0;
   beginTravel(s.floor, f, s.elevTotal);
+  markDirty();
+}
+
+/**
+ * Ankommen, ohne dass die Uhr läuft.
+ *
+ * Der Fahrstuhl zählt sonst in `stepMinute` herunter — steht die Uhr, kommt man
+ * nie an und sitzt bis zum Fortsetzen im Schacht fest. Genau das nimmt der
+ * Freie Aufbau weg: Die Fahrt läuft an der Bildschleife statt an der Spieluhr,
+ * unabhängig von Pause und Geschwindigkeit.
+ */
+const ELEV_MS = 80;
+let elevMs = 0;
+
+function fahrstuhlEchtzeit(dt: number): boolean {
+  const s = S();
+  if (s.elevBusy <= 0) return false;
+  elevMs += dt;
+  while (elevMs >= ELEV_MS && s.elevBusy > 0) {
+    elevMs -= ELEV_MS;
+    s.elevBusy--;
+    // Die Figur im Flur bewegt die Weltschicht Bild für Bild; das Panel
+    // darunter zeigt nur einen Balken und braucht nicht jeden Schritt einen
+    // neuen Aufbau aus HTML.
+    if (s.elevBusy % 3 === 0) { needView = true; markDirty(); }
+  }
+  if (s.elevBusy === 0 && s.elevTarget !== null) angekommen();
+  return true;
+}
+
+/** Der letzte Schritt jeder Fahrt — aus dem Schacht in den Raum. */
+function angekommen(): void {
+  const s = S();
+  if (s.elevTarget === null) return;
+  s.floor = s.elevTarget;
+  s.room = FLOORS[s.floor]!.id;
+  s.elevTarget = null;
+  clearTravel();
   markDirty();
 }
 
@@ -146,15 +189,10 @@ function stepMinute(): boolean {
   // stünde der Sendemarker bis zu zwölf Minuten auf dem falschen Platz.
   if (currentSlot(g.time) !== vorher) needView = true;
 
-  if (s.elevBusy > 0) {
+  // Im Freien Aufbau fährt der Fahrstuhl an der Bildschleife, nicht an der Uhr.
+  if (s.elevBusy > 0 && !g.opt.godMode) {
     s.elevBusy--;
-    if (s.elevBusy === 0 && s.elevTarget !== null) {
-      s.floor = s.elevTarget;
-      s.room = FLOORS[s.floor]!.id;
-      s.elevTarget = null;
-      clearTravel();
-      markDirty();
-    }
+    if (s.elevBusy === 0) angekommen();
   }
 
   // Jedes Halbstundenfeld geht zu seiner eigenen Zeit auf Sendung.
@@ -207,9 +245,14 @@ function frame(ts: number): void {
     }
   }
 
+  // Der Fahrstuhl im Freien Aufbau — er fährt auch dann, wenn oben nichts lief.
+  const eigeneFahrt = s.g.opt.godMode && !s.g.over && fahrstuhlEchtzeit(dt);
+
   // Die Weltschicht ändert nur Attribute — das darf jedes Bild passieren.
   if (isMounted()) {
-    const alpha = halted ? 0 : Math.min(0.999, accumulator / msPerMinute());
+    const alpha = eigeneFahrt
+      ? Math.min(0.999, elevMs / ELEV_MS)
+      : halted ? 0 : Math.min(0.999, accumulator / msPerMinute());
     updateWorld(alpha);
   }
 
