@@ -34,29 +34,38 @@ function ohneRaumbilder(): Plugin {
 }
 
 /**
- * Zwei Ausgabeformen aus derselben Quelle:
+ * Drei Ausgabeformen aus derselben Quelle:
  *
- *   npm run build          → dist/          (Ordner-Build, z. B. für GitHub Pages)
- *   npm run build:single   → dist-single/   (eine einzige HTML-Datei zum Verschicken)
+ *   npm run build            → dist/           Ordner-Build, z. B. für GitHub Pages
+ *   npm run build:single     → dist-single/    eine Datei zum Verschicken, ohne Raumbilder
+ *   npm run build:vollbild   → dist-vollbild/  eine Datei mit allem drin
  *
- * Der Unterschied ist seit den Raumbildern nicht mehr nur die Verpackung: Die
- * Einzeldatei lässt die Bilder weg und zeigt die betroffenen Räume als Panel.
+ * Die ersten beiden sind die Erzeugnisse; das dritte ist der Sonderfall.
+ * Manche Wege nehmen nur eine einzelne Datei an und laden zugleich nichts von
+ * außen nach — eine hochgeladene Vorschauseite etwa. Dort wäre die schlanke
+ * Einzeldatei falsch, weil sie die begehbaren Räume nicht mitbringt, und der
+ * Ordner-Build ebenso, weil er aus mehreren Dateien besteht. `vollbild` ist
+ * genau dafür da und wiegt entsprechend: rund ein Megabyte.
  */
 export default defineConfig(({ mode }) => {
-  const single = mode === 'single';
+  const einzeln = mode === 'single' || mode === 'vollbild';
+  // Nur die schlanke Einzeldatei verzichtet auf die Bilder.
+  const ohneBilder = mode === 'single';
   return {
     base: './',
-    plugins: single ? [ohneRaumbilder(), viteSingleFile()] : [],
-    // Manifest, Sinnbild und Dienstarbeiter gehören zum Ordner-Build. Die
+    plugins: einzeln
+      ? [...(ohneBilder ? [ohneRaumbilder()] : []), viteSingleFile()]
+      : [],
+    // Manifest, Sinnbild und Dienstarbeiter gehören zum Ordner-Build. Eine
     // Einzeldatei muss eine Datei bleiben, sonst verliert sie ihren Zweck.
-    publicDir: single ? false : 'public',
+    publicDir: einzeln ? false : 'public',
     define: { __APP_VERSION__: JSON.stringify(version) },
     build: {
-      outDir: single ? 'dist-single' : 'dist',
+      outDir: mode === 'single' ? 'dist-single' : mode === 'vollbild' ? 'dist-vollbild' : 'dist',
       emptyOutDir: true,
       target: 'es2022',
-      cssCodeSplit: !single,
-      assetsInlineLimit: single ? 100_000_000 : 4096,
+      cssCodeSplit: !einzeln,
+      assetsInlineLimit: einzeln ? 100_000_000 : 4096,
       reportCompressedSize: true,
     },
     test: {

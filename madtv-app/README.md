@@ -22,11 +22,12 @@ npm test               # Simulationstests
 npm run test:ui        # Prüfungen im echten Browser (braucht Playwright)
 npm run sim            # Schwierigkeitskurve, drei Startwerte
 npm run sim:breit      # dieselbe Messung mit zehn — dauert, aber sagt etwas
-npm run build          # dist/         — Ordner-Build (z. B. GitHub Pages)
-npm run build:single   # dist-single/  — eine einzige HTML-Datei
+npm run build          # dist/          — Ordner-Build (z. B. GitHub Pages)
+npm run build:single   # dist-single/   — eine Datei zum Verschicken, ohne Raumbilder
+npm run build:vollbild # dist-vollbild/ — eine Datei mit allem drin (~1 MB)
 ```
 
-**Die beiden Ausgaben sind seit den Raumbildern nicht mehr dasselbe in anderer
+**Die Ausgaben sind seit den Raumbildern nicht mehr dasselbe in anderer
 Verpackung.** Ein eingebettetes Bild wiegt als Daten-URI rund ein Drittel mehr
 als die Datei selbst; drei davon trieben die Einzeldatei von 271 auf 913 KB, und
 dreizehn hätten daraus gut zwei Megabyte gemacht — für etwas, das man per E-Mail
@@ -39,12 +40,17 @@ Raum ohne Hintergrund ist keine Szene, und wer keine Szene hat, zeigt sein Panel
 `ohneRaumbilder()` in `vite.config.ts`, zwölf Zeilen, die den Bildimport in
 diesem einen Baumodus durch eine leere Zeichenkette ersetzen.
 
-| | `dist/` | `dist-single/` |
-|---|---|---|
-| Umfang | Ordner mit Nebendateien | **eine** Datei |
-| Raumbilder | ja, als eigene Dateien | nein |
-| Büro, Chefbüro, Filmagentur | begehbare Szene | Panel |
-| Größe | 237 KB JS + 458 KB Bilder | **303 KB** |
+| | `dist/` | `dist-single/` | `dist-vollbild/` |
+|---|---|---|---|
+| Umfang | Ordner mit Nebendateien | **eine** Datei | **eine** Datei |
+| Raumbilder | ja, als eigene Dateien | nein | ja, eingebettet |
+| Büro, Chefbüro, Filmagentur | begehbare Szene | Panel | begehbare Szene |
+| Größe | 237 KB JS + 458 KB Bilder | **303 KB** | 913 KB |
+
+`vollbild` ist kein drittes Erzeugnis, sondern ein Sonderfall: Manche Wege
+nehmen nur eine einzelne Datei an und laden zugleich nichts von außen nach —
+eine hochgeladene Vorschauseite etwa. Dort wäre `single` falsch, weil die
+begehbaren Räume fehlten, und `dist/` ebenso, weil es mehrere Dateien sind.
 
 Nebenbei ist auch der Ordner-Build günstiger geworden: Die Bilder sind dort
 jetzt eigene Dateien statt Base64 im Bündel, das Skript schrumpfte von rund

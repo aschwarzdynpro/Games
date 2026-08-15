@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:single": "tsc --noEmit && vite build --mode single",
+    "build:vollbild": "tsc --noEmit && vite build --mode vollbild",
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "test": "vitest run",
