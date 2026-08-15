@@ -85,7 +85,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 108 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 110 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -127,11 +127,19 @@ Raum bleibt dahinter sichtbar.
 
 Drei Dinge sind daran wichtiger als die Zeichnung selbst:
 
-**Die Klickpunkte liegen im Zeichenraster, nicht im Bild.** Die Szenenschicht
-kennt zwei Sorten Hintergrund und behandelt sie gleich: eine gezeichnete
-Vektorszene oder ein fertiges Bild über `bild:`. Beides liegt hinter derselben
-Karte aus Punkten in 1600×900. Wer später ein gerendertes Bild einhängt,
-tauscht den Hintergrund und lässt die Karte, wie sie ist.
+**Die Klickpunkte liegen im Raster, nicht im Bild.** Die Szenenschicht kennt
+zwei Sorten Hintergrund und behandelt sie gleich: eine gezeichnete Vektorszene
+oder ein fertiges Bild über `bild:`. Beides liegt hinter derselben Karte aus
+Punkten, auf 1600 Punkte Breite normiert. Dein Büro und das Chefbüro sind
+inzwischen beide Bilder — der Tausch war jeweils eine Zeile, und an der
+Bedienung hat sich nichts geändert. Genau dafür war die Schicht gebaut.
+
+**Stehendes Bild, Konsole daneben.** Beide gelieferten Bilder sind hochformatig
+(926×1010 und 930×787). Bei stehendem Bild bindet die Höhe: Was darunter liegt,
+nimmt dem Raum direkt Größe weg, während neben ihm Breite ungenutzt bleibt. Ab
+1080 Pixeln Fensterbreite wandern Sendekonsole und Knopfleiste deshalb an die
+Seite — gemessen 713×778 statt 611 Pixel Breite fürs Büro. Ein breiter Raum
+behält sie unten, weil ihm sonst die Breite fehlte.
 
 **Es gibt beide Wege hinein.** Die Punkte sind echte fokussierbare Elemente mit
 Beschriftung, kein Trefferflächen-Raten auf einer Leinwand — mit Tabulator und

@@ -237,7 +237,13 @@ function bindView(): void {
 function viewRaumszene(room: RoomId): string {
   const s = S();
   const sz = SZENEN[room]!;
-  let h = `<div class="raum-szene">${renderSzene(sz)}${renderKonsole()}${renderSzeneLeiste(sz)}`;
+  // Ein hochformatiger Raum bekommt Konsole und Leiste daneben statt darunter.
+  // Bei stehendem Bild bindet die Höhe: Was unter dem Bild liegt, nimmt ihm
+  // direkt Größe weg — neben ihm liegt es auf sonst ungenutzter Breite.
+  const [, , vbW, vbH] = sz.viewBox.split(/\s+/).map(Number);
+  const hoch = (vbH ?? 0) / (vbW || 1) > 0.8;
+  let h = `<div class="raum-szene${hoch ? ' hoch' : ''}">${renderSzene(sz)}` +
+    `<div class="raum-seite">${renderKonsole()}${renderSzeneLeiste(sz)}</div>`;
 
   if (s.fenster) {
     const inhalt = fensterInhalt(room, s.fenster);

@@ -1614,6 +1614,31 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
 /* Ohne Flur darüber hat der Raum die Höhe, die er braucht. Der Deckel liegt
    trotzdem fest: Darunter müssen Konsole und Leiste noch hinpassen. */
 .raum-szene{position:static;}
+.raum-seite{min-width:0;}
+
+/* Ein stehendes Bild lässt Breite übrig und hat keine Höhe zu verschenken —
+   dort wandern Konsole und Leiste an die Seite. Ein breiter Raum behält sie
+   unten, weil ihm sonst die Breite fehlte. */
+@media (min-width:1080px){
+  .raum-szene.hoch{display:flex;align-items:flex-start;gap:12px;}
+  /* Der Kasten füllt den Platz, das Bild steht mittig darin. Ihn schrumpfen zu
+     lassen wäre das Naheliegende, geht aber nicht: Ein SVG als Flex-Kind mit
+     flex-basis auto fällt auf null zusammen. Stattdessen wird der Rahmen hier
+     unsichtbar — die Bilder bringen ihre eigene Kante mit. */
+  .raum-szene.hoch .szene{
+    flex:1 1 auto;min-width:0;
+    background:transparent;border-color:transparent;box-shadow:none;
+  }
+  .raum-szene.hoch .raum-seite{
+    flex:0 0 330px;display:flex;flex-direction:column;gap:8px;
+  }
+  .raum-szene.hoch .konsole{flex-direction:column;margin-top:0;}
+  .raum-szene.hoch .ko-feld,.raum-szene.hoch .ko-tv{flex:0 0 auto;}
+  .raum-szene.hoch .szene-leiste{flex-direction:column;margin-top:0;}
+  .raum-szene.hoch .szene-knopf{justify-content:flex-start;}
+  /* Unter dem Bild liegt nichts mehr, also darf es fast die ganze Höhe haben. */
+  .raum-szene.hoch .szene-svg{max-height:min(calc(100dvh - 202px),920px);}
+}
 .szene{
   position:relative;display:flex;justify-content:center;
   border:1px solid var(--line2);border-radius:12px;overflow:hidden;

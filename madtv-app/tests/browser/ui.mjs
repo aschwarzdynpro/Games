@@ -375,6 +375,24 @@ async function main() {
       ohneNamen: [...document.querySelectorAll('.hs')].filter((x) => !x.getAttribute('aria-label')).length,
     }));
     pruefe('Dein Büro ist eine Szene', sz.szene);
+    // Auch dieser Raum ist inzwischen ein Bild — dasselbe Argument wie beim
+    // Chefbüro: Ein Bild, das nicht lädt, fällt sonst nicht auf.
+    const grundBuero = await r.evaluate(() => {
+      const i = document.querySelector('.szene-grund image');
+      const rr = i?.getBoundingClientRect();
+      return i ? { art: (i.getAttribute('href') ?? '').slice(0, 11),
+        breit: Math.round(rr.width), hoch: Math.round(rr.height) } : null;
+    });
+    pruefe('sein Hintergrund ist ein aufgezogenes Bild',
+      grundBuero?.art === 'data:image/' && grundBuero.breit > 300 && grundBuero.hoch > 300,
+      JSON.stringify(grundBuero));
+    // Stehendes Bild: Konsole und Leiste gehören daneben, nicht darunter.
+    pruefe('bei stehendem Bild steht die Konsole daneben',
+      await r.evaluate(() => {
+        const sz2 = document.querySelector('.szene').getBoundingClientRect();
+        const se = document.querySelector('.raum-seite').getBoundingClientRect();
+        return se.left >= sz2.right - 2;
+      }));
     pruefe('sie hat sechs Klickpunkte', sz.punkte === 6, String(sz.punkte));
     pruefe('und dieselbe Zahl Knöpfe in der Leiste', sz.knoepfe === sz.punkte,
       `${sz.knoepfe} zu ${sz.punkte}`);
