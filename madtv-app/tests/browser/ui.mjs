@@ -886,6 +886,137 @@ async function main() {
     await w.close();
   }
 
+  /* ── Bettys Büro ──
+     Der erste Raum mit einem Menschen darin. Für die Szenenschicht ändert das
+     nichts; für den Zuschnitt schon: Die Figurenbox ist zugleich das
+     Ablageziel für Geschenke, also müssen Betty und die Tasche in ein Fenster. */
+  console.log('\nBettys Büro');
+  {
+    const mm = [];
+    const bt = await browser.newPage({ viewport: { width: 1320, height: 1600 } });
+    bt.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    bt.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(bt);
+    const etage = await bt.evaluate(() =>
+      window.madtv.core.FLOORS.findIndex((f) => f.id === 'betty'));
+    await bt.keyboard.press('Escape');
+    await bt.waitForTimeout(200);
+    await bt.click(`[data-go="${etage}"]`);
+    await angekommen(bt);
+
+    pruefe('Bettys Büro ist eine Szene',
+      await bt.evaluate(() => !!document.querySelector('.raum-svg')));
+    pruefe('mit sechs Klickpunkten',
+      (await bt.evaluate(() => document.querySelectorAll('.hs').length)) === 6);
+    const btDoppelt = await bt.evaluate(() => {
+      const r = [...document.querySelectorAll('.hs-feld')].map((e) => ({
+        n: e.parentElement.getAttribute('aria-label').split(' —')[0],
+        x: +e.getAttribute('x'), y: +e.getAttribute('y'),
+        w: +e.getAttribute('width'), h: +e.getAttribute('height'),
+      }));
+      const t = [];
+      for (let i = 0; i < r.length; i++) {
+        for (let j = i + 1; j < r.length; j++) {
+          const a = r[i]; const b = r[j];
+          if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) {
+            t.push(`${a.n}/${b.n}`);
+          }
+        }
+      }
+      return t;
+    });
+    pruefe('keine zwei Klickpunkte überlappen sich', btDoppelt.length === 0, btDoppelt.join(', '));
+
+    // Die Kaffeekanne ist kein Fenster, sondern ein Griff: Sie kostet Zeit und
+    // bringt Zuneigung, unmittelbar.
+    const vorher = await bt.evaluate(() => ({
+      zeit: window.madtv.session().g.time,
+      love: window.madtv.session().g.player.love,
+    }));
+    await bt.click('[data-act="visit"].hs');
+    await bt.waitForTimeout(600);
+    if (await bt.isVisible('#modal.on')) {
+      await bt.click('#mbox .mf button:first-child');
+      await bt.waitForTimeout(300);
+    }
+    const nachKaffee = await bt.evaluate(() => ({
+      zeit: window.madtv.session().g.time,
+      love: window.madtv.session().g.player.love,
+    }));
+    pruefe('das Kaffeegedeck kostet Sendezeit', nachKaffee.zeit > vorher.zeit,
+      `${vorher.zeit} → ${nachKaffee.zeit}`);
+    pruefe('und bringt Zuneigung', nachKaffee.love > vorher.love,
+      `${vorher.love} → ${nachKaffee.love}`);
+    pruefe('es öffnet dafür kein Fenster',
+      await bt.evaluate(() => !document.querySelector('.fenster')));
+
+    for (const [welches, erwartet] of [
+      ['betty', 'Betty Botterbloom'],
+      ['zuneigung', 'Wie es um euch steht'],
+      ['konkurrenz', 'Was die Konkurrenz treibt'],
+    ]) {
+      await bt.click(`[data-f="${welches}"].hs`);
+      await bt.waitForTimeout(350);
+      const w = await bt.evaluate(() => ({
+        titel: document.querySelector('.fenster-kopf h2')?.textContent ?? '',
+        zeichen: (document.querySelector('.fenster-inhalt')?.textContent ?? '').trim().length,
+      }));
+      pruefe(`«${erwartet}» öffnet sich mit Inhalt`,
+        w.titel === erwartet && w.zeichen > 20, `${w.titel} · ${w.zeichen} Zeichen`);
+      await bt.click('.fenster-zu');
+      await bt.waitForTimeout(200);
+    }
+
+    // Ein Geschenk übergeben. Gekauft wird sonst am Kiosk im Foyer — hier geht
+    // es um das Fenster, nicht um den Einkauf, also kommt das Stück direkt in
+    // die Tasche.
+    await bt.evaluate(() => {
+      const g = window.madtv.session().g;
+      g.gifts.push(window.madtv.core.GIFTS.find((x) => x.min === 0) ?? window.madtv.core.GIFTS[0]);
+      window.madtv.session().dirty = true;
+    });
+    await bt.waitForTimeout(500);
+    await bt.click('[data-f="betty"].hs');
+    await bt.waitForTimeout(400);
+    const tisch = await bt.evaluate(() => ({
+      pakete: document.querySelectorAll('.fenster [data-drag="paket"]').length,
+      ziel: document.querySelectorAll('.fenster [data-drop="tisch"]').length,
+    }));
+    pruefe('Tasche und Ablageziel liegen im selben Fenster',
+      tisch.pakete > 0 && tisch.ziel > 0, JSON.stringify(tisch));
+
+    const paket = await bt.$('.fenster [data-drag="paket"]');
+    const ziel = await bt.$('.fenster [data-drop="tisch"]');
+    if (paket && ziel) {
+      await paket.scrollIntoViewIfNeeded();
+      await bt.waitForTimeout(200);
+      const pa = await paket.boundingBox();
+      const zi = await ziel.boundingBox();
+      const liebe = () => bt.evaluate(() => window.madtv.session().g.player.love);
+      const vorGabe = await liebe();
+      pruefe('Paket und Schreibtisch sind gleichzeitig sichtbar', pa.y > 60 && zi.y > 60,
+        `Paket y=${Math.round(pa.y)}, Tisch y=${Math.round(zi.y)}`);
+      await bt.mouse.move(pa.x + pa.width / 2, pa.y + pa.height / 2);
+      await bt.mouse.down();
+      await bt.mouse.move(pa.x + pa.width / 2 + 30, pa.y + pa.height / 2 + 10, { steps: 8 });
+      await bt.mouse.move(zi.x + zi.width / 2, zi.y + zi.height / 2, { steps: 14 });
+      await bt.mouse.up();
+      await bt.waitForTimeout(700);
+      if (await bt.isVisible('#modal.on')) {
+        await bt.click('#mbox .mf button:first-child');
+        await bt.waitForTimeout(300);
+      }
+      pruefe('das Geschenk kommt bei ihr an', (await liebe()) > vorGabe,
+        `Zuneigung ${Math.round(vorGabe)} → ${Math.round(await liebe())}`);
+    }
+
+    const grundB = await hintergrundBild(bt);
+    pruefe('die Bildquelle lässt sich wirklich holen',
+      grundB?.geladen === true, JSON.stringify(grundB));
+    pruefe('Bettys Büro ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await bt.close();
+  }
+
   /* ── Ziehen im Fenster ──
      Für die Räume, die noch Szenen werden sollen, hängt der Zuschnitt daran:
      Die Werbeagentur lebt davon, eine Karte aus der Kartei in den Koffer zu

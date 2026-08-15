@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 186 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 200 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -160,6 +160,17 @@ Punkten, auf 1600 Punkte Breite normiert. Dein Büro, das Chefbüro und die
 Filmagentur sind inzwischen alle drei Bilder — der Tausch war jeweils eine
 Zeile, und an der Bedienung hat sich nichts geändert. Genau dafür war die
 Schicht gebaut.
+
+**Bettys Büro ist der erste Raum mit einem Menschen darin.** Für die
+Szenenschicht ändert das nichts — die Klickpunkte liegen wie überall im Raster
+über dem Bild. Es ändert, wo man hinfasst: Man klickt auf *sie*, nicht auf ein
+Gerät. Dieselbe Klammer wie in der Werbeagentur gilt auch hier, aus demselben
+Grund: Die Figurenbox ist zugleich das Ablageziel für Geschenke, also führen
+Betty und die freie Schreibunterlage in dasselbe Fenster.
+
+Das Kaffeegedeck ist dort die Ausnahme von der Regel «Klickpunkt öffnet
+Fenster»: Es löst unmittelbar «Auf einen Kaffee bleiben» aus. Ein Fenster mit
+einem einzigen Knopf darin wäre eine Tür vor einer Tür.
 
 **Die Filmagentur ist der erste Raum ohne Tür im Bild.** Der Laptop öffnet den
 Katalog, der Monitor die laufende Auktion, das Rollenbündel auf dem Tisch das

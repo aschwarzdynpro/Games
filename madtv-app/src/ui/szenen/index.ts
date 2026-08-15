@@ -12,17 +12,20 @@ import {
   chefAushang, chefKalender, chefRaffer,
   filmAuktion, filmKatalog, filmPaket, genreKonjunktur,
   werbeArbeitsplatz, zielgruppen,
+  bettyGespraech, bettyKonkurrenz, bettyMitbringsel, bettyZuneigung,
 } from '../rooms';
 import { BUERO } from './buero';
 import { CHEF } from './chef';
 import { FILM } from './film';
 import { WERBE } from './werbe';
+import { BETTY } from './betty';
 
 const ALLE: Partial<Record<RoomId, Raumszene>> = {
   office: BUERO,
   chef: CHEF,
   film: FILM,
   werbe: WERBE,
+  betty: BETTY,
 };
 
 /**
@@ -102,6 +105,24 @@ export function fensterInhalt(room: RoomId, welches: string): Fensterinhalt | nu
         return bau('Zielgruppen', 'ui-diagramm', zielgruppen(), 'Noch keine Zahlen.');
       case 'vertraege':
         return bau('Laufende Verträge', 'ui-buch', bueroKoffer(), 'Kein Vertrag im Koffer.');
+      default:
+        return null;
+    }
+  }
+
+  if (room === 'betty') {
+    switch (welches) {
+      // Betty und die Tasche in *einem* Fenster: Die Figurenbox ist das
+      // Ablageziel für Geschenke, und aus einem geschlossenen Fenster zieht
+      // man in kein offenes. Deshalb führen beide Klickpunkte hierher.
+      case 'betty':
+        return bau('Betty Botterbloom', 'flr-betty',
+          bettyGespraech() + bettyMitbringsel(), 'Sie ist gerade nicht da.');
+      case 'zuneigung':
+        return bau('Wie es um euch steht', 'ui-herz', bettyZuneigung(), 'Noch nichts passiert.');
+      case 'konkurrenz':
+        return bau('Was die Konkurrenz treibt', 'ui-buch', bettyKonkurrenz(),
+          'Von der Konkurrenz war hier noch niemand.');
       default:
         return null;
     }

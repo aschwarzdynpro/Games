@@ -1011,25 +1011,33 @@ function chef(): string {
 
 /* ─────────── Bettys Büro ─────────── */
 
-function betty(): string {
+/**
+ * Betty selbst — was sie sagt, und die Vase als stiller Zähler.
+ *
+ * Die Figurenbox ist zugleich das Ablageziel für Geschenke (`drop: 'tisch'`).
+ * Im begehbaren Raum wird sie deshalb *zusammen mit* der Tasche gezeigt: Aus
+ * einem geschlossenen Fenster zieht man in kein offenes, dieselbe Regel wie
+ * bei der Kundenkartei in der Werbeagentur.
+ */
+export function bettyGespraech(): string {
   const g = G();
-  const p = g.player;
-  const talk = speak(g, 'betty');
   // Die Vase füllt sich mit dem, was schon überreicht wurde — bis zu sieben Halme
-  const halme = Math.min(7, Math.round(p.love / 12));
-
-  let h = '<div class="room">' + head('flr-betty', 'Bettys Büro',
-    'Betty Botterbloom, Kulturredaktion — Geschenk auf den Schreibtisch legen');
-
-  h += figur({
-    name: 'Betty Botterbloom', rolle: 'Kulturredaktion', ico: 'ui-tanz', klasse: 'sz-betty', talk,
+  const halme = Math.min(7, Math.round(g.player.love / 12));
+  return figur({
+    name: 'Betty Botterbloom', rolle: 'Kulturredaktion', ico: 'ui-tanz', klasse: 'sz-betty',
+    talk: speak(g, 'betty'),
     drop: 'tisch',
     extra: `<div class="vase">${'<i></i>'.repeat(halme)}<div class="va-glas"></div></div>`,
   });
+}
 
+/** Zuneigung, ihr Deckel und der Kaffeebesuch. */
+export function bettyZuneigung(): string {
+  const g = G();
+  const p = g.player;
   // Der Zuneigungsmesser samt Deckel: Warum es nicht weitergeht, gehört daneben
   const deckel = Math.round(p.image);
-  h += '<div class="messer">' +
+  let h = '<div class="messer">' +
     `<div class="me-kopf"><span>Zuneigung</span><b class="heart">${Math.round(p.love)} / 100</b></div>` +
     '<div class="me-bahn">' +
     `<i style="width:${p.love}%"></i>` +
@@ -1041,9 +1049,14 @@ function betty(): string {
     // Preis stehen.
     `<button class="btn love" data-act="visit">Auf einen Kaffee bleiben${
       g.opt.godMode ? '' : ' (15 Min)'}</button></div></div>`;
+  return h;
+}
 
-  // Die Tasche mit den mitgebrachten Stücken, ziehbar auf den Schreibtisch
-  h += `<div class="mitbringsel" ${RAILBOX}><div class="mi-kopf">Mitgebracht` +
+/** Die Tasche mit den mitgebrachten Stücken, ziehbar auf den Schreibtisch. */
+export function bettyMitbringsel(): string {
+  const g = G();
+  const p = g.player;
+  let h = `<div class="mitbringsel" ${RAILBOX}><div class="mi-kopf">Mitgebracht` +
     `<span>${g.gifts.length ? 'auf den Schreibtisch ziehen' : 'der Kiosk im Foyer hat geöffnet'}</span>` +
     `${g.gifts.length ? railNav('Tasche') : ''}</div>`;
   h += g.gifts.length
@@ -1060,11 +1073,23 @@ function betty(): string {
       }).join('') + '</div>'
     : '<div class="mi-leer">Nichts dabei.</div>';
   h += '</div>';
+  return h;
+}
 
+/** Wie weit die Konkurrenz bei ihr schon ist. */
+export function bettyKonkurrenz(): string {
+  const g = G();
   const rivalLove = g.ch.slice(1)
     .map((c) => `${esc(c.name)} ${Math.round(c.love)}`).join(' · ');
-  h += `<div class="hint">Die Konkurrenz schläft nicht — ${rivalLove}</div></div>`;
-  return h;
+  return `<div class="hint">Die Konkurrenz schläft nicht — ${rivalLove}</div>`;
+}
+
+function betty(): string {
+  return '<div class="room">'
+    + head('flr-betty', 'Bettys Büro',
+      'Betty Botterbloom, Kulturredaktion — Geschenk auf den Schreibtisch legen')
+    + bettyGespraech() + bettyZuneigung() + bettyMitbringsel() + bettyKonkurrenz()
+    + '</div>';
 }
 
 /* ─────────── Foyer & Kiosk ─────────── */
