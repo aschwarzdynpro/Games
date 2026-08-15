@@ -15,6 +15,8 @@ import { ROOMS } from './rooms';
 import { runAction } from './actions';
 import { bindBoard } from './board';
 import { scrollMerken, scrollZurueck } from './rail';
+import { renderSzene, renderSzeneLeiste } from './szene';
+import { SZENEN, fensterInhalt } from './szenen';
 import { goFloor, leaveRoom, setSpeed, togglePause } from './loop';
 import { openMenu } from './screens';
 
@@ -184,6 +186,7 @@ export function renderView(): void {
 
   if (s.elevBusy > 0) view.innerHTML = viewElevator();
   else if (!s.room) view.innerHTML = viewTower();
+  else if (SZENEN[s.room]) view.innerHTML = viewRaumszene(s.room);
   else view.innerHTML = ROOMS[s.room]();
 
   scrollZurueck(view, gescrollt);
@@ -212,6 +215,30 @@ function bindView(): void {
     activate(n, () => goFloor(Number(n.dataset.go)));
   });
   bindBoard(view);
+}
+
+/**
+ * Ein Raum, den es als Szene gibt: das Bild füllt die Ansicht, darunter die
+ * Leiste mit denselben Punkten, und darüber — falls eines offen ist — das
+ * Fenster mit dem eigentlichen Inhalt.
+ */
+function viewRaumszene(room: RoomId): string {
+  const s = S();
+  const sz = SZENEN[room]!;
+  let h = `<div class="raum-szene">${renderSzene(sz)}${renderSzeneLeiste(sz)}`;
+
+  if (s.fenster) {
+    const inhalt = fensterInhalt(room, s.fenster);
+    if (inhalt) {
+      h += '<div class="fenster-grund" data-act="fensterzu"></div>' +
+        '<div class="fenster" role="dialog" aria-modal="false" ' +
+        `aria-label="${esc(inhalt.titel)}">` +
+        `<div class="fenster-kopf">${icon(inhalt.ico)}<h2>${esc(inhalt.titel)}</h2>` +
+        `<button class="fenster-zu" data-act="fensterzu" aria-label="Fenster schließen">${icon('ui-schliessen')}</button></div>` +
+        `<div class="fenster-inhalt">${inhalt.html}</div></div>`;
+    }
+  }
+  return `${h}</div>`;
 }
 
 function viewElevator(): string {

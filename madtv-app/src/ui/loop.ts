@@ -92,6 +92,9 @@ export function goFloor(f: number): void {
   const s = S();
   if (g.over || s.elevBusy > 0) return;
 
+  // Ein Raumwechsel schließt das Fenster: Es gehört zu dem Raum, in dem es
+  // aufging, und nicht zum nächsten.
+  s.fenster = null;
   if (f === s.floor) {
     s.room = FLOORS[f]!.id;
     markDirty();
@@ -142,6 +145,7 @@ function fahrstuhlEchtzeit(dt: number): boolean {
 function angekommen(): void {
   const s = S();
   if (s.elevTarget === null) return;
+  s.fenster = null;
   s.floor = s.elevTarget;
   s.room = FLOORS[s.floor]!.id;
   s.elevTarget = null;
@@ -150,7 +154,9 @@ function angekommen(): void {
 }
 
 export function leaveRoom(): void {
-  S().room = null;
+  const s = S();
+  s.room = null;
+  s.fenster = null;
   markDirty();
 }
 

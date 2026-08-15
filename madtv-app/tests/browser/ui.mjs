@@ -113,7 +113,8 @@ async function raumRundgang(seite, meldungen) {
     await seite.click(`[data-go="${i}"]`);
     await angekommen(seite);
     const zustand = await seite.evaluate(() => ({
-      inhalt: !!document.querySelector('#view .room'),
+      // Ein Raum ist entweder ein Panel oder eine begehbare Szene.
+      inhalt: !!document.querySelector('#view .room, #view .raum-szene'),
       ueberlauf: document.body.scrollWidth - document.body.clientWidth,
     }));
     pruefe(`Raum «${etagen[i]}» zeichnet`, zustand.inhalt);
@@ -223,7 +224,10 @@ async function main() {
   pruefe('jedes bedienbare Element hat einen Namen', struktur.ohneNamen.length === 0,
     struktur.ohneNamen.slice(0, 5).join(','));
 
-  // Die Steckwand
+  // Die Steckwand. Seit das Büro eine begehbare Szene ist, liegt sie im Fenster
+  // hinter dem Laptop — geprüft wird sie dort, wo der Spieler sie auch findet.
+  await seite.click('[data-f="sendeplan"].hs');
+  await seite.waitForTimeout(350);
   const tafel = await seite.evaluate(() => ({
     felder: document.querySelectorAll('.pocket.prog').length,
     werbung: document.querySelectorAll('.pocket.ad').length,
@@ -235,8 +239,9 @@ async function main() {
   pruefe('Gegenüber-Spalte hat 14 Halbstunden', tafel.gegen === 14, String(tafel.gegen));
   pruefe('Sendeplan hat Felder', tafel.felder > 0, String(tafel.felder));
 
-  // Alle vier Sendeplan-Reiter. Der vierte reicht einen Tag weiter, als die
-  // Konkurrenz plant — genau dort hat die Gegenüber-Spalte einmal geworfen.
+  // Alle vier Sendeplan-Reiter, weiterhin im offenen Fenster. Der vierte reicht
+  // einen Tag weiter, als die Konkurrenz plant — genau dort hat die
+  // Gegenüber-Spalte einmal geworfen.
   for (const reiter of ['Morgen', 'Mittwoch', 'Donnerstag']) {
     const vorher = meldungen.length;
     await seite.click(`button:has-text("${reiter}")`);
@@ -248,6 +253,8 @@ async function main() {
   }
   await seite.click('button:has-text("Heute")');
   await seite.waitForTimeout(300);
+  await seite.click('.fenster-zu');
+  await seite.waitForTimeout(250);
 
   // Tastatur. Jede Station muss sichtbar umrandet sein, sonst weiß niemand,
   // wo er gerade steht.
@@ -259,9 +266,17 @@ async function main() {
       const a = document.activeElement;
       if (!a || a === document.body) return null;
       const st = getComputedStyle(a);
+      // Klickpunkte in der Raumszene sind SVG-Gruppen; ihre Fokusanzeige sitzt
+      // auf dem Rechteck darin, das die gestrichelte Linie gegen eine volle
+      // tauscht. Ein outline am <g> gäbe es dort nicht zu sehen.
+      const feld = a.classList?.contains('hs') ? a.querySelector('.hs-feld') : null;
+      const rahmen = feld
+        ? getComputedStyle(feld).strokeDasharray === 'none'
+        : st.outlineStyle !== 'none' && st.outlineWidth !== '0px';
       return {
-        name: (a.innerText || a.getAttribute('aria-label') || a.className || a.tagName).trim().slice(0, 24),
-        rahmen: st.outlineStyle !== 'none' && st.outlineWidth !== '0px',
+        name: (a.innerText || a.getAttribute('aria-label') || a.className?.baseVal
+          || a.className || a.tagName).toString().trim().slice(0, 24),
+        rahmen,
       };
     });
     if (!f) continue;
@@ -340,6 +355,69 @@ async function main() {
       `${Math.round(lage.knopfHoehe)} px`);
     pruefe(`${name}: keine Konsolenfehler`, mm.length === 0, mm.join(' | '));
     await s.close();
+  }
+
+  /* ── Der begehbare Raum ── */
+  console.log('\nDein Büro als Szene');
+  {
+    const mm = [];
+    const r = await browser.newPage({ viewport: { width: 1320, height: 980 } });
+    r.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    r.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(r);
+    await r.keyboard.press(' ');            // Uhr anhalten, sonst zeichnet es dazwischen
+    await r.waitForTimeout(250);
+
+    const sz = await r.evaluate(() => ({
+      szene: !!document.querySelector('.szene-svg'),
+      punkte: document.querySelectorAll('.hs').length,
+      knoepfe: document.querySelectorAll('.szene-knopf').length,
+      ohneNamen: [...document.querySelectorAll('.hs')].filter((x) => !x.getAttribute('aria-label')).length,
+    }));
+    pruefe('Dein Büro ist eine Szene', sz.szene);
+    pruefe('sie hat sechs Klickpunkte', sz.punkte === 6, String(sz.punkte));
+    pruefe('und dieselbe Zahl Knöpfe in der Leiste', sz.knoepfe === sz.punkte,
+      `${sz.knoepfe} zu ${sz.punkte}`);
+    pruefe('jeder Klickpunkt ist benannt', sz.ohneNamen === 0, String(sz.ohneNamen));
+
+    // Jeder Punkt muss ein Fenster mit Inhalt öffnen — ein leeres wäre kaputt.
+    for (const [f, erwartet] of [['sendeplan', 'Sendeplan'], ['koffer', 'Werbekoffer'],
+      ['quote', 'Wer hat zugesehen'], ['bilanz', 'Bilanz des Tages'], ['lage', 'Marktlage']]) {
+      await r.click(`[data-f="${f}"].hs`);
+      await r.waitForTimeout(300);
+      const w = await r.evaluate(() => ({
+        titel: document.querySelector('.fenster-kopf h2')?.textContent ?? '',
+        zeichen: (document.querySelector('.fenster-inhalt')?.textContent ?? '').trim().length,
+        szeneBleibt: !!document.querySelector('.szene-svg'),
+      }));
+      pruefe(`«${erwartet}» öffnet sich mit Inhalt`,
+        w.titel === erwartet && w.zeichen > 20 && w.szeneBleibt,
+        `${w.titel} · ${w.zeichen} Zeichen`);
+      await r.click('.fenster-zu');
+      await r.waitForTimeout(200);
+    }
+    pruefe('geschlossen ist geschlossen',
+      !(await r.evaluate(() => !!document.querySelector('.fenster'))));
+
+    // Der Sendeplan im Fenster ist derselbe wie vorher — samt Steckwand
+    await r.click('[data-f="sendeplan"].hs');
+    await r.waitForTimeout(300);
+    const tafel = await r.evaluate(() => ({
+      werbung: document.querySelectorAll('.fenster .pocket.ad').length,
+      gegen: document.querySelectorAll('.fenster .gegen').length,
+    }));
+    pruefe('die Steckwand im Fenster ist vollständig',
+      tafel.werbung === 7 && tafel.gegen === 14, JSON.stringify(tafel));
+    await r.click('.fenster-zu');
+    await r.waitForTimeout(200);
+
+    // Die Tür führt zurück in den Flur
+    await r.click('[aria-label^="Tür"].hs');
+    await r.waitForTimeout(400);
+    pruefe('die Tür führt in den Flur',
+      (await r.evaluate(() => window.madtv.session().room)) === null);
+    pruefe('Szene ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await r.close();
   }
 
   /* ── Freier Aufbau: die Uhr darf einen nicht mehr festhalten ── */

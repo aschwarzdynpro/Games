@@ -48,15 +48,21 @@ export function licMeta(l: Licence): string {
 
 /* ─────────── Dein Büro ─────────── */
 
-function office(): string {
+/* ─────────── Dein Büro ─────────── */
+
+/**
+ * Das Büro besteht aus vier Teilen, und die stehen einzeln hier, weil es sie
+ * zweimal zu sehen gibt: als durchgehendes Panel und, seit der Raum eine Szene
+ * ist, jeweils für sich im Fenster über dem Schreibtisch. Zwei Quellen für
+ * dieselbe Tabelle wären ein sicherer Weg, dass sie irgendwann verschieden
+ * aussagen — deshalb baut beides denselben Text.
+ */
+
+/** Zuschauer, Marktanteil, Konto — die drei Zahlen des Tages. */
+export function bueroBilanz(): string {
   const g = G();
-  const s = S();
   const p = g.player;
-  const day = g.day + s.viewDay;
-  const slots = getDay(p, day);
-
-  let h = '<div class="room">' + head('flr-office', 'Dein Büro', 'Sendeplan, Werbekoffer und die nackte Bilanz');
-
+  let h = '';
   const todaySum = p.todayAud.reduce((a, b) => a + b, 0);
   const yesterSum = p.lastAud.reduce((a, b) => a + b, 0);
   h += '<div class="grid3" style="margin-bottom:10px">' +
@@ -66,7 +72,17 @@ function office(): string {
     `<div class="d">${esc(g.ch[1]!.name)} ${g.ch[1]!.image.toFixed(0)}% · ${esc(g.ch[2]!.name)} ${g.ch[2]!.image.toFixed(0)}%</div></div>` +
     `<div class="kpi"><div class="k">Konto</div><div class="v ${p.money < 0 ? 'bad' : 'ok'}">${moneyShort(p.money)}</div>` +
     `<div class="d">Fixkosten ${moneyShort(dailyCosts(p))}/Tag</div></div></div>`;
+  return h;
+}
 
+/** Sendeplan mit Tagesreitern, Nachrichtenband und der Steckwand. */
+export function bueroSendeplan(): string {
+  const g = G();
+  const s = S();
+  const p = g.player;
+  const day = g.day + s.viewDay;
+  const slots = getDay(p, day);
+  let h = '';
   h += '<div class="card"><div class="btnrow" style="margin-bottom:9px">';
   for (let i = 0; i < 4; i++) {
     const wd = WEEKDAYS[(g.weekday + i) % 7]!;
@@ -99,7 +115,14 @@ function office(): string {
   h += '<div class="hint">Karten aus dem Programmordner auf einen Sendeplatz ziehen — oder den Platz ' +
     'anklicken und aus der Liste wählen. Eine Programmkarte auf einem <b>Werbeplatz</b> wird zum Trailer ' +
     'und zieht später Zuschauer. Filme ab 18 vor 22 Uhr kosten Quote — und rufen den Gerichtsvollzieher.</div></div>';
+  return h;
+}
 
+/** Die laufenden Werbeverträge. */
+export function bueroKoffer(): string {
+  const g = G();
+  const p = g.player;
+  let h = '';
   // Werbekoffer
   h += `<div class="card"><h3>Werbekoffer (${p.contracts.length}/${MAX_CONTRACTS})</h3>`;
   if (!p.contracts.length) {
@@ -119,7 +142,14 @@ function office(): string {
     h += '</table>';
   }
   h += '</div>';
+  return h;
+}
 
+/** Wer zuletzt zugesehen hat, nach Zielgruppen. */
+export function bueroQuote(): string {
+  const g = G();
+  const p = g.player;
+  let h = '';
   // Wer hat zugesehen
   const gsum = new Array(GROUPS.length).fill(0);
   let gday: number | null = null;
@@ -146,7 +176,13 @@ function office(): string {
     h += '<div class="hint">Werbeverträge mit Zielgruppe zahlen nur, wenn genau diese Gruppe im Block ' +
       'erreicht wird. Die Verteilung hängt am Genre und an der Uhrzeit.</div></div>';
   }
+  return h;
+}
 
+/** Konjunktur, Quotenverlauf und Protokoll — was im Regal stünde. */
+export function bueroLage(): string {
+  const g = G();
+  let h = '';
   // Genre-Konjunktur
   const trends = (Object.keys(GENRES) as GenreId[])
     .map((k) => ({ g: k, v: trendOf(g, k) }))
@@ -187,8 +223,14 @@ function office(): string {
         `<td class="right num ${e.share > 0.4 ? 'ok' : e.share < 0.2 ? 'bad' : ''}">${pct(e.share, 0)}</td></tr>`)
         .join('') + '</table></div>';
   }
+  return h;
+}
 
-  return h + '</div>';
+function office(): string {
+  return '<div class="room">'
+    + head('flr-office', 'Dein Büro', 'Sendeplan, Werbekoffer und die nackte Bilanz')
+    + bueroBilanz() + bueroSendeplan() + bueroKoffer() + bueroQuote() + bueroLage()
+    + '</div>';
 }
 
 /* ─────────── Filmagentur ─────────── */

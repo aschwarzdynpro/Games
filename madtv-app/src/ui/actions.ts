@@ -54,6 +54,11 @@ function sellPrice(l: Licence): number {
 const ACTIONS: Record<string, (d: Data) => void> = {
   back() { leaveRoom(); },
 
+  // Fenster über der Raumszene. Der Inhalt wird beim Zeichnen frisch gebaut,
+  // hier steht nur, welcher es ist.
+  fenster(d) { S().fenster = d.f ?? null; },
+  fensterzu() { S().fenster = null; },
+
   setday(d) { S().viewDay = Number(d.d); },
 
   filmfilter(d) { S().filmFilter = d.g!; },

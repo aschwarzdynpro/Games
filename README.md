@@ -55,6 +55,13 @@ dritte Spalte bekommen: Neben Sendeplatz und Werbung steht für jede Halbstunde,
 was bei beiden Konkurrenten läuft. Läuft dort dasselbe Genre wie im eigenen
 Feld, färbt sich die Zeile.
 
+Und der erste Raum ist begehbar geworden: Dein Büro ist keine Liste mit Kulisse
+mehr, sondern ein gezeichneter Raum, in dem man Dinge anfasst — Laptop für den
+Sendeplan, Koffer für die Verträge, Regalwand für die Marktlage, Tür zurück in
+den Flur. Das Panel öffnet sich als Fenster darüber. Die Klickpunkte liegen in
+einem festen Raster, damit sich der gezeichnete Hintergrund später gegen ein
+fertiges Bild tauschen lässt, ohne dass sich an der Bedienung etwas ändert.
+
 Und die Figuren reden mit: Betty schaut zur besten Zeit selbst zu und nimmt
 Reißerisches übel, Herr Raffer wird bei fallender Quote persönlich, und die
 Konkurrenz reibt einem den weggeschnappten Spitzenfilm unter die Nase. Welcher

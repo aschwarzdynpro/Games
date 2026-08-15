@@ -38,7 +38,9 @@ src/
     talk.ts       was Betty, Raffer und die Konkurrenz sagen
   world/          gezeichnete Szene: Flur, Fahrstuhl, Figur, Wegplanung
   ui/             Panels: Räume, Aktionen, Dialoge, Spieluhr, Zeichensatz
-  assets/icons/   96 Symbole, je eine SVG-Datei
+    szene.ts      Räume als begehbares Bild mit Klickpunkten
+    szenen/       je Raum: Zeichnung und Karte der Klickpunkte
+  assets/icons/   97 Symbole, je eine SVG-Datei
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
 tests/            Vitest: Engine, Wegplanung, Sendelängen, Symbole, Daten, Figuren, Balancing
@@ -81,14 +83,14 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 76 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 89 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
 | Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
-| Symbole | Emoji aus der Schriftart | 96 gezeichnete Vektorsymbole aus dem eigenen Satz |
+| Symbole | Emoji aus der Schriftart | 97 gezeichnete Vektorsymbole aus dem eigenen Satz |
 | Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
 | Figuren | je vier feste Sätze nach einer Zahl | Sätze mit Bedingung und Rang, abhängig vom Spielverlauf |
 
@@ -111,6 +113,44 @@ Laufabschnitte einen gedeckelten Anteil am Weg, und die Fahrt schluckt den Rest
 — man sieht ja die Etagen vorbeiziehen. **Die Gesamtkosten in Spielminuten
 bleiben dabei exakt erhalten**; das ist die Ressource, um die gespielt wird, und
 `tests/travel.test.ts` prüft genau diese Invariante.
+
+## Begehbare Räume
+
+Bis hierher *war* ein Raum sein Panel, mit einer schmalen Kulisse darüber. Dein
+Büro ist jetzt umgekehrt gebaut: Der Raum füllt die Ansicht, und was man wissen
+will, holt man sich, indem man einen Gegenstand anfasst — den Laptop für den
+Sendeplan, den Koffer für die Verträge, die Regalwand für Konjunktur und
+Protokoll, die Tür für den Flur. Das Panel öffnet sich als Fenster darüber; der
+Raum bleibt dahinter sichtbar.
+
+Drei Dinge sind daran wichtiger als die Zeichnung selbst:
+
+**Die Klickpunkte liegen im Zeichenraster, nicht im Bild.** Die Szenenschicht
+kennt zwei Sorten Hintergrund und behandelt sie gleich: eine gezeichnete
+Vektorszene oder ein fertiges Bild über `bild:`. Beides liegt hinter derselben
+Karte aus Punkten in 1600×900. Wer später ein gerendertes Bild einhängt,
+tauscht den Hintergrund und lässt die Karte, wie sie ist.
+
+**Es gibt beide Wege hinein.** Die Punkte sind echte fokussierbare Elemente mit
+Beschriftung, kein Trefferflächen-Raten auf einer Leinwand — mit Tabulator und
+Vorleseprogramm bleibt der Raum bedienbar. Unter der Szene zählt eine Leiste
+dieselben Punkte noch einmal als Knöpfe auf, für alle, denen das Suchen im Bild
+zu mühsam ist; auf schmalen Geräten ist sie ohnehin der bequemere Weg.
+
+**Das Panel bleibt die eine Quelle.** Die vier Fenster bauen denselben Text wie
+das durchgehende Panel — `bueroSendeplan()`, `bueroKoffer()` und die anderen
+stehen einzeln in `rooms.ts`, weil es sie zweimal zu sehen gibt. Zwei Quellen
+für dieselbe Tabelle wären ein sicherer Weg, dass sie irgendwann verschieden
+aussagen.
+
+Beim Bauen ist genau dabei ein Fehler entstanden und wieder verschwunden:
+Konjunktur, Quotenverlauf und Sendeprotokoll hingen nur am durchgehenden Panel.
+Sobald das Büro eine Szene war, hätte sie niemand mehr erreicht — sie sind jetzt
+das, was in der Regalwand steht. Ein Gegenstand im Bild ohne Funktion wäre eine
+Lüge; eine Funktion ohne Gegenstand ist ein Verlust.
+
+Die übrigen zwölf Räume zeigen weiterhin ihr Panel. Ein Raum wandert um, sobald
+er eine Szene hat — zwischen zwei Ständen ist nie etwas kaputt.
 
 ## Bedienbarkeit
 

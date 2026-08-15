@@ -1601,3 +1601,95 @@ body.dragging .tresen-kante{pointer-events:auto;}
   #topbar .stat:not(.live){gap:0;}
   #topbar .stat.live .k{font-size:8px;}
 }
+
+
+/* ─────────── Begehbarer Raum ─────────── */
+
+/* Die Szene füllt die Ansicht, die Leiste darunter zählt dieselben Punkte als
+   Knöpfe auf. Beides zusammen ist der Raum; das Fenster legt sich darüber. */
+.raum-szene{position:relative;}
+.szene{
+  position:relative;border:1px solid var(--line2);border-radius:12px;overflow:hidden;
+  background:#0d1219;box-shadow:0 8px 26px rgba(0,0,0,.42);
+}
+.szene-svg{display:block;width:100%;height:auto;max-height:62vh;}
+
+/* Klickpunkt: unsichtbar, bis man ihn sucht. Ein Raum, in dem alles umrandet
+   ist, sieht aus wie ein Formular — einer ohne jeden Hinweis wie ein Rätsel. */
+.hs{cursor:pointer;}
+.hs-feld{
+  fill:rgba(90,169,255,.001);
+  stroke:rgba(122,180,255,.19);stroke-width:2;stroke-dasharray:7 10;
+  transition:fill .14s, stroke .14s;
+}
+.hs:hover .hs-feld,.hs:focus-visible .hs-feld{
+  fill:rgba(90,169,255,.16);stroke:var(--acc);stroke-dasharray:none;stroke-width:3.5;
+}
+.hs:focus{outline:none;}
+.hs:focus-visible .hs-feld{stroke:#fff;}
+.hs-schild{opacity:0;transition:opacity .14s;pointer-events:none;}
+.hs:hover .hs-schild,.hs:focus-visible .hs-schild{opacity:1;}
+.hs-schild-grund{fill:#0e131b;stroke:var(--acc);stroke-width:2;opacity:.95;}
+.hs-titel{
+  fill:#e6ebf2;font-size:15px;font-weight:800;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;
+}
+.hs-hinweis{
+  fill:#8493a6;font-size:11px;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;
+}
+/* Beschriftungen in der Zeichnung selbst */
+.b-schild{fill:#e0c98a;font-size:22px;font-weight:800;letter-spacing:.1em;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
+.b-schild-klein{fill:#8a7a55;font-size:11px;letter-spacing:.14em;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
+.b-mark{fill:#e33c3c;font-size:38px;font-weight:900;letter-spacing:.06em;text-anchor:middle;
+  font-family:Inter,system-ui,sans-serif;}
+
+.szene-leiste{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
+.szene-knopf{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;
+  background:var(--panel);border:1px solid var(--line);color:var(--dim);
+}
+.szene-knopf:hover{border-color:var(--acc);color:var(--acc);}
+.szene-knopf .ic{width:1.15em;height:1.15em;}
+
+/* Das Fenster über der Szene. Der Raum bleibt sichtbar — man soll nie
+   vergessen, wo man gerade steht. */
+.fenster-grund{position:absolute;inset:0;background:rgba(6,9,13,.55);border-radius:12px;}
+.fenster{
+  position:absolute;left:50%;top:14px;transform:translateX(-50%);
+  width:min(1000px,96%);max-height:calc(62vh - 28px);
+  display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--line2);border-radius:12px;
+  box-shadow:0 22px 60px rgba(0,0,0,.62);
+  animation:fensterAuf .16s ease;
+}
+@keyframes fensterAuf{from{opacity:0;transform:translateX(-50%) translateY(-10px);}}
+.fenster-kopf{
+  display:flex;align-items:center;gap:9px;flex-shrink:0;
+  padding:10px 12px;border-bottom:1px solid var(--line);
+}
+.fenster-kopf .ic{width:1.3em;height:1.3em;color:var(--acc);}
+.fenster-kopf h2{font-size:14px;font-weight:800;}
+.fenster-zu{
+  margin-left:auto;width:30px;height:30px;border-radius:8px;
+  background:var(--panel2);border:1px solid var(--line2);color:var(--dim);
+  display:flex;align-items:center;justify-content:center;
+}
+.fenster-zu:hover{border-color:var(--bad);color:var(--bad);}
+.fenster-inhalt{overflow:auto;padding:12px;}
+.fenster-inhalt>.card:last-child{margin-bottom:0;}
+
+/* Schmal: Die Szene wird flacher, das Fenster nimmt die ganze Fläche. */
+@media (max-width:700px){
+  .szene-svg{max-height:34vh;}
+  .fenster{
+    left:0;right:0;top:0;transform:none;width:100%;
+    max-height:none;height:100%;border-radius:12px;
+  }
+  @keyframes fensterAuf{from{opacity:0;transform:translateY(12px);}}
+  .szene-knopf span{display:none;}
+  .szene-knopf{padding:9px 12px;}
+}

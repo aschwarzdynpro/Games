@@ -23,6 +23,12 @@ export interface Session {
   /** 0 = heute, 1 = morgen … im Sendeplan. */
   viewDay: number;
   filmFilter: string;
+  /**
+   * Welches Fenster gerade über der Raumszene liegt — null, wenn man den Raum
+   * einfach nur ansieht. Der Inhalt wird bei jedem Neuzeichnen frisch gebaut,
+   * damit im offenen Fenster dieselben Zahlen stehen wie überall sonst.
+   */
+  fenster: string | null;
   dirty: boolean;
   tickCount: number;
 }
@@ -38,6 +44,7 @@ export function startSession(g: Game): Session {
     speed: 2, paused: false,
     viewDay: 0,
     filmFilter: 'alle',
+    fenster: null,
     dirty: true,
     tickCount: 0,
   };
