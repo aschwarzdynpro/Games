@@ -1616,31 +1616,75 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
 .raum-szene{position:static;}
 .raum-seite{min-width:0;}
 
-/* Ein stehendes Bild lässt Breite übrig und hat keine Höhe zu verschenken —
-   dort wandern Konsole und Leiste an die Seite. Ein breiter Raum behält sie
-   unten, weil ihm sonst die Breite fehlte. */
-@media (min-width:1080px){
+/* Wohin Konsole und Leiste gehören, entscheidet die Form des Platzes, nicht
+   die des Bildes.
+   Liegt das Fenster quer, ist die Höhe knapp und die Breite übrig: Alles, was
+   unter dem Bild läge, nähme ihm direkt Größe weg — also daneben. Steht das
+   Fenster hoch, ist es umgekehrt: darunter.
+   Die zweite Bedingung ist das Bild selbst. Ein breites Bild wäre im Querformat
+   ohnehin breitenbegrenzt; ihm nähme eine Seitenspalte nur Größe weg. Deshalb
+   greift sie nur bei stehendem Bild (.hoch).
+   Die Untergrenze von 640 Punkten hält das quer gehaltene Telefon drin — genau
+   dort ist die Spalte am nötigsten — und lässt Winzfenster außen vor. */
+@media (orientation:landscape) and (min-width:640px){
   .raum-szene.hoch{display:flex;align-items:flex-start;gap:12px;}
   /* Der Kasten füllt den Platz, das Bild steht mittig darin. Ihn schrumpfen zu
      lassen wäre das Naheliegende, geht aber nicht: Ein SVG als Flex-Kind mit
      flex-basis auto fällt auf null zusammen. Stattdessen wird der Rahmen hier
      unsichtbar — die Bilder bringen ihre eigene Kante mit. */
-  .raum-szene.hoch .szene{
+  .raum-szene.hoch .raum-bild{
     flex:1 1 auto;min-width:0;
     background:transparent;border-color:transparent;box-shadow:none;
   }
   .raum-szene.hoch .raum-seite{
-    flex:0 0 330px;display:flex;flex-direction:column;gap:8px;
+    /* Mitwachsend statt fest: Auf einem quer gehaltenen Telefon wäre eine
+       330-Punkte-Spalte fast die halbe Breite. */
+    flex:0 0 clamp(232px,26vw,336px);
+    display:flex;flex-direction:column;gap:8px;
   }
   .raum-szene.hoch .konsole{flex-direction:column;margin-top:0;}
   .raum-szene.hoch .ko-feld,.raum-szene.hoch .ko-tv{flex:0 0 auto;}
-  .raum-szene.hoch .szene-leiste{flex-direction:column;margin-top:0;}
-  .raum-szene.hoch .szene-knopf{justify-content:flex-start;}
+  .raum-szene.hoch .raum-leiste{flex-direction:column;margin-top:0;}
+  .raum-szene.hoch .raum-knopf{justify-content:flex-start;}
   /* Unter dem Bild liegt nichts mehr, also darf es fast die ganze Höhe haben. */
-  .raum-szene.hoch .szene-svg{max-height:min(calc(100dvh - 202px),920px);}
+  .raum-szene.hoch .raum-svg{max-height:min(calc(100dvh - 202px),920px);}
 }
-.szene{
-  position:relative;display:flex;justify-content:center;
+
+/* Quer und flach — das liegende Telefon. Dort ist jede Zeile Höhe kostbar:
+   Die Etagenleiste verliert ihre Beschriftung, die Kopfzeile rückt zusammen. */
+@media (orientation:landscape) and (max-height:520px){
+  #bottom{padding:4px 8px;}
+  #bottom button{padding:5px 9px;}
+  #bottom .lbl{display:none;}
+  #topbar{padding:4px 10px;gap:7px;}
+  .clock{font-size:15px;padding:1px 8px;}
+  body.im-raum .wrap{padding:6px 10px 10px;}
+  .raum-szene.hoch .raum-svg{max-height:calc(100dvh - 104px);}
+  .ko-v{font-size:14px;}
+  .ko-feld{padding:5px 8px;}
+  .raum-knopf{padding:5px 10px;font-size:11px;}
+  /* Auf 390 Punkten Höhe passt die gestapelte Spalte nicht — und das Erste,
+     was hinausfiele, wären die Knöpfe, also gerade das, was man anfassen will.
+     Statt sie wegscrollen zu lassen, fallen die drei Anzeigen weg, die zwei
+     Handbreit weiter oben in der Kopfzeile ohnehin stehen. Übrig bleibt, was
+     es nur hier gibt: der Vorschaumonitor und die Couch. */
+  .raum-szene.hoch .ko-doppel{display:none;}
+  .raum-szene.hoch .raum-seite{
+    flex:0 0 clamp(268px,38vw,360px);
+    /* Der Deckel bleibt als Netz: Wächst die Spalte doch einmal über den
+       Bildschirm, scrollt sie in sich statt die ganze Seite zu verschieben. */
+    max-height:calc(100dvh - 104px);overflow:auto;
+  }
+  .raum-szene.hoch .konsole{
+    flex-direction:row;flex-wrap:wrap;padding:6px;gap:6px;
+  }
+  .raum-szene.hoch .ko-feld{flex:1 1 46%;}
+  .raum-szene.hoch .ko-tv{flex:1 1 100%;}
+  .raum-szene.hoch .raum-leiste{flex-direction:row;flex-wrap:wrap;}
+  .raum-szene.hoch .raum-knopf{flex:1 1 46%;}
+}
+.raum-bild{
+  position:relative;display:flex;justify-content:center;align-items:flex-start;
   border:1px solid var(--line2);border-radius:12px;overflow:hidden;
   background:#0d1219;box-shadow:0 8px 26px rgba(0,0,0,.42);
 }
@@ -1651,9 +1695,9 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
    Knopfleiste noch hinpassen, darüber die Kopfzeile, darunter die Etagen. Was
    die beanspruchen, steht hier als Abzug — sonst schneidet die Etagenleiste
    dem Raum die Knöpfe ab. */
-.szene-svg{
+.raum-svg{
   display:block;width:auto;max-width:100%;height:auto;
-  max-height:min(calc(100dvh - 314px),760px);
+  max-height:min(calc(100dvh - 348px),760px);
 }
 
 /* ─────────── Sendekonsole ─────────── */
@@ -1752,14 +1796,14 @@ body.im-raum .wrap{max-width:1420px;padding:10px 12px 52px;}
 .b-mark{fill:#e33c3c;font-size:38px;font-weight:900;letter-spacing:.06em;text-anchor:middle;
   font-family:Inter,system-ui,sans-serif;}
 
-.szene-leiste{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;}
-.szene-knopf{
+.raum-leiste{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;}
+.raum-knopf{
   display:flex;align-items:center;gap:6px;
   padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;
   background:var(--panel);border:1px solid var(--line);color:var(--dim);
 }
-.szene-knopf:hover{border-color:var(--acc);color:var(--acc);}
-.szene-knopf .ic{width:1.15em;height:1.15em;}
+.raum-knopf:hover{border-color:var(--acc);color:var(--acc);}
+.raum-knopf .ic{width:1.15em;height:1.15em;}
 
 /* Das Fenster über der Szene. Der Raum bleibt sichtbar — man soll nie
    vergessen, wo man gerade steht. */
@@ -1799,12 +1843,22 @@ body.fenster-offen #main{overflow:hidden;}
    falsche und hält die Ablage darunter für nicht vorhanden. */
 .fenster .board-grid{max-height:none;overflow-y:visible;}
 
-/* Schmal: Die Szene wird flacher, das Fenster nimmt die ganze Fläche. */
+/* Schmal: Das Fenster nimmt die ganze Fläche, und der Raum bekommt die Höhe,
+   die unter Kopfzeile, Konsole, Leiste und Etagen übrig bleibt. Der Abzug ist
+   gemessen, nicht geschätzt — auf dem hochkant gehaltenen Telefon ist die
+   Kopfzeile zweizeilig und die Konsole gestapelt, zusammen rund 360 Punkte. */
 @media (max-width:700px){
-  .szene-svg{max-height:min(calc(100dvh - 330px),46vh);}
+  .raum-svg{max-height:calc(100dvh - 360px);}
   .fenster{inset:4px;}
-  .szene-knopf span{display:none;}
-  .szene-knopf{padding:9px 12px;}
+  /* Die Beschriftung bleibt. Ein hochformatiges Bild kann die Breite eines
+     Telefons nicht ausfüllen, ohne oben und unten anzustoßen — die Zeilen, die
+     dadurch frei bleiben, sind hier besser in Wörtern angelegt als in Luft.
+     Sechs namenlose Symbole nebeneinander sind ein Ratespiel. */
+  .raum-knopf{padding:8px 11px;font-size:11.5px;flex:1 1 44%;justify-content:center;}
+  /* Denselben Handel wie beim liegenden Telefon: Marktanteil, Konto und Uhr
+     stehen zwei Fingerbreit weiter oben in der Kopfzeile. Ein zweites Mal
+     kosten sie hier die Zeilen, in denen die Knöpfe stehen sollen. */
+  .raum-szene .ko-doppel{display:none;}
   .konsole{gap:6px;padding:7px;}
   .ko-feld{flex:1 1 132px;padding:6px 8px;gap:7px;}
   .ko-v{font-size:15px;}

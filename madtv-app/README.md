@@ -27,8 +27,10 @@ npm run build:single   # dist-single/  — eine einzige HTML-Datei
 ```
 
 `npm run build:single` erzeugt weiterhin eine selbstständige Datei zum
-Doppelklicken oder Verschicken. Solange die Grafik aus Vektoren besteht, bleibt
-sie klein genug dafür.
+Doppelklicken oder Verschicken. Sie ist mit den beiden Raumbildern von 271 auf
+**599 KB** gewachsen — die Bilder stecken als Daten-URI mit drin. Das trägt noch;
+bei dreizehn Räumen wären es grob zwei Megabyte, und dann muss entschieden
+werden, ob die Einzeldatei die Bilder weiter mitschleppt.
 
 ## Aufbau
 
@@ -85,7 +87,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 110 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 140 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -125,7 +127,7 @@ Sendeplan, den Koffer für die Verträge, die Regalwand für Konjunktur und
 Protokoll, die Tür für den Flur. Das Panel öffnet sich als Fenster darüber; der
 Raum bleibt dahinter sichtbar.
 
-Drei Dinge sind daran wichtiger als die Zeichnung selbst:
+Ein paar Dinge sind daran wichtiger als die Zeichnung selbst:
 
 **Die Klickpunkte liegen im Raster, nicht im Bild.** Die Szenenschicht kennt
 zwei Sorten Hintergrund und behandelt sie gleich: eine gezeichnete Vektorszene
@@ -134,12 +136,48 @@ Punkten, auf 1600 Punkte Breite normiert. Dein Büro und das Chefbüro sind
 inzwischen beide Bilder — der Tausch war jeweils eine Zeile, und an der
 Bedienung hat sich nichts geändert. Genau dafür war die Schicht gebaut.
 
-**Stehendes Bild, Konsole daneben.** Beide gelieferten Bilder sind hochformatig
-(926×1010 und 930×787). Bei stehendem Bild bindet die Höhe: Was darunter liegt,
-nimmt dem Raum direkt Größe weg, während neben ihm Breite ungenutzt bleibt. Ab
-1080 Pixeln Fensterbreite wandern Sendekonsole und Knopfleiste deshalb an die
-Seite — gemessen 713×778 statt 611 Pixel Breite fürs Büro. Ein breiter Raum
-behält sie unten, weil ihm sonst die Breite fehlte.
+**Die Form des Platzes entscheidet, nicht die des Bildes.** Beide gelieferten
+Bilder sind hochformatig (926×1010 und 930×787). Wohin Sendekonsole und
+Knopfleiste gehören, hing zuerst an einer Breitenschwelle — das war der falsche
+Maßstab. Maßgeblich ist die Orientierung des Fensters: Liegt es quer, ist Höhe
+knapp und Breite übrig, also gehört alles neben das Bild; steht es hoch, ist es
+umgekehrt. Die zweite Bedingung bleibt das Bild selbst, denn ein breiter Raum
+wäre quer ohnehin breitenbegrenzt und verlöre durch eine Seitenspalte nur
+Größe. Gemessen an fünf echten Geräteformaten:
+
+| Format | Fenster | Bild | Konsole |
+| --- | --- | --- | --- |
+| Schreibtisch quer | 1320×980 | 713×778 | daneben |
+| Tablet quer | 1024×768 | 519×566 | daneben |
+| Telefon quer | 844×390 | 262×286 | daneben |
+| Tablet hoch | 834×1112 | 697×760 | darunter |
+| Telefon hoch | 390×844 | 364×397 | darunter |
+
+**Dieselbe Zahl zweimal ist auf einem Telefon zu teuer.** Marktanteil, Konto und
+Uhr stehen in der Konsole *und* zwei Fingerbreit weiter oben in der Kopfzeile.
+Auf einem großen Bildschirm ist das gewollt — kurze Wege schlagen Sparsamkeit.
+Auf einem Telefon kostet die Wiederholung genau die Zeilen, in denen sonst die
+Knöpfe stünden: Vorher fielen sie unter den Rand, und man musste die Seitenspalte
+scrollen, um an den Laptop zu kommen. Die drei tragen deshalb `ko-doppel` und
+fallen auf schmalen wie auf flachen Geräten weg. Übrig bleibt, was es nur hier
+gibt: der Vorschaumonitor und die Couch. Damit ist auch die Beschriftung der
+Knöpfe wieder bezahlbar — sechs namenlose Symbole nebeneinander waren ein
+Ratespiel.
+
+Nachgemessen wird das nicht per Augenschein, sondern in `tests/browser/ui.mjs`:
+Für jedes der fünf Formate prüft der Lauf, ob die Konsole an der richtigen Seite
+steht, ob nichts seitlich hinausläuft, ob die Seite als Ganzes ruhig bleibt und
+ob die Knöpfe der Szene erreichbar sind. Alle dreizehn Räume — auch die elf, die
+weiterhin Panels sind — laufen in beiden Lagen ohne waagerechten Überlauf.
+
+**Ein Name war schon vergeben.** Die Klassen der Raumszene heißen `raum-*` und
+nicht `szene-*`, weil `.szene` im Haus bereits die Figurenbox mit der Hängelampe
+war — die in Bettys Büro und den Rivalenbüros. Beide Bauteile trugen eine Weile
+denselben Namen und vererbten sich gegenseitig ihre Gestaltung: Die Figurenbox
+wurde unbemerkt zu einem Flex-Kasten, und im Raum tauchten 16 Punkte Polsterung
+auf, die niemand geschrieben hatte — genug, damit die Seite scrollte, ohne dass
+eine Regel dafür zu finden war. Gesucht wurde der Fehler in den Höhenabzügen;
+gefunden wurde er im Namen.
 
 **Es gibt beide Wege hinein.** Die Punkte sind echte fokussierbare Elemente mit
 Beschriftung, kein Trefferflächen-Raten auf einer Leinwand — mit Tabulator und
@@ -166,7 +204,8 @@ Weg hinaus.
 
 **Darunter steht die Sendekonsole**: Marktanteil, Konto, Uhr, ein
 Vorschaumonitor mit dem, was gerade über den Sender geht, und die Couch mit den
-Zuschauern davor. Fünf Anzeigen, dort wo man ohnehin hinsieht. Das Gerüst
+Zuschauern davor. Fünf Anzeigen auf großen Geräten, zwei auf dem Telefon (siehe
+oben), dort wo man ohnehin hinsieht. Das Gerüst
 entsteht beim Zeichnen der Ansicht, die Zahlen schreibt `updateKonsole()` im
 Minutentakt hinein — hinge sie am Neuzeichnen der Panels, ginge die Uhr bis zu
 zwölf Spielminuten nach.

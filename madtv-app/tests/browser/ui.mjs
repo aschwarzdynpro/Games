@@ -369,16 +369,16 @@ async function main() {
     await r.waitForTimeout(250);
 
     const sz = await r.evaluate(() => ({
-      szene: !!document.querySelector('.szene-svg'),
+      szene: !!document.querySelector('.raum-svg'),
       punkte: document.querySelectorAll('.hs').length,
-      knoepfe: document.querySelectorAll('.szene-knopf').length,
+      knoepfe: document.querySelectorAll('.raum-knopf').length,
       ohneNamen: [...document.querySelectorAll('.hs')].filter((x) => !x.getAttribute('aria-label')).length,
     }));
     pruefe('Dein Büro ist eine Szene', sz.szene);
     // Auch dieser Raum ist inzwischen ein Bild — dasselbe Argument wie beim
     // Chefbüro: Ein Bild, das nicht lädt, fällt sonst nicht auf.
     const grundBuero = await r.evaluate(() => {
-      const i = document.querySelector('.szene-grund image');
+      const i = document.querySelector('.raum-grund image');
       const rr = i?.getBoundingClientRect();
       return i ? { art: (i.getAttribute('href') ?? '').slice(0, 11),
         breit: Math.round(rr.width), hoch: Math.round(rr.height) } : null;
@@ -389,7 +389,7 @@ async function main() {
     // Stehendes Bild: Konsole und Leiste gehören daneben, nicht darunter.
     pruefe('bei stehendem Bild steht die Konsole daneben',
       await r.evaluate(() => {
-        const sz2 = document.querySelector('.szene').getBoundingClientRect();
+        const sz2 = document.querySelector('.raum-bild').getBoundingClientRect();
         const se = document.querySelector('.raum-seite').getBoundingClientRect();
         return se.left >= sz2.right - 2;
       }));
@@ -406,7 +406,7 @@ async function main() {
       const w = await r.evaluate(() => ({
         titel: document.querySelector('.fenster-kopf h2')?.textContent ?? '',
         zeichen: (document.querySelector('.fenster-inhalt')?.textContent ?? '').trim().length,
-        szeneBleibt: !!document.querySelector('.szene-svg'),
+        szeneBleibt: !!document.querySelector('.raum-svg'),
       }));
       pruefe(`«${erwartet}» öffnet sich mit Inhalt`,
         w.titel === erwartet && w.zeichen > 20 && w.szeneBleibt,
@@ -496,7 +496,7 @@ async function main() {
     await angekommen(c);
 
     pruefe('das Chefbüro ist eine Szene',
-      await c.evaluate(() => !!document.querySelector('.szene-svg')));
+      await c.evaluate(() => !!document.querySelector('.raum-svg')));
     pruefe('mit vier Klickpunkten',
       (await c.evaluate(() => document.querySelectorAll('.hs').length)) === 4);
 
@@ -518,7 +518,7 @@ async function main() {
     // nicht lädt, fällt sonst nicht auf: Die Klickpunkte lägen weiter da, nur
     // eben über einer leeren Fläche.
     const grund = await c.evaluate(() => {
-      const i = document.querySelector('.szene-grund image');
+      const i = document.querySelector('.raum-grund image');
       if (!i) return null;
       const r = i.getBoundingClientRect();
       const href = i.getAttribute('href') ?? '';
@@ -604,6 +604,62 @@ async function main() {
       (await t.evaluate(() => window.madtv.session().g.player.licences.length)) > lizenzen);
     pruefe('Freier Aufbau ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
     await t.close();
+  }
+
+  /* ── Hoch- und Querformat ──
+     Der begehbare Raum ordnet sich nach der Form des Fensters: quer wandern
+     Konsole und Knopfleiste neben das Bild, hochkant darunter. Beide Male gilt
+     dasselbe Versprechen — nichts läuft seitlich hinaus, und die Knöpfe der
+     Szene bleiben ohne Umweg erreichbar. Die Werte stehen hier als Messung,
+     nicht als Wunsch: Sie sind an echten Geräteformaten abgenommen. */
+  console.log('\nHoch- und Querformat');
+  for (const [name, breite, hoehe, daneben] of [
+    ['Schreibtisch quer', 1320, 980, true],
+    ['Tablet quer', 1024, 768, true],
+    ['Telefon quer', 844, 390, true],
+    ['Tablet hoch', 834, 1112, false],
+    ['Telefon hoch', 390, 844, false],
+  ]) {
+    const mm = [];
+    const o = await browser.newPage({ viewport: { width: breite, height: hoehe } });
+    o.on('pageerror', (e) => mm.push('Ausnahme: ' + e.message));
+    o.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(o);
+    // Ohne das bliebe der Zeiger auf einem Klickpunkt stehen und dessen
+    // Schildchen verfälschte die Messung.
+    await o.mouse.move(3, 3);
+    await o.waitForTimeout(250);
+
+    const lage = await o.evaluate(() => {
+      const kasten = document.querySelector('.raum-bild')?.getBoundingClientRect();
+      const seite = document.querySelector('.raum-seite')?.getBoundingClientRect();
+      const knopf = [...document.querySelectorAll('.raum-knopf')].pop();
+      const spalte = document.querySelector('.raum-seite');
+      const nav = document.getElementById('bottom').getBoundingClientRect();
+      const main = document.getElementById('main');
+      return {
+        bild: !!kasten,
+        // Rechts vom Bild statt darunter — das unterscheidet die beiden Lagen.
+        daneben: kasten && seite ? seite.left >= kasten.right - 2 : null,
+        ueberlauf: document.body.scrollWidth - document.body.clientWidth,
+        // Der Raum selbst soll nie die ganze Seite scrollen lassen.
+        seiteScrollt: main.scrollHeight > main.clientHeight + 2,
+        // Erreichbar heißt: sichtbar, oder in der Spalte daneben erscrollbar.
+        knopfFrei: knopf
+          ? knopf.getBoundingClientRect().bottom <= nav.top + 1
+            || (!!spalte && spalte.scrollHeight > spalte.clientHeight + 2)
+          : false,
+      };
+    });
+
+    pruefe(`${name}: der Raum ist eine Szene`, lage.bild);
+    pruefe(`${name}: Konsole ${daneben ? 'neben' : 'unter'} dem Bild`,
+      lage.daneben === daneben, `daneben=${lage.daneben}`);
+    pruefe(`${name}: kein seitlicher Überlauf`, lage.ueberlauf <= 1, `${lage.ueberlauf} px`);
+    pruefe(`${name}: die Seite scrollt nicht als Ganzes`, !lage.seiteScrollt);
+    pruefe(`${name}: die Knöpfe der Szene sind erreichbar`, lage.knopfFrei);
+    pruefe(`${name}: keine Konsolenfehler`, mm.length === 0, mm.join(' | '));
+    await o.close();
   }
 
   await browser.close();

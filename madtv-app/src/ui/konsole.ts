@@ -6,6 +6,12 @@
  * Fünf Anzeigen, sonst nichts: Marktanteil, Konto, Uhr, was gerade läuft, und
  * wie viele davor sitzen.
  *
+ * Drei davon stehen auch in der Kopfzeile. Das ist auf einem großen Bildschirm
+ * gewollt — kurze Wege schlagen Sparsamkeit. Auf einem quer gehaltenen Telefon
+ * ist Höhe aber das knappe Gut, und dieselbe Zahl zweimal zu zeigen kostet dort
+ * genau den Platz, an dem die Knöpfe fehlen. Die drei tragen deshalb
+ * `ko-doppel`, damit das Stilblatt sie dort weglassen kann.
+ *
  * Gebaut wird das Gerüst beim Zeichnen der Ansicht, die Zahlen schreibt
  * `updateKonsole()` im Minutentakt hinein — genau wie bei der Kopfzeile. Würde
  * die Konsole am Neuzeichnen der Panels hängen, ginge die Uhr bis zu zwölf
@@ -19,15 +25,15 @@ import { G } from './session';
 export function renderKonsole(): string {
   return '<div class="konsole" role="group" aria-label="Sendekonsole">' +
 
-    `<div class="ko-feld"><div class="ko-ico">${icon('ui-diagramm')}</div>` +
+    `<div class="ko-feld ko-doppel"><div class="ko-ico">${icon('ui-diagramm')}</div>` +
     '<div class="ko-werte"><div class="ko-k">Marktanteil</div>' +
     '<div class="ko-v acc" id="k-quote">—</div></div></div>' +
 
-    `<div class="ko-feld"><div class="ko-ico gold">${icon('ui-waage')}</div>` +
+    `<div class="ko-feld ko-doppel"><div class="ko-ico gold">${icon('ui-waage')}</div>` +
     '<div class="ko-werte"><div class="ko-k">Konto</div>' +
     '<div class="ko-v" id="k-geld">—</div></div></div>' +
 
-    `<div class="ko-feld"><div class="ko-ico">${icon('ui-uhr')}</div>` +
+    `<div class="ko-feld ko-doppel"><div class="ko-ico">${icon('ui-uhr')}</div>` +
     '<div class="ko-werte"><div class="ko-k">Sendezeit</div>' +
     '<div class="ko-v num" id="k-uhr">--:--</div></div></div>' +
 

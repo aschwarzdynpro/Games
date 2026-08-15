@@ -6,6 +6,12 @@
  * man sich, indem man einen Gegenstand anfasst — den Laptop für den Sendeplan,
  * den Koffer für die Verträge, die Tür für den Flur.
  *
+ * Die Klassen heißen `raum-*` und nicht `szene-*`: `.szene` gibt es im Haus
+ * schon — so heißt die Figurenbox mit der Hängelampe in Bettys Büro und den
+ * Rivalenbüros. Zwei Bauteile mit demselben Namen erben gegenseitig ihre
+ * Gestaltung, und das fällt erst auf, wenn irgendwo 16 Punkte Polsterung
+ * auftauchen, die niemand geschrieben hat.
+ *
  * Die Schicht kennt zwei Sorten Hintergrund und behandelt sie gleich: eine
  * gezeichnete Vektorszene oder ein fertiges Bild. Beides liegt hinter derselben
  * Karte aus Klickpunkten, deren Koordinaten im viewBox-Raster stehen — wer
@@ -81,10 +87,10 @@ export function renderSzene(sz: Raumszene): string {
       'preserveAspectRatio="xMidYMid slice"/>'
     : (sz.malen?.() ?? '');
 
-  return '<div class="szene">' +
-    `<svg class="szene-svg" viewBox="${esc(sz.viewBox)}" preserveAspectRatio="xMidYMid meet" ` +
+  return '<div class="raum-bild">' +
+    `<svg class="raum-svg" viewBox="${esc(sz.viewBox)}" preserveAspectRatio="xMidYMid meet" ` +
     `role="group" aria-label="${esc(sz.beschreibung)}">` +
-    `<g class="szene-grund" aria-hidden="true">${grund}</g>` +
+    `<g class="raum-grund" aria-hidden="true">${grund}</g>` +
     sz.punkte.map(klickpunkt).join('') +
     '</svg></div>';
 }
@@ -98,9 +104,9 @@ export function renderSzene(sz: Raumszene): string {
  * Geräten ist sie ohnehin der bequemere.
  */
 export function renderSzeneLeiste(sz: Raumszene): string {
-  return '<div class="szene-leiste">' +
+  return '<div class="raum-leiste">' +
     sz.punkte.map((p) =>
-      `<button class="szene-knopf" data-act="${esc(p.act)}"` +
+      `<button class="raum-knopf" data-act="${esc(p.act)}"` +
       Object.entries(p.daten ?? {}).map(([k, v]) => ` data-${k}="${esc(v)}"`).join('') +
       ` title="${esc(p.hinweis)}">${icon(p.ico)}<span>${esc(p.titel)}</span></button>`).join('') +
     '</div>';
