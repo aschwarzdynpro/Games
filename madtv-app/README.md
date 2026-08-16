@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 260 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 269 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -316,6 +316,32 @@ keiner war: Quelle und Ziel passten nicht gleichzeitig ins Fenster, das
 Einscrollen der Quelle schob das Ziel hinaus, und der Zeiger landete auf der
 Kopfzeile. Die Prüfung misst deshalb ausdrücklich mit, ob beide sichtbar sind,
 bevor sie das Ergebnis glaubt.
+
+**Das Nachrichtenstudio auf dem Telefon.** Gemessen war der Raum 1557 Punkte
+hoch bei 466 sichtbaren — dreieinhalb Bildschirme, für die man dreimal blättern
+musste. Drei Eingriffe, nach gemessener Wirkung:
+
+*Der Flur weicht jedem Raum, nicht nur den begehbaren.* In den Bildräumen
+verschwand er längst — man steht ja im Zimmer und nicht davor —, in den acht
+Panelräumen stand er weiter da und kostete 93 der 466 sichtbaren Punkte. Ein
+Fünftel der Inhaltsfläche für einen Gang, in dem man gerade nicht ist. Zu sehen
+ist er weiterhin dort, wo er etwas erzählt: im Hochhaus und während der Fahrt.
+
+*Die Ressortkörbe liegen schmal nebeneinander.* Gestapelt waren die fünf 991
+von 1557 Punkten — zwei Drittel des Raums. Als Wischleiste mit denselben
+Pfeilen wie überall sonst kosten sie eine Reihe. Auf breiten Geräten bleibt das
+Raster, dort ist die Reihe unnötig.
+
+*Der Teleprompter klebt oben.* Er ist das Ziel jeder Geste in diesem Raum, und
+der Weg dorthin wuchs mit jedem Korb: 268 Punkte lagen zwischen erster Meldung
+und Prompter, vom fünften Korb aus müsste man mitten im Ziehen scrollen — mit
+dem Finger kaum machbar. Jetzt bleibt er stehen, und der Ziehweg bleibt auch am
+Ende der Körbe unter 400 Punkten.
+
+Zusammen: **1557 → 795 Punkte**, von dreieinhalb auf **1,3 Bildschirme**, das
+Beiwerk von 25 auf 4 Prozent. Alle dreizehn Räume laufen danach ohne
+waagerechten Überlauf; der längste ist noch das Rivalenbüro mit 1,7
+Bildschirmen.
 
 **Das Brett scrollt nicht.** Ein Instrumentenbrett, in dem man erst blättern
 muss, ist keines. Sichtbar bleibt nur, was man *im Spielen* dauernd braucht:

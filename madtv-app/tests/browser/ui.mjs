@@ -1088,6 +1088,99 @@ async function main() {
     await bt.close();
   }
 
+  /* ── Nachrichtenstudio auf dem Telefon ──
+     Gemessen war der Raum 1557 Punkte hoch bei 466 sichtbaren — dreieinhalb
+     Bildschirme, davon ein Viertel Beiwerk. Drei Eingriffe: Der Flur weicht
+     jedem Raum, die Ressortkörbe liegen schmal nebeneinander statt
+     untereinander, und der Teleprompter klebt oben, weil er das Ziel jeder
+     Geste ist. */
+  console.log('\nNachrichtenstudio auf dem Telefon');
+  {
+    const mm = [];
+    const n = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    n.on('pageerror', (x) => mm.push('Ausnahme: ' + x.message));
+    n.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(n);
+    const etage = await n.evaluate(() =>
+      window.madtv.core.FLOORS.findIndex((f) => f.id === 'news'));
+    await n.click(`#bottom [data-f="${etage}"]`);
+    await angekommen(n);
+    // Volle Abos, sonst sind die Körbe leer und der Raum künstlich kurz.
+    await n.evaluate(() => {
+      const g = window.madtv.session().g;
+      window.madtv.core.RESSORTS.forEach((r) => { g.player.newsSub[r.id] = 2; });
+      window.madtv.session().dirty = true;
+    });
+    await n.waitForTimeout(600);
+
+    const lage = await n.evaluate(() => {
+      const main = document.getElementById('main');
+      const welt = document.getElementById('world');
+      const tr = document.querySelector('.trays');
+      return {
+        flurSichtbar: !!welt && welt.offsetParent !== null,
+        hoehe: main.scrollHeight, sicht: main.clientHeight,
+        koerbeWaagerecht: tr ? tr.scrollWidth > tr.clientWidth + 4 : false,
+        pfeile: document.querySelectorAll('.trays-kopf [data-rail]').length,
+      };
+    });
+    pruefe('der Flur weicht auch dem Panelraum', !lage.flurSichtbar);
+    pruefe('der Raum passt in unter zwei Bildschirme',
+      lage.hoehe / lage.sicht < 2, `${lage.hoehe} von ${lage.sicht} — ${
+        (lage.hoehe / lage.sicht).toFixed(1)} Bildschirme`);
+    pruefe('die Ressortkörbe liegen nebeneinander', lage.koerbeWaagerecht);
+    pruefe('und haben ihre zwei Pfeile', lage.pfeile === 2, String(lage.pfeile));
+
+    // Der Teleprompter ist das Ziel jeder Geste — er muss erreichbar bleiben,
+    // auch wenn man unten in den Körben steht.
+    await n.evaluate(() => { document.getElementById('main').scrollTop = 9999; });
+    await n.waitForTimeout(350);
+    const geklebt = await n.evaluate(() => {
+      const pr = document.querySelector('.prompter').getBoundingClientRect();
+      const main = document.getElementById('main').getBoundingClientRect();
+      const q = document.querySelector('[data-drag="news"]')?.getBoundingClientRect();
+      return {
+        sichtbar: pr.bottom > main.top + 2 && pr.top < main.bottom - 2,
+        ziehweg: q ? Math.round(Math.abs(q.top - pr.top)) : null,
+      };
+    });
+    pruefe('der Teleprompter bleibt beim Scrollen stehen', geklebt.sichtbar);
+    pruefe('und der Ziehweg bleibt kurz',
+      (geklebt.ziehweg ?? 999) < 400, `${geklebt.ziehweg} px`);
+
+    // Auf dem Finger ist Antippen der Weg — er muss tragen.
+    const vor = await n.evaluate(() => window.madtv.session().g.player.newsShow.length);
+    await n.click('[data-drag="news"]');
+    await n.waitForTimeout(500);
+    pruefe('eine Meldung antippen setzt sie in den Prompter',
+      (await n.evaluate(() => window.madtv.session().g.player.newsShow.length)) > vor);
+
+    pruefe('Nachrichtenstudio ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await n.close();
+  }
+
+  /* ── Auf breiten Geräten bleibt das Raster ── */
+  {
+    const w = await browser.newPage({ viewport: { width: 1320, height: 980 } });
+    await starte(w);
+    const etage = await w.evaluate(() =>
+      window.madtv.core.FLOORS.findIndex((f) => f.id === 'news'));
+    await w.click(`#bottom [data-f="${etage}"]`);
+    await angekommen(w);
+    await w.evaluate(() => {
+      const g = window.madtv.session().g;
+      window.madtv.core.RESSORTS.forEach((r) => { g.player.newsSub[r.id] = 2; });
+      window.madtv.session().dirty = true;
+    });
+    await w.waitForTimeout(600);
+    pruefe('am Schreibtisch bleiben die Körbe ein Raster',
+      await w.evaluate(() => {
+        const tr = document.querySelector('.trays');
+        return tr.scrollWidth <= tr.clientWidth + 4;
+      }));
+    await w.close();
+  }
+
   /* ── Brett, Übersicht und Popups ──
      Drei Zusagen: Das Brett scrollt nie, ein Popup deckt alles ab, und wer im
      Sendeplan nach unten sieht, bleibt dort. Das Letzte war ein Fehler — die

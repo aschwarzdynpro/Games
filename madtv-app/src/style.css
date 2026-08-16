@@ -998,10 +998,16 @@ body.dragging .pocket{transition:none;}
   border:1px solid var(--line2);border-radius:12px;padding:12px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 6px 18px rgba(0,0,0,.28);
 }
+/* Der Teleprompter klebt oben: Er ist das Ziel jeder Geste in diesem Raum, und
+   der Weg dorthin wuchs mit jedem Ressortkorb. Auf dem Telefon lagen zwischen
+   erster Meldung und Prompter schon 268 Punkte — vom fünften Korb aus müsste
+   man mitten im Ziehen scrollen, und das geht mit dem Finger kaum. */
 .prompter{
+  position:sticky;top:0;z-index:5;
   background:linear-gradient(180deg,#0a1a12,#061009);
   border:1px solid #1f5c3a;border-radius:9px;padding:9px;
   margin-bottom:12px;
+  box-shadow:0 8px 18px -8px rgba(0,0,0,.7);
 }
 .prompter-head{
   font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
@@ -1029,6 +1035,29 @@ body.dragging .pocket{transition:none;}
 .newsslot.drop-ok{border-color:var(--ok);background:rgba(30,110,70,.4);}
 
 .trays{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;}
+.trays-kasten{margin-bottom:12px;}
+.trays-kopf{
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  font-size:11px;font-weight:700;color:var(--dim);
+}
+.trays-kopf span{font-size:10px;font-weight:400;color:var(--dim2);}
+/* Auf breiten Geräten bleiben die Körbe ein Raster — dort ist die Reihe nicht
+   nötig, und die Pfeile schalten sich von selbst ab. */
+@media (min-width:701px){ .trays-kopf .shelf-nav{display:none;} }
+
+/* Schmal: die fünf Körbe nebeneinander statt untereinander. Gestapelt waren
+   sie 991 von 1557 Punkten — zwei Drittel des Raums, für den man dreimal
+   blättern musste. Als Wischleiste bleibt der Raum auf einem Bildschirm. */
+@media (max-width:700px){
+  .trays{
+    display:flex;grid-template-columns:none;
+    overflow-x:auto;scroll-snap-type:x mandatory;
+    gap:9px;padding-bottom:4px;
+  }
+  .trays > .tray{
+    flex:0 0 min(84vw,300px);scroll-snap-align:start;
+  }
+}
 .tray{
   background:linear-gradient(180deg,#1b2431,#141b25);
   border:1px solid var(--line);border-radius:9px;padding:8px;

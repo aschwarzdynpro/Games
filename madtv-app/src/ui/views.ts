@@ -182,7 +182,13 @@ export function renderView(): void {
   // Ein begehbarer Raum braucht die Höhe: Der Flur darüber verschwindet, solange
   // man drin ist — man steht ja im Zimmer und nicht davor.
   const imRaum = !!s.room && !!SZENEN[s.room] && s.elevBusy === 0;
-  setWorldVisible(S().g.opt.world && !imRaum);
+  // Der Flur weicht *jedem* Raum, nicht nur den begehbaren: Man steht ja auch
+  // im Nachrichtenstudio drin und nicht davor. Auf dem Telefon kostete der
+  // Streifen 93 der 466 sichtbaren Punkte — ein Fünftel der Inhaltsfläche für
+  // einen Gang, in dem man gerade nicht ist. Zu sehen ist er weiterhin dort,
+  // wo er etwas erzählt: im Hochhaus und während der Fahrt.
+  const inEinemRaum = !!s.room && s.elevBusy === 0;
+  setWorldVisible(S().g.opt.world && !inEinemRaum);
   document.body.classList.toggle('im-raum', imRaum);
   document.body.classList.toggle('fenster-offen', (imRaum && !!s.fenster) || s.uebersicht);
   // Freie Plätze zeigen an, dass sie nehmen würden, was in der Hand liegt.

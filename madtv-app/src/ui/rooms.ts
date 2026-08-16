@@ -615,8 +615,15 @@ function news(): string {
     `<div class="hint" style="margin-top:7px">Wirkung dieser Sendung: <b>${wirkung.toFixed(0)}</b>. ` +
     'Nur tagesaktuelle Meldungen aus einem hohen Abo ziehen Zuschauer von der Konkurrenz ab.</div></div>';
 
-  // Ressortkörbe mit Abostufe und Ticker
-  h += '<div class="trays">';
+  // Ressortkörbe mit Abostufe und Ticker. Auf schmalen Geräten liegen sie
+  // nebeneinander statt untereinander — gestapelt waren sie zwei Drittel des
+  // Raums. Die Pfeile sind dieselben wie an jeder anderen Reihe im Haus: Mit
+  // dem Finger wischt man ohnehin, mit der Maus ahnt man sonst nicht, dass es
+  // weitergeht.
+  h += `<div class="trays-kasten" ${RAILBOX}>` +
+    `<div class="trays-kopf">Ressorts<span>${RESSORTS.length} Körbe</span>` +
+    `${railNav('Ressorts')}</div>`;
+  h += '<div class="trays" data-scroll>';
   RESSORTS.forEach((r) => {
     const lvl = p.newsSub[r.id] ?? 0;
     h += '<div class="tray"><div class="tray-head">' +
