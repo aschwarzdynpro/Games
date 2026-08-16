@@ -1096,6 +1096,37 @@ async function main() {
      Gemessen wird über das ganze Fenster, nicht nur die Ansicht — das
      Armaturenbrett steht außerhalb von #view und war beim ersten Anlauf
      durchgerutscht. */
+  /* ── Vollbild ──
+     Auf einem Tablet ist die Browserleiste ein knappes Drittel der Höhe. Der
+     Schalter in der Kopfzeile holt sie sich; wo der Browser kein Vollbild
+     kennt oder die Seite schon ohne Leiste läuft, verschwindet er. */
+  console.log('\nVollbild');
+  {
+    const mm = [];
+    const f = await browser.newPage({ viewport: { width: 834, height: 1112 } });
+    f.on('pageerror', (x) => mm.push('Ausnahme: ' + x.message));
+    f.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(f);
+
+    pruefe('der Schalter steht in der Kopfzeile',
+      await f.isVisible('#vollbild'));
+
+    await f.click('#vollbild');
+    await f.waitForTimeout(400);
+    const drin = await f.evaluate(() => document.fullscreenElement !== null);
+    pruefe('ein Klick schaltet ins Vollbild', drin);
+    pruefe('und der Schalter zeigt jetzt den Rückweg',
+      (await f.getAttribute('#vollbild', 'aria-label')) === 'Vollbild verlassen');
+
+    await f.click('#vollbild');
+    await f.waitForTimeout(400);
+    pruefe('noch ein Klick führt zurück',
+      await f.evaluate(() => document.fullscreenElement === null));
+
+    pruefe('Vollbild ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await f.close();
+  }
+
   console.log('\nLesbare Schrift');
   for (const [name, breite, hoehe] of [
     ['iPad quer', 1180, 820], ['Telefon', 390, 844],

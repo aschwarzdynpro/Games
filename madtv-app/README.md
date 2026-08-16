@@ -67,7 +67,7 @@ src/
     szene.ts      Räume als begehbares Bild mit Klickpunkten
     szenen/       je Raum: Zeichnung oder Bild, plus Karte der Klickpunkte
     konsole.ts    Marktanteil, Konto, Uhr, Vorschaumonitor, Zuschauercouch
-  assets/icons/   98 Symbole, je eine SVG-Datei
+  assets/icons/   100 Symbole, je eine SVG-Datei
   assets/szenen/  Raumbilder; im Ordner-Build eigene Dateien, in der Einzeldatei gar nicht
   style.css
 public/           Manifest, Sinnbild, Dienstarbeiter — nur im Ordner-Build
@@ -111,14 +111,14 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 282 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 287 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
 | Flur | Liste mit Symbolen | gezeichnete Szene mit laufender Figur |
 | Sendeplan | Textliste mit Auswahldialog | Steckwand mit Kassetten zum Ziehen |
 | Sendezeit | 7 gleich lange Plätze | 14 Halbstundenfelder, Sendungen 30 Min bis 3 Std |
-| Symbole | Emoji aus der Schriftart | 98 gezeichnete Vektorsymbole aus dem eigenen Satz |
+| Symbole | Emoji aus der Schriftart | 100 gezeichnete Vektorsymbole aus dem eigenen Satz |
 | Verteilung | Datei zum Doppelklicken | zusätzlich installierbar und offline spielbar |
 | Figuren | je vier feste Sätze nach einer Zahl | Sätze mit Bedingung und Rang, abhängig vom Spielverlauf |
 
@@ -461,6 +461,26 @@ Die Prüfung misst dabei über das ganze Fenster, nicht nur über die Ansicht: D
 Armaturenbrett steht außerhalb von `#view` und war beim ersten Anlauf
 durchgerutscht. Ausgenommen bleibt, was in einem `<svg>` steht — dort ist die
 Zahl eine Bildkoordinate und sagt über Lesbarkeit nichts aus.
+
+**Wirklich Vollbild.** Das Spiel füllt die Fläche, die es bekommt — auf einem
+Tablet war ein knappes Drittel davon Browserleiste. Zwei Wege, und beide waren
+zu bauen:
+
+Ein Schalter in der Kopfzeile schaltet über die Vollbild-Schnittstelle um.
+Er verschwindet, wo er nichts täte: in einem Browser ohne diese Schnittstelle
+(dem iPhone), in einem eingebetteten Rahmen, der Vollbild nicht erlaubt, und
+auf einer Seite, die schon ohne Leiste läuft.
+
+Der zweite Weg ist der bessere und war seit je halb gebaut: Über *Zum
+Startbildschirm* startet das Spiel als eigene Kachel, ganz ohne Leiste. Das
+Manifest sagt das seit Langem (`display: standalone`) — Safari liest es dafür
+aber nicht, es braucht `apple-mobile-web-app-capable`. Das Meta-Feld fehlte,
+also blieb die Leiste stehen.
+
+Dabei fiel ein Fehler in der Verteilung auf: Die Weiche stand auf
+`MODE === 'single'`, die Vollbild-Fassung läuft aber unter `vollbild` — sie
+forderte ein Manifest und einen Dienstarbeiter an, die neben einer einzelnen
+Datei gar nicht liegen. Jetzt zählen beide Einzeldatei-Fassungen gleich.
 
 **Vollbild und Point & Click.** Ein Raum ist eine Grafik mit Klickbereichen,
 wie im Original und in klassischen Point-&-Click-Spielen — ohne Rahmen, ohne

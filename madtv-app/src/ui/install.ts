@@ -11,7 +11,10 @@
  * Ursprung voraus, den eine lokale Datei nicht hat.
  */
 
-const isSingle = import.meta.env.MODE === 'single';
+// Beide Einzeldatei-Fassungen zählen hier gleich: `single` ohne Raumbilder,
+// `vollbild` mit. Nur auf `single` zu prüfen hieß, dass die Vollbild-Fassung
+// ein Manifest und einen Dienstarbeiter anforderte, die neben ihr nicht liegen.
+const isSingle = import.meta.env.MODE === 'single' || import.meta.env.MODE === 'vollbild';
 const isHttp = typeof location !== 'undefined' && location.protocol.startsWith('http');
 
 export function setupInstall(): void {
