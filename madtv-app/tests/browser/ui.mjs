@@ -1091,8 +1091,11 @@ async function main() {
   /* ── Lesbare Schrift ──
      161 Regeln standen bei 11 Punkten oder darunter, 34 davon bei 9 oder
      weniger. Acht Punkte sind auf einem Tablet keine Schrift mehr, sondern ein
-     Muster. Der Boden liegt jetzt bei 10,5; geprüft wird, dass er dort bleibt
-     und dass die größere Schrift nirgends abgeschnitten wird. */
+     Muster. Nach zwei Runden liegt der Boden bei 12,5; geprüft wird, dass er
+     dort bleibt und dass die größere Schrift nirgends abgeschnitten wird.
+     Gemessen wird über das ganze Fenster, nicht nur die Ansicht — das
+     Armaturenbrett steht außerhalb von #view und war beim ersten Anlauf
+     durchgerutscht. */
   console.log('\nLesbare Schrift');
   for (const [name, breite, hoehe] of [
     ['iPad quer', 1180, 820], ['Telefon', 390, 844],
@@ -1106,8 +1109,11 @@ async function main() {
         const r = e.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
       };
-      const texte = [...document.querySelectorAll('#view *')].filter((e) =>
-        sichtbar(e) && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+      // Beschriftungen in der Zeichnung skalieren mit dem Bild und werden in
+      // Bildkoordinaten gemessen — ihre px-Zahl sagt nichts über die Lesbarkeit.
+      const texte = [...document.querySelectorAll('#view *, #brett *, #topbar *, #bottom *')].filter((e) =>
+        !(e instanceof SVGElement)
+        && sichtbar(e) && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
       const groessen = texte.map((e) => parseFloat(getComputedStyle(e).fontSize));
       // Abgeschnitten: Inhalt höher als der Kasten, und der Kasten schneidet ab.
       const beschnitten = texte.filter((e) => {
@@ -1118,13 +1124,15 @@ async function main() {
       return {
         kleinste: Math.min(...groessen),
         wieviele: texte.length,
-        unter11: groessen.filter((g) => g < 10.4).length,
+        zuklein: texte.filter((e) => parseFloat(getComputedStyle(e).fontSize) < 12.4)
+          .map((e) => `${e.className}@${getComputedStyle(e).fontSize}`).slice(0, 5),
+        unter11: groessen.filter((g) => g < 12.4).length,
         beschnitten: [...new Set(beschnitten)].slice(0, 4),
       };
     });
-    pruefe(`${name}: nichts steht unter 10,5 Punkten`,
-      mass.unter11 === 0 && mass.kleinste >= 10.4,
-      `kleinste ${mass.kleinste}px, ${mass.unter11} darunter`);
+    pruefe(`${name}: nichts steht unter 12,5 Punkten`,
+      mass.unter11 === 0 && mass.kleinste >= 12.4,
+      `kleinste ${mass.kleinste}px, ${mass.unter11} darunter: ${mass.zuklein.join(' | ')}`);
     pruefe(`${name}: und nichts wird abgeschnitten`,
       mass.beschnitten.length === 0, mass.beschnitten.join(' | '));
     await sc.close();

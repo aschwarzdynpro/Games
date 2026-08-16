@@ -163,7 +163,7 @@ const ACTIONS: Record<string, (d: Data) => void> = {
         `<div class="grouprow"><div class="gn">${icon(grp.ico)} ${esc(grp.name)}</div>` +
         `<div class="gb">${bar(s.res!.groups[i]!, gmax)}</div>` +
         `<div class="gv">${viewers(s.res!.groups[i]!)}</div></div>`).join('') +
-      '<div style="margin-top:10px;font-size:11.5px;color:var(--dim2)">Gleichzeitig: ' +
+      '<div style="margin-top:10px;font-size:15.5px;color:var(--dim2)">Gleichzeitig: ' +
       rivals.map((r) => `${esc(r.name)} ${viewers(r.aud)}`).join(' · ') + '</div>',
       [{ t: 'Schließen', cls: 'btn ghost' }]);
   },

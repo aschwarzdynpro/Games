@@ -89,7 +89,7 @@ export function bueroSendeplan(): string {
     h += `<button class="btn sm ${s.viewDay === i ? '' : 'ghost'}" data-act="setday" data-d="${i}">` +
       `${i === 0 ? 'Heute' : i === 1 ? 'Morgen' : wd}</button>`;
   }
-  h += '<span class="dim" style="font-size:11px;margin-left:auto">' +
+  h += '<span class="dim" style="font-size:15px;margin-left:auto">' +
     `Sendeschema: ${NEWS_MINUTES} Min Nachrichten · Film · ${AD_MINUTES} Min Werbung</span></div>`;
 
   const openSlots = slots.filter((x) => !x.prog && !x.aired).length;
@@ -132,7 +132,7 @@ export function bueroKoffer(): string {
       '<th class="right">Frist</th><th class="right">pro Spot</th><th class="right">Strafe</th></tr>';
     p.contracts.forEach((c) => {
       const left = c.deadline - g.day;
-      h += `<tr><td><b>${esc(c.brand)}</b><br><span class="dim" style="font-size:10.5px">${esc(c.product)}</span></td>` +
+      h += `<tr><td><b>${esc(c.brand)}</b><br><span class="dim" style="font-size:14.5px">${esc(c.product)}</span></td>` +
         `<td>${viewers(c.minAud)}${c.group ? ` <span class="tag p">${GROUPS[c.gi]!.name}</span>` : ''}</td>` +
         `<td class="right num">${c.done}/${c.spots}</td>` +
         `<td class="right num ${left <= 1 ? 'bad' : left <= 2 ? 'warn' : ''}">${left <= 0 ? 'heute!' : `${left} T`}</td>` +
@@ -298,16 +298,16 @@ export function filmAuktion(): string {
     const a = g.auction;
     h += `<div class="card" style="border-color:var(--gold)"><h3>${icon('ui-hammer')} Auktion läuft</h3>` +
       '<div class="item" style="background:transparent;border:none;padding:0">' +
-      `<div style="flex:1"><div class="t" style="font-size:14px">${esc(a.title)}</div>` +
+      `<div style="flex:1"><div class="t" style="font-size:17px">${esc(a.title)}</div>` +
       `<div class="m">${licMeta(a)} · ${fskTag(a.fsk)}</div>` +
       `<div class="statline" style="margin-top:5px">Zuschauerwert ${bar(a.qual)} ${a.qual} &nbsp; ` +
       `Kritik ${bar(a.critic, 100, 'var(--acc2)')} ${a.critic}</div></div>` +
-      `<div class="r"><div style="font-size:18px;font-weight:800">${money(a.bid)}</div>` +
+      `<div class="r"><div style="font-size:21px;font-weight:800">${money(a.bid)}</div>` +
       `<div class="m">${a.leader ? `Höchstbietend: ${esc(a.leader)}` : 'noch kein Gebot'}</div></div></div>` +
       '<div class="btnrow" style="margin-top:9px">' +
       `<button class="btn gold" data-act="bid">Bieten: ${money(Math.round((a.bid * 1.12) / 1000) * 1000)}</button>` +
       '<button class="btn ghost" data-act="passauction">Verzichten</button>' +
-      `<span class="dim" style="font-size:11px">Richtpreis ${money(a.guide)} · Zuschlag zum Sendeschluss</span></div>` +
+      `<span class="dim" style="font-size:15px">Richtpreis ${money(a.guide)} · Zuschlag zum Sendeschluss</span></div>` +
       '<div class="hint">Die Konkurrenz steigert stündlich mit — wer wartet, zahlt drauf oder geht leer aus.</div></div>';
   }
   return h;
@@ -318,11 +318,11 @@ export function filmPaket(): string {
   const g = G();
   if (g.packageTaken) return '';
   return `<div class="card" style="border-color:var(--acc2)"><h3>${icon('ui-karton')} Exklusivpaket</h3>` +
-    '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Fünf Spitzentitel aus dem Verleihkatalog, ' +
+    '<p class="dim" style="font-size:16px;margin-bottom:9px">Fünf Spitzentitel aus dem Verleihkatalog, ' +
     'gebündelt und ohne Auktion. Der Preis ist unverschämt — aber die Konkurrenz kommt an keinen davon heran.</p>' +
     `<div class="btnrow"><button class="btn" data-act="package" ${g.player.money < PACKAGE_COST ? 'disabled' : ''}>` +
     `Paket kaufen · ${money(PACKAGE_COST)}</button>` +
-    '<span class="dim" style="font-size:11px">5 Titel der Güteklassen 4–5</span></div></div>';
+    '<span class="dim" style="font-size:15px">5 Titel der Güteklassen 4–5</span></div></div>';
 }
 
 /** Der Katalog: Genre-Filter und die Regalwand mit den Schachteln. */
@@ -605,8 +605,10 @@ function news(): string {
         `<button class="btn sm ghost" data-act="unnews" data-i="${n.id}" aria-label="Meldung entfernen">✕</button>` +
         '</div>';
     } else {
+      // Kurz halten: Die Anleitung steht schon in der Überschrift des Raums,
+      // und dreimal derselbe Satz brach auf dem Telefon je zweizeilig um.
       h += `<div class="newsslot" data-drop="news" data-i="${i}"><div class="no">${i + 1}</div>` +
-        '<div class="empty">Meldung aus einem Ressortkorb hierher ziehen</div></div>';
+        '<div class="empty">frei</div></div>';
     }
   }
   const na = newsAttraction(g, p);
@@ -1198,7 +1200,7 @@ function foyer(): string {
   if (g.pendingTerror) {
     const cur = g.terrorSign;
     h += `<div class="card" style="border-color:var(--bad)"><h3>${icon('ui-bombe')} Türschild-Verzeichnis</h3>` +
-      '<p class="dim" style="font-size:12.5px;margin-bottom:9px">Für morgen ist ein Anschlag angekündigt. ' +
+      '<p class="dim" style="font-size:16px;margin-bottom:9px">Für morgen ist ein Anschlag angekündigt. ' +
       'Wer im Verzeichnis die Etagenbeschriftung vertauscht, schickt die Herrschaften woandershin. ' +
       'Unsportlich? Aber sicher.</p><div class="btnrow">' +
       (['self', 'rival1', 'rival2'] as const).map((t) =>

@@ -424,10 +424,15 @@ gemeinsamen `.ablagen`-Schale mit *einer* klebenden Kante.
 **Lesbar auf Tablet und Handy.** Die Schriftgrößen waren aus der Bildschirmzeit
 gewachsen: 161 Regeln standen bei 11 Punkten oder darunter, 34 davon bei 9 oder
 weniger — auf einem iPad ist ein 8er-Etikett kein Etikett mehr, sondern ein
-Muster. Die ganze Skala ist einmal durchgereicht worden (8 → 10,5 · 9 → 11 ·
-10 → 12 · 11 → 13 · 12 → 13,5 · 14 → 15 · 16 → 17), also proportional
-angehoben statt einzeln nachgebessert; die Abstände zwischen den Stufen
-bleiben, das Bodenmaß steigt.
+Muster. Die ganze Skala ist zweimal durchgereicht worden, beim zweiten Mal
+flach um zwei Punkte (8 → 12,5 · 9 → 13 · 10 → 14 · 11 → 15 · 12 → 15,5 ·
+14 → 17 · 16 → 19), also proportional angehoben statt einzeln nachgebessert;
+die Abstände zwischen den Stufen bleiben, das Bodenmaß steigt von 8 auf 12,5.
+
+Beim zweiten Durchgang fiel auf, dass die erste Runde die **Inline-Größen in
+den TypeScript-Dateien** übersehen hatte — zehn Stellen, die ihre Größe direkt
+ins `style`-Attribut schreiben statt über eine Klasse. Sie standen noch auf der
+alten Leiter und sind jetzt fortgeschrieben.
 
 Ausgenommen sind die fünf Beschriftungen *in* den Grafiken (Türschilder,
 Hinweise, Markenschriftzüge). Sie stehen in Bildkoordinaten und skalieren mit
@@ -437,7 +442,25 @@ Größere Schrift kostet Platz, und der Platz war knapp. Nachgemessen wurde
 deshalb dreierlei: Kein Text wird abgeschnitten, das Brett scrollt in keinem
 der vier Formate, und alle zwanzig Kombinationen aus Raum und Format zeigen
 weiterhin jeden Klickbereich vollständig. Kleinste tatsächlich gezeichnete
-Größe: 10,5 Punkte auf dem iPad, 11 auf dem Telefon.
+Größe: **12,5 Punkte**.
+
+Zwei Stellen zerbrachen an der zweiten Runde, und beide sind an der Ursache
+repariert statt an der Schriftgröße:
+
+- Die Ressortkörbe liefen seitlich über. «Sensationen» samt Abostufen braucht
+  222 Punkte, die Rasterspalte gab 210 her — das Mindestmaß steht jetzt auf
+  240.
+- Das Nachrichtenstudio wuchs auf dem Telefon auf genau zwei Bildschirme. Der
+  Platz kam nicht von der Schrift, sondern von drei leeren Teleprompter-Plätzen,
+  die jeder denselben zweizeiligen Satz trugen («Meldung aus einem Ressortkorb
+  hierher ziehen») — die Anleitung steht schon in der Überschrift des Raums. Sie
+  sagen jetzt «frei», das spart 66 Punkte, und der Raum liegt bei 1,95
+  Bildschirmen.
+
+Die Prüfung misst dabei über das ganze Fenster, nicht nur über die Ansicht: Das
+Armaturenbrett steht außerhalb von `#view` und war beim ersten Anlauf
+durchgerutscht. Ausgenommen bleibt, was in einem `<svg>` steht — dort ist die
+Zahl eine Bildkoordinate und sagt über Lesbarkeit nichts aus.
 
 **Vollbild und Point & Click.** Ein Raum ist eine Grafik mit Klickbereichen,
 wie im Original und in klassischen Point-&-Click-Spielen — ohne Rahmen, ohne

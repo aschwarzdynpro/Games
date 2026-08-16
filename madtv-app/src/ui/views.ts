@@ -285,7 +285,7 @@ function viewElevator(): string {
   return '<div class="room" style="text-align:center;padding:60px 0">' +
     `<div class="bigico">${icon('ui-fahrstuhl')}</div>` +
     '<h2 style="margin:10px 0 4px">Der Fahrstuhl fährt…</h2>' +
-    `<p class="dim" style="font-size:12.5px">Ziel: ${t ? esc(t.name) : '—'}` +
+    `<p class="dim" style="font-size:16px">Ziel: ${t ? esc(t.name) : '—'}` +
     `${frei ? '' : ` · noch ${s.elevBusy} Minuten`}</p>` +
     `<div class="bar" style="max-width:240px;margin:16px auto;height:7px"><i style="width:${done}%"></i></div>` +
     `<p class="hint" style="max-width:380px;margin:0 auto">${frei
