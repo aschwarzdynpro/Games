@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 222 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 223 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -317,13 +317,35 @@ Einscrollen der Quelle schob das Ziel hinaus, und der Zeiger landete auf der
 Kopfzeile. Die Prüfung misst deshalb ausdrücklich mit, ob beide sichtbar sind,
 bevor sie das Ergebnis glaubt.
 
+**Vollbild und Point & Click.** Ein Raum ist eine Grafik mit Klickbereichen,
+wie im Original und in klassischen Point-&-Click-Spielen — ohne Rahmen, ohne
+Ecken, ohne Knopfleiste daneben. Die Grafik läuft bis an die Kanten ihrer
+Fläche.
+
+Randlos *und* verlustfrei geht nur auf einem Weg, und der erste war der
+falsche. Zuerst gab die Fläche die Form vor und die Grafik wurde beschnitten
+(`preserveAspectRatio="slice"`). Gemessen kostete das Klickbereiche: Im
+liegenden Telefon war der Sessel der Filmagentur — der Ausgang — zu **null
+Prozent** sichtbar, in der Werbeagentur die Tür ebenso. Jetzt ist es umgekehrt:
+Das Seitenverhältnis der Grafik geht als `--seite` ins Stilblatt, der Raum
+nimmt genau die Fläche, die seine Form verlangt, und das Brett bekommt den
+Rest. Über vier Geräteformate und fünf Räume wird seither kein einziger
+Klickbereich mehr angeschnitten; eine Prüfung misst das nach.
+
+Ohne Knopfleiste hängt die Bedienbarkeit an den Punkten selbst. Sie sind
+weiterhin echte fokussierbare Elemente mit Beschriftung — mit Tabulator und
+Vorleseprogramm bleibt der Raum bedienbar, und eine Prüfung hält fest, dass
+jeder Punkt erreichbar ist. `renderSzeneLeiste()` bleibt im Haus, ungenutzt:
+Sie wäre der Weg zurück, falls sich das Zeigen im Bild je als zu mühsam
+erweist.
+
 **Die App ist das Bild und das Brett darunter.** Der Raum oben wechselt, das
 Armaturenbrett bleibt stehen — deshalb sitzt es im Rahmen und nicht in der
 Ansicht. Darin steht alles, was man beim Spielen wissen muss: Sendetag,
 Sendezeit, Konto samt Tageskosten, Marktanteil, Zuschauer, Betty; daneben der
-Vorschaumonitor, der Abend als Liste und die letzten Meldungen. Und die
-Handgriffe des Raums — der Laptop, die Tür — stehen gleich darunter statt unter
-dem Bild.
+Vorschaumonitor, der Abend als Liste und die letzten Meldungen. Es ist selbst
+Grafik: dunkles Blech mit Nieten, die Anzeigen als eingelassene Scheiben darin
+— gebaut aus Verläufen, denn ein Bild dafür wäre Gewicht ohne Gewinn.
 
 Die Kopfzeile zeigte dieselben Zahlen noch einmal. Zwei Orte für dieselbe Zahl
 sind einer zu viel; sie ist auf das geschrumpft, was keine Anzeige ist: Tempo

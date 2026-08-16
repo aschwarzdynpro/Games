@@ -437,6 +437,10 @@ async function main() {
       szene: !!document.querySelector('.raum-svg'),
       punkte: document.querySelectorAll('.hs').length,
       knoepfe: document.querySelectorAll('.raum-knopf').length,
+      // Vollbild-Umbau: Ein Raum ist eine Grafik mit Klickbereichen, ohne
+      // Knopfleiste daneben. Die Punkte müssen deshalb selbst tragen.
+      fokussierbar: [...document.querySelectorAll('.hs')]
+        .filter((x) => x.getAttribute('tabindex') === '0').length,
       ohneNamen: [...document.querySelectorAll('.hs')].filter((x) => !x.getAttribute('aria-label')).length,
     }));
     pruefe('Dein Büro ist eine Szene', sz.szene);
@@ -455,8 +459,9 @@ async function main() {
         return br.left >= sz2.right - 2;
       }));
     pruefe('sie hat sechs Klickpunkte', sz.punkte === 6, String(sz.punkte));
-    pruefe('und dieselbe Zahl Knöpfe in der Leiste', sz.knoepfe === sz.punkte,
-      `${sz.knoepfe} zu ${sz.punkte}`);
+    pruefe('ohne Knopfleiste daneben', sz.knoepfe === 0, String(sz.knoepfe));
+    pruefe('dafür ist jeder Klickpunkt mit der Tastatur erreichbar',
+      sz.fokussierbar === sz.punkte, `${sz.fokussierbar} von ${sz.punkte}`);
     pruefe('jeder Klickpunkt ist benannt', sz.ohneNamen === 0, String(sz.ohneNamen));
 
     // Jeder Punkt muss ein Fenster mit Inhalt öffnen — ein leeres wäre kaputt.
@@ -1292,9 +1297,7 @@ async function main() {
     const lage = await o.evaluate(() => {
       const kasten = document.querySelector('.raum-bild')?.getBoundingClientRect();
       const seite = document.getElementById('brett')?.getBoundingClientRect();
-      const knopf = [...document.querySelectorAll('.raum-knopf')].pop();
-      const spalte = document.getElementById('brett');
-      const nav = document.getElementById('bottom').getBoundingClientRect();
+      const svg = document.querySelector('.raum-svg')?.getBoundingClientRect();
       const main = document.getElementById('main');
       return {
         bild: !!kasten,
@@ -1303,20 +1306,23 @@ async function main() {
         ueberlauf: document.body.scrollWidth - document.body.clientWidth,
         // Der Raum selbst soll nie die ganze Seite scrollen lassen.
         seiteScrollt: main.scrollHeight > main.clientHeight + 2,
-        // Erreichbar heißt: sichtbar, oder in der Spalte daneben erscrollbar.
-        knopfFrei: knopf
-          ? knopf.getBoundingClientRect().bottom <= nav.top + 1
-            || (!!spalte && spalte.scrollHeight > spalte.clientHeight + 2)
-          : false,
+        // Ohne Knopfleiste hängt alles daran, dass die Klickbereiche im Bild
+        // liegen. Angeschnitten heißt hier: weniger als die Hälfte sichtbar.
+        punkteDrin: svg ? [...document.querySelectorAll('.hs-feld')].every((e) => {
+          const b = e.getBoundingClientRect();
+          const w = Math.max(0, Math.min(b.right, svg.right) - Math.max(b.left, svg.left));
+          const h = Math.max(0, Math.min(b.bottom, svg.bottom) - Math.max(b.top, svg.top));
+          return b.width * b.height > 0 && (w * h) / (b.width * b.height) > 0.55;
+        }) : false,
       };
     });
 
     pruefe(`${name}: der Raum ist eine Szene`, lage.bild);
-    pruefe(`${name}: Konsole ${daneben ? 'neben' : 'unter'} dem Bild`,
+    pruefe(`${name}: Brett ${daneben ? 'neben' : 'unter'} dem Bild`,
       lage.daneben === daneben, `daneben=${lage.daneben}`);
     pruefe(`${name}: kein seitlicher Überlauf`, lage.ueberlauf <= 1, `${lage.ueberlauf} px`);
     pruefe(`${name}: die Seite scrollt nicht als Ganzes`, !lage.seiteScrollt);
-    pruefe(`${name}: die Knöpfe der Szene sind erreichbar`, lage.knopfFrei);
+    pruefe(`${name}: kein Klickbereich wird angeschnitten`, lage.punkteDrin);
     pruefe(`${name}: keine Konsolenfehler`, mm.length === 0, mm.join(' | '));
     await o.close();
   }

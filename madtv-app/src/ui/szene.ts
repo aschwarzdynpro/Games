@@ -87,8 +87,13 @@ export function renderSzene(sz: Raumszene): string {
       'preserveAspectRatio="xMidYMid slice"/>'
     : (sz.malen?.() ?? '');
 
+  // `slice` statt `meet`: Die Grafik füllt ihre Fläche randlos aus, statt mit
+  // Balken darin zu schweben. Weil Bild *und* Klickpunkte in demselben viewBox
+  // liegen, verschieben sie sich beim Zuschnitt gemeinsam — die Trefferflächen
+  // bleiben also auf ihren Gegenständen. Was der Zuschnitt kostet, ist Rand:
+  // `tests/browser/ui.mjs` misst nach, dass kein Klickpunkt hinausfällt.
   return '<div class="raum-bild">' +
-    `<svg class="raum-svg" viewBox="${esc(sz.viewBox)}" preserveAspectRatio="xMidYMid meet" ` +
+    `<svg class="raum-svg" viewBox="${esc(sz.viewBox)}" preserveAspectRatio="xMidYMid slice" ` +
     `role="group" aria-label="${esc(sz.beschreibung)}">` +
     `<g class="raum-grund" aria-hidden="true">${grund}</g>` +
     sz.punkte.map(klickpunkt).join('') +
@@ -97,6 +102,11 @@ export function renderSzene(sz: Raumszene): string {
 
 /**
  * Die Leiste unter der Szene.
+ *
+ * Wird seit dem Vollbild-Umbau nicht mehr gezeichnet: Ein Raum ist eine Grafik
+ * mit Klickbereichen, wie im Original und in klassischen Point-&-Click-Spielen.
+ * Die Funktion bleibt, weil sie die Punkte als gewöhnliche Knöpfe ausgibt und
+ * damit der Weg wäre, wenn sich das Zeigen im Bild je als zu mühsam erweist.
  *
  * Ein gezeichneter Raum sagt einem nicht von selbst, was anklickbar ist. Die
  * Leiste zählt dieselben Punkte noch einmal als Knöpfe auf — sie ist der

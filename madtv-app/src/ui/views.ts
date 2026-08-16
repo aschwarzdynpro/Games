@@ -15,7 +15,7 @@ import { ROOMS } from './rooms';
 import { runAction } from './actions';
 import { bindBoard } from './board';
 import { scrollMerken, scrollZurueck } from './rail';
-import { renderSzene, renderSzeneLeiste } from './szene';
+import { renderSzene } from './szene';
 import { SZENEN, fensterInhalt } from './szenen';
 import { renderBrett, updateBrett } from './konsole';
 import { setWorldVisible } from '../world/world';
@@ -182,12 +182,6 @@ export function renderView(): void {
   // Freie Plätze zeigen an, dass sie nehmen würden, was in der Hand liegt.
   document.body.classList.toggle('hat-hand', !!s.hand);
 
-  // Die Knöpfe des Raums gehören ins Brett — dort stehen die Handgriffe,
-  // während oben nur noch das Bild ist.
-  const knoepfe = el('b-knoepfe');
-  const sz = s.room ? SZENEN[s.room] : undefined;
-  knoepfe.innerHTML = sz && s.elevBusy === 0 ? renderSzeneLeiste(sz) : '';
-
   if (s.elevBusy > 0) view.innerHTML = viewElevator();
   else if (!s.room) view.innerHTML = viewTower();
   else if (SZENEN[s.room]) view.innerHTML = viewRaumszene(s.room);
@@ -234,9 +228,13 @@ function viewRaumszene(room: RoomId): string {
   // direkt Größe weg — neben ihm liegt es auf sonst ungenutzter Breite.
   const [, , vbW, vbH] = sz.viewBox.split(/\s+/).map(Number);
   const hoch = (vbH ?? 0) / (vbW || 1) > 0.8;
-  // Die Knopfleiste steht seit dem Umbau im Armaturenbrett, zusammen mit den
-  // übrigen Anzeigen — der Raum selbst ist nur noch das Bild.
-  let h = `<div class="raum-szene${hoch ? ' hoch' : ''}">${renderSzene(sz)}`;
+  // Das Seitenverhältnis der Grafik geht ins Stilblatt: Die Fläche richtet sich
+  // danach, statt die Grafik zu beschneiden. Beschneiden hatte Klickbereiche
+  // gekostet — im liegenden Telefon war der Ausgang der Filmagentur zu null
+  // Prozent sichtbar.
+  const seite = `${vbW ?? 3} / ${vbH ?? 4}`;
+  let h = `<div class="raum-szene${hoch ? ' hoch' : ''}" style="--seite:${seite}">`
+    + renderSzene(sz);
 
   if (s.fenster) {
     const inhalt = fensterInhalt(room, s.fenster);

@@ -44,18 +44,38 @@ input,select{font:inherit;color:inherit;}
    wechselt, das Brett bleibt stehen — deshalb sitzt es im Rahmen und nicht in
    der Ansicht. Im Querformat rückt es neben das Bild, weil dort die Höhe knapp
    ist und die Breite übrig; die Regel ist dieselbe wie beim Raum selbst. */
+/* Das Brett ist selbst Grafik: dunkles Blech mit Nieten, die Anzeigen als
+   eingelassene Felder darin. Die Nieten sind vier Punktverläufe in den Ecken —
+   ein Bild dafür zu laden wäre Gewicht ohne Gewinn. */
 #brett{
-  flex-shrink:0;background:var(--bg2);border-top:1px solid var(--line);
-  padding:8px 12px;overflow:auto;max-height:46dvh;
+  flex-shrink:0;overflow:auto;max-height:46dvh;
+  padding:10px;
+  background:
+    radial-gradient(circle at 9px 9px,#5a6474 0 2px,transparent 2.6px),
+    radial-gradient(circle at calc(100% - 9px) 9px,#5a6474 0 2px,transparent 2.6px),
+    radial-gradient(circle at 9px calc(100% - 9px),#5a6474 0 2px,transparent 2.6px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px),#5a6474 0 2px,transparent 2.6px),
+    linear-gradient(180deg,#2b3441,#1d242e);
+  border-top:2px solid #3d4a5c;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.06);
 }
 .brett{display:flex;flex-direction:column;gap:8px;}
 .br-zeile{display:flex;gap:8px;flex-wrap:wrap;}
 .br-zahlen .br-feld{flex:1 1 132px;}
+/* Eine eingelassene Anzeige: dunkle Scheibe, Rahmen aus Blech, Nieten links
+   und rechts. Dasselbe Bauteil trägt Zahlen wie Tafeln. */
+.br-feld,.br-tafeln>*{
+  position:relative;
+  background:
+    radial-gradient(circle at 6px 6px,#4a5464 0 1.6px,transparent 2.2px),
+    radial-gradient(circle at calc(100% - 6px) 6px,#4a5464 0 1.6px,transparent 2.2px),
+    linear-gradient(180deg,#0f151d,#0a0e14);
+  border:1px solid #39424f;border-radius:7px;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.05);
+}
 .br-feld{
   display:flex;align-items:center;gap:9px;min-width:0;
-  padding:7px 10px;border-radius:9px;
-  background:#0e131b;border:1px solid #10151d;
-  box-shadow:inset 0 2px 7px rgba(0,0,0,.55);
+  padding:7px 10px;
 }
 .br-ico{color:var(--dim);display:flex;flex-shrink:0;}
 .br-ico .ic{width:1.4em;height:1.4em;}
@@ -76,11 +96,7 @@ input,select{font:inherit;color:inherit;}
 .br-v.onair{color:var(--acc);}
 
 /* Die drei Tafeln: was läuft, was folgt, was passiert ist */
-.br-tafeln>*{
-  flex:1 1 210px;min-width:0;
-  padding:8px 10px;border-radius:9px;
-  background:#0e131b;border:1px solid #10151d;
-}
+.br-tafeln>*{flex:1 1 210px;min-width:0;padding:8px 10px;}
 .br-titel{
   font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
   color:var(--dim2);margin-bottom:6px;
@@ -141,6 +157,8 @@ input,select{font:inherit;color:inherit;}
 @media (orientation:landscape) and (min-width:660px){
   #app{display:grid;grid-template-columns:1fr clamp(300px,27vw,400px);
     grid-template-rows:auto 1fr auto;height:100dvh;}
+  /* Im Raum bestimmt die Grafik die Spaltenbreite, nicht eine Schätzung. */
+  body.im-raum #app{grid-template-columns:auto 1fr;}
   #topbar{grid-column:1/-1;}
   #main{grid-column:1;grid-row:2;}
   #brett{
@@ -151,8 +169,11 @@ input,select{font:inherit;color:inherit;}
   .br-zahlen .br-feld{flex:1 1 44%;}
   /* Untereinander, aber jede nur so hoch wie ihr Inhalt — mit `flex:1 1`
      zögen sie sich sonst über die ganze Spalte auseinander. */
-  .br-tafeln{flex-direction:column;}
+  .br-tafeln{flex-direction:column;flex:1 1 auto;min-height:0;}
   .br-tafeln>*{flex:0 0 auto;}
+  /* Die letzte Tafel füllt, was die Spalte übrig lässt — sonst endet das Brett
+     auf halber Höhe und darunter steht leeres Blech. */
+  .br-tafeln>.br-meld{flex:1 1 auto;}
 }
 
 /* ─────────── Topbar ─────────── */
@@ -1850,21 +1871,30 @@ body.dragging .tresen-kante{pointer-events:auto;}
    sich das Brett darunter ändert — und genau daran waren die Konstanten
    vorher jedes Mal zerbrochen. */
 body.im-raum .wrap{
-  max-width:1420px;padding:10px 12px 12px;
+  max-width:none;padding:0;
   height:100%;box-sizing:border-box;
 }
 body.im-raum .raum-szene{height:100%;}
 /* `height`, nicht `max-height`: Ein Prozentwert gegen eine automatische Höhe
    greift nicht — das Bild hätte sich an nichts anlehnen können und wäre über
    den Rand hinausgewachsen. */
+/* Randlos, aber ohne Beschnitt.
+   Die Grafik füllt ihre Fläche bis an die Kanten — und die Fläche folgt dem
+   Seitenverhältnis der Grafik, statt umgekehrt. Beides zugleich geht nur, wenn
+   sich der Rest der Ansicht danach richtet: Der Raum nimmt, was seine Form
+   verlangt, das Brett bekommt genau den Rest. Andersherum — Fläche vorgeben,
+   Grafik beschneiden — hatte Klickbereiche gekostet, im liegenden Telefon bis
+   hin zum Ausgang. */
 body.im-raum .raum-bild{
-  height:100%;min-height:0;
-  /* Der Kasten füllt jetzt den Platz, das Bild steht mittig darin. Mit Rahmen
-     und Grund sähe man vor allem den leeren Kasten; die Bilder bringen ihre
-     eigene Kante mit. */
-  align-items:center;
-  background:transparent;border-color:transparent;box-shadow:none;
+  aspect-ratio:var(--seite,3/4);
+  height:100%;width:auto;max-width:100%;max-height:100%;margin:0 auto;
+  min-height:0;align-items:stretch;
+  background:#0d1219;border:0;border-radius:0;box-shadow:none;
 }
+body.im-raum .raum-svg{width:100%;height:100%;max-width:none;max-height:none;}
+/* Der Raum nimmt nur, was die Form braucht; das Brett füllt den Rest. */
+body.im-raum #main{flex:0 0 auto;overflow:visible;}
+body.im-raum #brett{flex:1 1 auto;max-height:none;}
 body.im-raum .raum-svg{max-height:100%;}
 
 /* Ohne Flur darüber hat der Raum die Höhe, die er braucht. Der Deckel liegt
@@ -1951,10 +1981,7 @@ body.im-raum .raum-svg{max-height:100%;}
    Knopfleiste noch hinpassen, darüber die Kopfzeile, darunter die Etagen. Was
    die beanspruchen, steht hier als Abzug — sonst schneidet die Etagenleiste
    dem Raum die Knöpfe ab. */
-.raum-svg{
-  display:block;width:auto;max-width:100%;height:auto;
-  max-height:min(100%,920px);
-}
+.raum-svg{display:block;width:100%;height:100%;}
 
 /* ─────────── Sendekonsole ─────────── */
 

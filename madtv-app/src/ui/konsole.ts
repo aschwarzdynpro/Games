@@ -41,11 +41,6 @@ export function renderBrett(): string {
     feld('b-betty', 'ui-herz', 'Betty', 'betty') +
     '</div>' +
 
-    // Die Handgriffe des Raums stehen direkt unter den Zahlen — sie sind das,
-    // wofür man herkommt. Weiter unten wären sie auf einem Telefon
-    // weggescrollt, während die Anzeigen davor stehen blieben.
-    '<div class="br-knoepfe" id="b-knoepfe"></div>' +
-
     '<div class="br-zeile br-tafeln">' +
 
     // Der Vorschaumonitor: was in diesem Augenblick über den Sender geht
