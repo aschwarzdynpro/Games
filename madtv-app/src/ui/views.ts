@@ -82,8 +82,6 @@ function buildTop(): void {
     `<button data-sp="2" aria-label="Normal">${icon('ui-play2')}</button>` +
     `<button data-sp="3" aria-label="Schnell">${icon('ui-play3')}</button>` +
     '</div>' +
-    `<button class="iconbtn" id="vollbild" aria-label="Vollbild" title="Vollbild">` +
-    `${icon('ui-vollbild')}</button>` +
     `<button class="iconbtn" id="menubtn" aria-label="Menü">${icon('ui-menu')}</button>`;
 
   el('topbar').querySelectorAll<HTMLButtonElement>('[data-sp]').forEach((b) => {
@@ -95,44 +93,7 @@ function buildTop(): void {
     };
   });
   el('menubtn').onclick = openMenu;
-  richteVollbild();
   topBuilt = true;
-}
-
-/**
- * Vollbild.
- *
- * Das Spiel füllt zwar die Fläche, die es bekommt — aber auf einem Tablet ist
- * ein gutes Drittel davon Browserleiste. Der Schalter holt sie sich.
- *
- * Zwei Fälle, die es nicht gibt und für die der Knopf deshalb verschwindet:
- * ein Browser ohne Vollbild-Schnittstelle (das iPhone), und eine Seite, die
- * schon im Vollbild läuft — vom Startbildschirm aus gestartet gibt es keine
- * Leiste mehr zu holen.
- */
-function richteVollbild(): void {
-  const b = el('vollbild');
-  const geht = document.fullscreenEnabled
-    // In einem eingebetteten Rahmen muss der Wirt es erlauben.
-    && (window.self === window.top || document.fullscreenEnabled);
-  const stehtSchon = window.matchMedia('(display-mode: standalone)').matches
-    || window.matchMedia('(display-mode: fullscreen)').matches;
-  if (!geht || stehtSchon) { b.hidden = true; return; }
-
-  const zeichne = (): void => {
-    const drin = document.fullscreenElement !== null;
-    b.innerHTML = icon(drin ? 'ui-fenstermass' : 'ui-vollbild');
-    b.setAttribute('aria-label', drin ? 'Vollbild verlassen' : 'Vollbild');
-    b.setAttribute('title', drin ? 'Vollbild verlassen' : 'Vollbild');
-  };
-  b.onclick = () => {
-    // Beide Wege können abgelehnt werden — ohne Abfangen landet die Absage als
-    // unbehandelte Zusage in der Konsole.
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
-    else void document.documentElement.requestFullscreen().catch(() => {});
-  };
-  document.addEventListener('fullscreenchange', zeichne);
-  zeichne();
 }
 
 function updateTop(): void {
