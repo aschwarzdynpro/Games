@@ -194,8 +194,13 @@ input,select{font:inherit;color:inherit;}
 @media (orientation:landscape) and (min-width:660px){
   #app{display:grid;grid-template-columns:1fr clamp(300px,27vw,400px);
     grid-template-rows:auto 1fr auto;height:100dvh;}
-  /* Im Raum bestimmt die Grafik die Spaltenbreite, nicht eine Schätzung. */
-  body.im-raum #app{grid-template-columns:auto 1fr;}
+  /* Im Raum bestimmt die Grafik die Spaltenbreite, nicht eine Schätzung.
+     Das Brett bekommt dabei einen Deckel: Als `1fr` schluckte es jeden Rest —
+     auf einem iPad quer 512 Punkte und 39 Prozent der Fläche, für vier Zahlen
+     und einen Knopf. Was übrig bleibt, geht an die Grafikspalte; die Grafik
+     selbst ist dort höhenbegrenzt und wächst nicht mit, steht aber mittig
+     statt an den Rand gedrückt. */
+  body.im-raum #app{grid-template-columns:1fr clamp(260px,24vw,360px);}
   #topbar{grid-column:1/-1;}
   #main{grid-column:1;grid-row:2;}
   #brett{
@@ -1937,6 +1942,9 @@ body.im-raum .wrap{
   max-width:none;padding:0;
   height:100%;box-sizing:border-box;
 }
+/* Der Kasten nimmt den ganzen Platz, die Grafik passt sich mittig hinein.
+   Das Rechnen mit Seitenverhältnissen ist damit erledigt — es hat dreimal
+   Klickbereiche gekostet. */
 body.im-raum .raum-szene{height:100%;}
 /* `height`, nicht `max-height`: Ein Prozentwert gegen eine automatische Höhe
    greift nicht — das Bild hätte sich an nichts anlehnen können und wäre über
@@ -1949,9 +1957,7 @@ body.im-raum .raum-szene{height:100%;}
    Grafik beschneiden — hatte Klickbereiche gekostet, im liegenden Telefon bis
    hin zum Ausgang. */
 body.im-raum .raum-bild{
-  aspect-ratio:var(--seite,3/4);
-  height:100%;width:auto;max-width:100%;max-height:100%;margin:0 auto;
-  min-height:0;align-items:stretch;
+  height:100%;width:100%;min-height:0;align-items:stretch;
   background:#0d1219;border:0;border-radius:0;box-shadow:none;
 }
 body.im-raum .raum-svg{width:100%;height:100%;max-width:none;max-height:none;}
@@ -1964,11 +1970,10 @@ body.im-raum .raum-svg{width:100%;height:100%;max-width:none;max-height:none;}
    hinaus, klemmt die Breite und die Grafik wird wieder beschnitten. Also das
    Brett — dort ist mehr Blech kein Schaden. Der Raum darf dafür schrumpfen,
    sonst drückte eine hochformatige Grafik das Brett auf hundert Punkte. */
-body.im-raum #main{flex:0 1 auto;min-height:0;overflow:visible;}
-/* Wachsen ja, schrumpfen nie: `overflow:hidden` setzt die Mindesthöhe eines
-   Flex-Kindes auf null, und damit wurde das Brett auf einem Tablet auf 137
-   Punkte gedrückt — genau das Scrollen, das hier nicht sein soll. */
-body.im-raum #brett{flex:1 0 auto;}
+body.im-raum #main{flex:1 1 auto;min-height:0;overflow:visible;}
+/* Nur so hoch wie sein Inhalt: Der Raum darüber nimmt den Rest, und weil die
+   Grafik eingepasst statt gedehnt wird, schadet ihr das nicht mehr. */
+body.im-raum #brett{flex:0 0 auto;}
 body.im-raum .raum-svg{max-height:100%;}
 
 /* Ohne Flur darüber hat der Raum die Höhe, die er braucht. Der Deckel liegt

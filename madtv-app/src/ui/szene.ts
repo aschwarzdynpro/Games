@@ -87,13 +87,17 @@ export function renderSzene(sz: Raumszene): string {
       'preserveAspectRatio="xMidYMid slice"/>'
     : (sz.malen?.() ?? '');
 
-  // `slice` statt `meet`: Die Grafik füllt ihre Fläche randlos aus, statt mit
-  // Balken darin zu schweben. Weil Bild *und* Klickpunkte in demselben viewBox
-  // liegen, verschieben sie sich beim Zuschnitt gemeinsam — die Trefferflächen
-  // bleiben also auf ihren Gegenständen. Was der Zuschnitt kostet, ist Rand:
-  // `tests/browser/ui.mjs` misst nach, dass kein Klickpunkt hinausfällt.
+  // `meet`, nicht `slice`.
+  //
+  // Randlos wäre schöner, und dreimal habe ich es versucht: die Fläche dem Bild
+  // anpassen, das Bild der Fläche, die Spalte deckeln. Jedes Mal fielen
+  // Klickbereiche heraus — im liegenden Telefon zuletzt der Sessel der
+  // Filmagentur und die Tür der Werbeagentur, beide zu null Prozent sichtbar,
+  // also Räume ohne Ausgang. Ein Rand ist hässlich, ein fehlender Ausgang ist
+  // kaputt. Die Grafik wird deshalb eingepasst; was übrig bleibt, ist dunkle
+  // Fassung, und kein Zuschnitt kann mehr etwas wegnehmen.
   return '<div class="raum-bild">' +
-    `<svg class="raum-svg" viewBox="${esc(sz.viewBox)}" preserveAspectRatio="xMidYMid slice" ` +
+    `<svg class="raum-svg" viewBox="${esc(sz.viewBox)}" preserveAspectRatio="xMidYMid meet" ` +
     `role="group" aria-label="${esc(sz.beschreibung)}">` +
     `<g class="raum-grund" aria-hidden="true">${grund}</g>` +
     sz.punkte.map(klickpunkt).join('') +

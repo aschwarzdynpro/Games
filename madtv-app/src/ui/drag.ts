@@ -42,7 +42,25 @@ interface Active {
 }
 
 let drag: Active | null = null;
-let pending: { x: number; y: number; card: HTMLElement; pointerId: number } | null = null;
+let pending: {
+  x: number; y: number; card: HTMLElement; pointerId: number;
+  /** Berührung oder Maus — davon hängt ab, wann ein Zug anspringt. */
+  tippen: boolean;
+  /** Wann der Finger aufsetzte. */
+  seit: number;
+} | null = null;
+
+/**
+ * Wie lange ein Finger liegen bleiben muss, bevor aus dem Wischen ein Zug wird.
+ *
+ * Ohne diese Wartezeit war der Sendeplan auf einem Tablet nicht zu scrollen:
+ * Jede Bewegung über sechs Punkte startete einen Zug, und der ruft
+ * `preventDefault()` — womit das Blättern des Browsers unterbunden war. Am
+ * Finger ist ein Wisch aber zuerst ein Wisch; ziehen will, wer erst hält.
+ * Mit der Maus bleibt es bei den sechs Punkten, dort gibt es kein Scrollen zu
+ * verwechseln.
+ */
+const HALTEN_MS = 320;
 let wired = false;
 
 export function isDragging(): boolean {
@@ -98,12 +116,20 @@ function clearHighlights(): void {
 }
 
 export function finishDrag(): void {
+  // Nur neu zeichnen, wenn wirklich gezogen wurde.
+  //
+  // `pointercancel` feuert auch dann, wenn der Browser eine Berührung als
+  // Blättern übernimmt — und das tut er bei jedem Wisch, der auf einer Karte
+  // beginnt. Das Neuzeichnen tauschte dabei mitten in der Bewegung den ganzen
+  // Inhalt aus und würgte den Schwung ab: Der Sendeplan sprang nach zwölf
+  // Punkten zurück und war auf dem Tablet praktisch nicht zu scrollen.
+  const liefWas = drag !== null;
   drag?.ghost.remove();
   drag = null;
   pending = null;
   clearHighlights();
   document.body.classList.remove('dragging');
-  markDirty();
+  if (liefWas) markDirty();
 }
 
 function begin(card: HTMLElement, x: number, y: number, pointerId: number): void {
@@ -122,7 +148,10 @@ export function bindDrag(root: HTMLElement): void {
   root.querySelectorAll<HTMLElement>('[data-drag]').forEach((card) => {
     card.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 && e.pointerType === 'mouse') return;
-      pending = { x: e.clientX, y: e.clientY, card, pointerId: e.pointerId };
+      pending = {
+        x: e.clientX, y: e.clientY, card, pointerId: e.pointerId,
+        tippen: e.pointerType !== 'mouse', seit: performance.now(),
+      };
     });
   });
 }
@@ -134,8 +163,13 @@ function wireGestures(): void {
   document.addEventListener('pointermove', (e) => {
     if (!drag && pending && e.pointerId === pending.pointerId) {
       const d = Math.hypot(e.clientX - pending.x, e.clientY - pending.y);
+      const gehalten = performance.now() - pending.seit >= HALTEN_MS;
+      // Wer wischt, will blättern. Erst wer hält, will ziehen.
+      if (pending.tippen && d > 6 && !gehalten) pending = null;
       // Erst ab einer klaren Bewegung ziehen — sonst wäre jeder Klick ein Zug
-      if (d > 6) begin(pending.card, e.clientX, e.clientY, e.pointerId);
+      else if (d > 6 && (!pending.tippen || gehalten)) {
+        begin(pending.card, e.clientX, e.clientY, e.pointerId);
+      }
     }
     if (!drag || e.pointerId !== drag.pointerId) return;
     e.preventDefault();

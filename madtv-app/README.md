@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 269 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 278 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -316,6 +316,35 @@ keiner war: Quelle und Ziel passten nicht gleichzeitig ins Fenster, das
 Einscrollen der Quelle schob das Ziel hinaus, und der Zeiger landete auf der
 Kopfzeile. Die Prüfung misst deshalb ausdrücklich mit, ob beide sichtbar sind,
 bevor sie das Ergebnis glaubt.
+
+**Der Sendeplan ließ sich mit dem Finger nicht scrollen** — und meine erste
+Prüfung dazu meldete grün. Sie setzte `scrollTop` von Hand und maß, ob die
+Stelle das Neuzeichnen überlebt; das tat sie. Nur *wischen* konnte man nicht.
+Ein Wisch, der auf einer Kassette beginnt, lässt den Browser `pointercancel`
+feuern, sobald er die Geste als Blättern übernimmt — und `finishDrag()`
+zeichnete daraufhin neu, mitten in der Bewegung. Zwölf Punkte, dann Stillstand.
+Jetzt zeichnet es nur neu, wenn wirklich gezogen wurde. Geprüft wird seither mit
+echten Berührungsereignissen über das Entwicklerprotokoll; nachgestellte
+Zeigerereignisse lösen kein natives Blättern aus und hätten den Fehler nie
+gezeigt.
+
+Am Finger gewinnt damit das Blättern gegen das Ziehen. Das ist richtig so — und
+es trägt nur, weil es den Antipp-Weg gibt: Kassette antippen, Sendeplatz
+antippen. Eine Prüfung fährt den ganzen Weg auf Berührung ab, vom Kauf bis zur
+Sendung im Plan.
+
+**Auf dem Tablet nahm das Brett zu viel.** Als `1fr` schluckte seine Spalte
+jeden Rest — auf einem iPad quer 512 Punkte und 39 Prozent der Fläche, für vier
+Zahlen und einen Knopf. Gedeckelt auf `clamp(260px,24vw,360px)` sind es 21
+Prozent.
+
+Dabei ging der dritte Anlauf am Seitenverhältnis schief: Ein Blockkasten füllt
+jede Breite, die man ihm gibt, und `width:auto` schlägt das Seitenverhältnis —
+die Grafik wurde wieder beschnitten, im liegenden Telefon bis zum Ausgang der
+Filmagentur bei null Prozent. Deshalb wird die Grafik jetzt **eingepasst statt
+beschnitten** (`meet` statt `slice`). Randlos wäre schöner; ein Rand ist
+hässlich, ein fehlender Ausgang ist kaputt. Über zwanzig Kombinationen aus Raum
+und Format bleibt seither jeder Klickbereich vollständig.
 
 **Das Nachrichtenstudio auf dem Telefon.** Gemessen war der Raum 1557 Punkte
 hoch bei 466 sichtbaren — dreieinhalb Bildschirme, für die man dreimal blättern

@@ -1088,6 +1088,106 @@ async function main() {
     await bt.close();
   }
 
+  /* ── Mit dem Finger ──
+     Der Sendeplan ließ sich auf einem Tablet nicht scrollen: Ein Wisch, der auf
+     einer Kassette beginnt, lässt den Browser `pointercancel` feuern, und
+     `finishDrag()` zeichnete daraufhin neu — mitten in der Bewegung, was den
+     Schwung abwürgte. Zwölf Punkte, dann Stillstand.
+
+     Geprüft wird mit echten Berührungsereignissen über das Entwicklerprotokoll;
+     nachgestellte Zeigerereignisse lösen kein natives Blättern aus und hätten
+     genau diesen Fehler nicht gezeigt. Das war er auch: Meine erste Prüfung
+     setzte `scrollTop` von Hand und meldete grün, während das Wischen kaputt war. */
+  console.log('\nMit dem Finger');
+  {
+    const mm = [];
+    const ctx = await browser.newContext({
+      viewport: { width: 834, height: 700 }, hasTouch: true, isMobile: true,
+    });
+    const t = await ctx.newPage();
+    const cdp = await ctx.newCDPSession(t);
+    t.on('pageerror', (x) => mm.push('Ausnahme: ' + x.message));
+    t.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(t);
+    await t.tap('[data-f="sendeplan"].hs');
+    await t.waitForTimeout(450);
+
+    const reserve = await t.evaluate(() => {
+      const e = document.querySelector('.fenster-inhalt');
+      return e.scrollHeight - e.clientHeight;
+    });
+    pruefe('der Sendeplan hat etwas zu scrollen', reserve > 100, `${reserve} px`);
+
+    const karte = await t.$('.fenster [data-drag="prog"], .fenster .cass');
+    if (karte && reserve > 100) {
+      const box = await karte.boundingBox();
+      const x = Math.round(box.x + box.width / 2);
+      const y1 = Math.round(box.y + box.height / 2);
+      const y2 = Math.max(60, y1 - 320);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y1 }] });
+      for (let i = 1; i <= 12; i++) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchMove', touchPoints: [{ x, y: Math.round(y1 + (y2 - y1) * i / 12) }],
+        });
+        await t.waitForTimeout(16);
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await t.waitForTimeout(400);
+      const stand = await t.evaluate(() =>
+        Math.round(document.querySelector('.fenster-inhalt').scrollTop));
+      pruefe('ein Wisch über einer Kassette blättert', stand > 100, `${stand} px`);
+      pruefe('und löst dabei keinen Zug aus',
+        await t.evaluate(() => !document.body.classList.contains('dragging')));
+    }
+
+    // Am Finger gewinnt das Blättern gegen das Ziehen — dann muss der
+    // Antipp-Weg tragen, sonst wäre der Raum auf Berührung unbedienbar.
+    const belegt = () => t.evaluate(() => window.madtv.core
+      .getDay(window.madtv.session().g.player, window.madtv.session().g.day)
+      .filter((f) => f.prog).length);
+    const kasse = await t.$('.shelf .cass');
+    if (kasse) {
+      await kasse.scrollIntoViewIfNeeded();
+      await t.waitForTimeout(200);
+      await kasse.tap();
+      await t.waitForTimeout(350);
+      pruefe('eine Kassette antippen legt sie in die Hand',
+        await t.evaluate(() => !!window.madtv.session().hand));
+      const vor = await belegt();
+      const platz = await t.$('.fenster [data-drop="prog"]');
+      if (platz) {
+        await platz.scrollIntoViewIfNeeded();
+        await t.waitForTimeout(200);
+        await platz.tap();
+        await t.waitForTimeout(500);
+        pruefe('und der Sendeplatz nimmt sie am Finger an',
+          (await belegt()) > vor, `belegt ${vor} → ${await belegt()}`);
+      }
+    }
+    pruefe('Fingerbedienung ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await ctx.close();
+  }
+
+  /* ── Bild und Brett auf dem Tablet ── */
+  console.log('\nBild und Brett auf dem Tablet');
+  for (const [name, breite, hoehe] of [
+    ['iPad quer', 1180, 820], ['iPad Pro quer', 1366, 1024], ['Tablet quer', 1024, 768],
+  ]) {
+    const tb = await browser.newPage({ viewport: { width: breite, height: hoehe } });
+    await starte(tb);
+    await tb.mouse.move(3, 3);
+    await tb.waitForTimeout(250);
+    const anteil = await tb.evaluate(() => {
+      const br = document.getElementById('brett').getBoundingClientRect();
+      return Math.round((br.width * br.height) / (innerWidth * innerHeight) * 100);
+    });
+    // Als `1fr` schluckte das Brett jeden Rest — auf einem iPad 512 Punkte und
+    // 39 Prozent der Fläche, für vier Zahlen und einen Knopf.
+    pruefe(`${name}: das Brett bleibt unter einem Viertel der Fläche`,
+      anteil <= 25, `${anteil}%`);
+    await tb.close();
+  }
+
   /* ── Nachrichtenstudio auf dem Telefon ──
      Gemessen war der Raum 1557 Punkte hoch bei 466 sichtbaren — dreieinhalb
      Bildschirme, davon ein Viertel Beiwerk. Drei Eingriffe: Der Flur weicht
