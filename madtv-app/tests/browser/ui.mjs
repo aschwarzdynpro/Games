@@ -1088,6 +1088,48 @@ async function main() {
     await bt.close();
   }
 
+  /* ── Lesbare Schrift ──
+     161 Regeln standen bei 11 Punkten oder darunter, 34 davon bei 9 oder
+     weniger. Acht Punkte sind auf einem Tablet keine Schrift mehr, sondern ein
+     Muster. Der Boden liegt jetzt bei 10,5; geprüft wird, dass er dort bleibt
+     und dass die größere Schrift nirgends abgeschnitten wird. */
+  console.log('\nLesbare Schrift');
+  for (const [name, breite, hoehe] of [
+    ['iPad quer', 1180, 820], ['Telefon', 390, 844],
+  ]) {
+    const sc = await browser.newPage({ viewport: { width: breite, height: hoehe } });
+    await starte(sc);
+    await sc.click('[data-f="sendeplan"].hs');
+    await sc.waitForTimeout(450);
+    const mass = await sc.evaluate(() => {
+      const sichtbar = (e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      };
+      const texte = [...document.querySelectorAll('#view *')].filter((e) =>
+        sichtbar(e) && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+      const groessen = texte.map((e) => parseFloat(getComputedStyle(e).fontSize));
+      // Abgeschnitten: Inhalt höher als der Kasten, und der Kasten schneidet ab.
+      const beschnitten = texte.filter((e) => {
+        const st = getComputedStyle(e);
+        if (st.overflowY === 'auto' || st.overflowY === 'scroll') return false;
+        return st.overflow === 'hidden' && e.scrollHeight > e.clientHeight + 2;
+      }).map((e) => `${e.className}: ${e.textContent.trim().slice(0, 20)}`);
+      return {
+        kleinste: Math.min(...groessen),
+        wieviele: texte.length,
+        unter11: groessen.filter((g) => g < 10.4).length,
+        beschnitten: [...new Set(beschnitten)].slice(0, 4),
+      };
+    });
+    pruefe(`${name}: nichts steht unter 10,5 Punkten`,
+      mass.unter11 === 0 && mass.kleinste >= 10.4,
+      `kleinste ${mass.kleinste}px, ${mass.unter11} darunter`);
+    pruefe(`${name}: und nichts wird abgeschnitten`,
+      mass.beschnitten.length === 0, mass.beschnitten.join(' | '));
+    await sc.close();
+  }
+
   /* ── Mit dem Finger ──
      Der Sendeplan ließ sich auf einem Tablet nicht scrollen: Ein Wisch, der auf
      einer Kassette beginnt, lässt den Browser `pointercancel` feuern, und

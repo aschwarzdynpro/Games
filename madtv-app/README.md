@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 278 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 282 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -399,6 +399,45 @@ schreibt sich bei jeder Änderung neu, spätestens alle zwölf Spielminuten — 
 `scrollMerken()` rettete nur die *waagerechte* Stelle der Regalreihen. Wer im
 Fenster nach unten sah, stand Sekunden später wieder oben. Gemerkt werden jetzt
 beide Richtungen, und `.fenster-inhalt` gehört dazu.
+
+Das war aber nur die halbe Wahrheit — der Sendeplan ließ sich danach im
+Artefakt immer noch nicht wischen, und die Rückmeldung kam zu Recht ein zweites
+Mal. Meine erste Prüfung hatte `scrollTop` gesetzt und bestand, während das
+Wischen kaputt war; sie prüfte, ob die Fläche scrollen *kann*, nicht ob der
+Finger sie bewegt. Mit echten Berührungsereignissen fiel sie sofort um. Der
+eigentliche Grund lag im Stilblatt: **sieben Regeln setzten `touch-action:none`
+auf die ziehbaren Karten** — der Browser gibt die Geste dann gar nicht erst ans
+Blättern weiter, und wer die Tafel dort anfasst, wo Kassetten liegen, fasst
+überall hin. Jetzt steht dort `pan-x pan-y`: Blättern gehört dem Browser,
+Ziehen beginnt erst nach 320 ms Halten. Nachgemessen wandert die Tafel 265
+Punkte, das Regal 459, auch wenn der Finger auf einer Kassette startet.
+
+Meine eigene Gegenregel war dabei zuerst zu breit gefasst: `[data-scroll]` traf
+auch die Sendetafel und nahm ihr das senkrechte Blättern wieder weg. Sie zielt
+jetzt auf die Wischleisten selbst.
+
+Zwei klebende Regale nebeneinander sind übrigens ein Regal zu viel — der
+Programmordner zeigte im Fenster nur noch seine Überschrift, weil der
+Werbekoffer darunter dieselbe Kante beanspruchte. Beide sitzen jetzt in einer
+gemeinsamen `.ablagen`-Schale mit *einer* klebenden Kante.
+
+**Lesbar auf Tablet und Handy.** Die Schriftgrößen waren aus der Bildschirmzeit
+gewachsen: 161 Regeln standen bei 11 Punkten oder darunter, 34 davon bei 9 oder
+weniger — auf einem iPad ist ein 8er-Etikett kein Etikett mehr, sondern ein
+Muster. Die ganze Skala ist einmal durchgereicht worden (8 → 10,5 · 9 → 11 ·
+10 → 12 · 11 → 13 · 12 → 13,5 · 14 → 15 · 16 → 17), also proportional
+angehoben statt einzeln nachgebessert; die Abstände zwischen den Stufen
+bleiben, das Bodenmaß steigt.
+
+Ausgenommen sind die fünf Beschriftungen *in* den Grafiken (Türschilder,
+Hinweise, Markenschriftzüge). Sie stehen in Bildkoordinaten und skalieren mit
+dem Raum — dort hätte ein Zahlenwechsel die Größe verdoppelt.
+
+Größere Schrift kostet Platz, und der Platz war knapp. Nachgemessen wurde
+deshalb dreierlei: Kein Text wird abgeschnitten, das Brett scrollt in keinem
+der vier Formate, und alle zwanzig Kombinationen aus Raum und Format zeigen
+weiterhin jeden Klickbereich vollständig. Kleinste tatsächlich gezeichnete
+Größe: 10,5 Punkte auf dem iPad, 11 auf dem Telefon.
 
 **Vollbild und Point & Click.** Ein Raum ist eine Grafik mit Klickbereichen,
 wie im Original und in klassischen Point-&-Click-Spielen — ohne Rahmen, ohne
@@ -689,9 +728,11 @@ Drei Dinge, die beim Bauen nicht offensichtlich waren:
   Zeilen unter dem Zeiger weg, sobald man in die Nähe des Rands kam — die Karte
   landete eine Zeile daneben. Jetzt wird nur geschoben, wenn in die Richtung
   überhaupt noch Scrollweg übrig ist.
-- **Auf dem Handy beansprucht der Browser die Wischgeste.** Karten tragen daher
-  `touch-action: none`, sonst bricht er den Zug mit `pointercancel` ab. Die
-  Ablagen lassen sich stattdessen über Pfeiltasten verschieben.
+- **Auf dem Handy beansprucht der Browser die Wischgeste.** Karten trugen
+  deshalb zuerst `touch-action: none` — was das Blättern der Tafel mit
+  erschlug (siehe oben). Jetzt steht dort `pan-x pan-y`, und das Ziehen holt
+  sich den Finger erst nach 320 ms Halten. Die Ablagen lassen sich zusätzlich
+  über Pfeiltasten verschieben.
 
 Während eines Zuges wird die Ansicht nicht neu gebaut — sonst löste sich die
 Karte unter dem Zeiger auf.

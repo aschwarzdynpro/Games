@@ -299,10 +299,14 @@ export function renderBoard(day: number): string {
         (gelaufen.length ? ` · ${spotsOk}/${gelaufen.length} Spots gezählt` : '')
       : '') +
     '</div>' +
+    // Beide Ablagen in *einem* Kasten: Sie kleben am unteren Rand, und zwei
+    // Klebrige nebeneinander kleben unabhängig voneinander — der Programmordner
+    // verschwand dabei hinter dem Werbekoffer, bis auf seine Kopfzeile.
+    '<div class="ablagen">' +
     shelfBlock(`${icon('ui-kassette')} Programmordner`, `${p.licences.length} Titel · zum Sendeplatz ziehen`,
       shelf || '<div class="shelf-none">Archiv leer.</div>') +
     shelfBlock(`${icon('flr-werbe')} Werbekoffer`, `${open.length} offen · auf den Werbeplatz ziehen`, koffer) +
-    '</div>'
+    '</div></div>'
   );
 }
 
