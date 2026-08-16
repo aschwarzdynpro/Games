@@ -186,9 +186,27 @@ export function meldungen(): readonly Meldung[] {
   return buch;
 }
 
+/**
+ * Wie viele Meldungen seit dem letzten Blick in die Übersicht dazukamen.
+ *
+ * Das Brett zeigt die Meldungen nicht mehr selbst — es soll nicht scrollen. Es
+ * muss aber sagen können, dass etwas da ist, sonst übersieht man eine Nachricht
+ * dauerhaft statt nur für vier Sekunden.
+ */
+let ungelesen = 0;
+
+export function neueMeldungen(): number {
+  return ungelesen;
+}
+
+export function meldungenGelesen(): void {
+  ungelesen = 0;
+}
+
 export function toast(level: ToastLevel, title: string, text: string): void {
   buch.unshift({ level, titel: title, text });
-  while (buch.length > 4) buch.pop();
+  while (buch.length > 8) buch.pop();
+  ungelesen = Math.min(9, ungelesen + 1);
   const box = el('toasts');
   const d = document.createElement('div');
   d.className = `toast ${level === 'info' ? '' : level}`;

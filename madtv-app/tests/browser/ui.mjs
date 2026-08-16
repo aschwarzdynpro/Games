@@ -494,22 +494,23 @@ async function main() {
       uhr: document.getElementById('b-uhr')?.textContent ?? '',
       quote: document.getElementById('b-quote')?.textContent ?? '',
       geld: document.getElementById('b-geld')?.textContent ?? '',
-      tag: document.getElementById('b-tag')?.textContent ?? '',
+
       tv: document.getElementById('b-tv-titel')?.textContent ?? '',
       couch: document.getElementById('b-couch')?.textContent ?? '',
-      plan: document.querySelectorAll('.br-zeile-plan, .br-plan-liste .br-leer').length,
-      meld: document.querySelectorAll('.br-meldung, .br-meld-liste .br-leer').length,
       kopfzahlen: document.querySelectorAll('#topbar .stat').length,
+      // Das Brett scrollt nicht — was nicht hineinpasst, steht in der Übersicht.
+      scrollt: (() => { const b = document.getElementById('brett');
+        return b.scrollHeight > b.clientHeight + 2; })(),
+      mehr: !!document.querySelector('.br-mehr'),
     }));
     pruefe('das Armaturenbrett steht im Rahmen', ko.da);
     pruefe('seine Uhr geht', /^\d\d:\d\d$/.test(ko.uhr), ko.uhr);
-    pruefe('Marktanteil, Konto und Sendetag stehen darin',
-      /%$/.test(ko.quote) && ko.geld.length > 1 && ko.tag.length > 2,
-      `${ko.quote} · ${ko.geld} · ${ko.tag}`);
+    pruefe('Marktanteil und Konto stehen darin',
+      /%$/.test(ko.quote) && ko.geld.length > 1, `${ko.quote} · ${ko.geld}`);
     pruefe('der Vorschaumonitor sagt, was läuft', ko.tv.length > 3, ko.tv);
     pruefe('die Couch ist beschriftet', ko.couch.length > 0, ko.couch);
-    pruefe('der Abend steht als Liste darin', ko.plan > 0, String(ko.plan));
-    pruefe('und die Meldungen haben ihren Platz', ko.meld > 0, String(ko.meld));
+    pruefe('es scrollt nicht', !ko.scrollt);
+    pruefe('und führt zur Übersicht', ko.mehr);
     pruefe('die Kopfzeile zeigt keine Zahlen mehr', ko.kopfzahlen === 0,
       `${ko.kopfzahlen} Anzeigen in der Kopfzeile`);
 
@@ -1065,9 +1066,10 @@ async function main() {
     // den Raum. Die Rivalenbüros sind noch Panels.
     const rivalEtage = await bt.evaluate(() =>
       window.madtv.core.FLOORS.findIndex((f) => f.id === 'rival1'));
-    // Über das Hochhaus statt über Escape: Escape räumt seit dem Umbau von
-    // innen nach außen ab, und ob hier noch ein Fenster offen steht, hängt am
-    // Verlauf darüber.
+    // Erst zumachen: Ein Fenster liegt seit dem Umbau über allem, auch über
+    // der Etagenleiste — ein Klick darauf ginge ins Leere.
+    await bt.keyboard.press('Escape');
+    await bt.waitForTimeout(250);
     await bt.click('#bottom [data-f="-1"]');
     await bt.waitForTimeout(400);
     await bt.click(`[data-go="${rivalEtage}"]`);
@@ -1084,6 +1086,102 @@ async function main() {
 
     pruefe('Bettys Büro ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
     await bt.close();
+  }
+
+  /* ── Brett, Übersicht und Popups ──
+     Drei Zusagen: Das Brett scrollt nie, ein Popup deckt alles ab, und wer im
+     Sendeplan nach unten sieht, bleibt dort. Das Letzte war ein Fehler — die
+     Ansicht schreibt sich alle zwölf Spielminuten neu und rettete nur die
+     waagerechte Scrollstelle. */
+  console.log('\nBrett, Übersicht und Popups');
+  for (const [name, breite, hoehe] of [
+    ['Schreibtisch', 1320, 980], ['Telefon hoch', 390, 844],
+    ['Telefon quer', 844, 390], ['Tablet hoch', 834, 1112],
+  ]) {
+    const mm = [];
+    const u = await browser.newPage({ viewport: { width: breite, height: hoehe } });
+    u.on('pageerror', (x) => mm.push('Ausnahme: ' + x.message));
+    u.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(u);
+    await u.mouse.move(3, 3);
+    await u.waitForTimeout(250);
+
+    pruefe(`${name}: das Brett scrollt nicht`,
+      await u.evaluate(() => {
+        const b = document.getElementById('brett');
+        return b.scrollHeight <= b.clientHeight + 2;
+      }));
+
+    // Die Übersicht trägt, was aus dem Brett gewichen ist.
+    await u.click('.br-mehr');
+    await u.waitForTimeout(400);
+    const ue = await u.evaluate(() => {
+      const f = document.querySelector('.fenster');
+      if (!f) return null;
+      const r = f.getBoundingClientRect();
+      const nav = document.getElementById('bottom').getBoundingClientRect();
+      return {
+        werte: document.querySelectorAll('.ue-wert').length,
+        plan: document.querySelectorAll('.fenster .br-zeile-plan').length,
+        meld: document.querySelectorAll('.fenster .br-meldung, .fenster .br-leer').length,
+        // Ein Popup darf über alles gehen — auch über die Etagenleiste.
+        ueberNav: r.bottom > nav.top || r.top < nav.top,
+        fest: getComputedStyle(f).position === 'fixed',
+      };
+    });
+    pruefe(`${name}: die Übersicht geht auf`, ue !== null);
+    pruefe(`${name}: mit den Zahlen, die aus dem Brett gewichen sind`,
+      (ue?.werte ?? 0) >= 4, String(ue?.werte));
+    pruefe(`${name}: mit dem ganzen Abend`, (ue?.plan ?? 0) === 14, String(ue?.plan));
+    pruefe(`${name}: und den Meldungen`, (ue?.meld ?? 0) > 0, String(ue?.meld));
+    pruefe(`${name}: das Popup liegt fest im Fenster`, ue?.fest === true);
+    await u.keyboard.press('Escape');
+    await u.waitForTimeout(250);
+    pruefe(`${name}: Escape schließt die Übersicht`,
+      await u.evaluate(() => !document.querySelector('.fenster')));
+    pruefe(`${name}: keine Konsolenfehler`, mm.length === 0, mm.join(' | '));
+    await u.close();
+  }
+
+  /* ── Der Sendeplan bleibt stehen, wo man ihn gelassen hat ── */
+  console.log('\nGescrollte Stelle im Fenster');
+  {
+    const mm = [];
+    const v = await browser.newPage({ viewport: { width: 1320, height: 980 } });
+    v.on('pageerror', (x) => mm.push('Ausnahme: ' + x.message));
+    v.on('console', (m) => { if (m.type() === 'error') mm.push('Konsole: ' + m.text()); });
+    await starte(v);
+    await v.click('[data-f="sendeplan"].hs');
+    await v.waitForTimeout(400);
+
+    const lang = await v.evaluate(() => {
+      const e = document.querySelector('.fenster-inhalt');
+      return e.scrollHeight > e.clientHeight + 20;
+    });
+    pruefe('der Sendeplan ist länger als sein Fenster', lang);
+
+    await v.evaluate(() => { document.querySelector('.fenster-inhalt').scrollTop = 240; });
+    await v.waitForTimeout(200);
+    const vorher = await v.evaluate(() =>
+      Math.round(document.querySelector('.fenster-inhalt').scrollTop));
+    pruefe('und lässt sich scrollen', vorher > 20, String(vorher));
+
+    // Genau das warf die Stelle bisher weg.
+    await v.evaluate(() => { window.madtv.session().dirty = true; });
+    await v.waitForTimeout(600);
+    const nachher = await v.evaluate(() =>
+      Math.round(document.querySelector('.fenster-inhalt').scrollTop));
+    pruefe('die Stelle überlebt das Neuzeichnen', Math.abs(vorher - nachher) < 6,
+      `${vorher} → ${nachher}`);
+
+    // Und über echten Zeitablauf hinweg, denn genau dann schreibt die Uhr neu.
+    await v.waitForTimeout(2500);
+    const spaeter = await v.evaluate(() =>
+      Math.round(document.querySelector('.fenster-inhalt').scrollTop));
+    pruefe('auch während die Uhr läuft', Math.abs(vorher - spaeter) < 6,
+      `${vorher} → ${spaeter}`);
+    pruefe('Scrollstelle ohne Konsolenfehler', mm.length === 0, mm.join(' | '));
+    await v.close();
   }
 
   /* ── Zwei Ebenen, nicht drei ──

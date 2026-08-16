@@ -14,7 +14,7 @@ import {
 } from '../core';
 import type { Channel, GenreId, Licence, RessortId } from '../core';
 import { G, S, markDirty } from './session';
-import { dialog, toast } from './overlay';
+import { dialog, meldungenGelesen, toast } from './overlay';
 import { playSfx } from './sfx';
 import { addTime, leaveRoom } from './loop';
 import { bar, licMeta } from './rooms';
@@ -59,6 +59,14 @@ const ACTIONS: Record<string, (d: Data) => void> = {
   // hier steht nur, welcher es ist.
   fenster(d) { S().fenster = d.f ?? null; },
   fensterzu() { S().fenster = null; },
+
+  /** Die Übersicht auf- und zuklappen. Beim Öffnen gelten die Meldungen als gelesen. */
+  uebersicht() {
+    const s = S();
+    s.uebersicht = !s.uebersicht;
+    if (s.uebersicht) meldungenGelesen();
+    markDirty();
+  },
 
   setday(d) { S().viewDay = Number(d.d); },
 

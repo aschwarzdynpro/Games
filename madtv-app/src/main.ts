@@ -65,6 +65,7 @@ document.addEventListener('keydown', (e) => {
     if (modalOpen()) closeDialog();
     // Die Hand ist die innerste Ebene: Wer eine Kassette hält und abbrechen
     // will, meint sie — nicht das Fenster und erst recht nicht den Raum.
+    else if (S().uebersicht) { S().uebersicht = false; renderView(); }
     else if (S().hand) { S().hand = null; renderView(); }
     else if (S().fenster) { S().fenster = null; renderView(); }
     else if (S().room) leaveRoom();

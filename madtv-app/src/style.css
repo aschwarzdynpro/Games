@@ -48,7 +48,9 @@ input,select{font:inherit;color:inherit;}
    eingelassene Felder darin. Die Nieten sind vier Punktverläufe in den Ecken —
    ein Bild dafür zu laden wäre Gewicht ohne Gewinn. */
 #brett{
-  flex-shrink:0;overflow:auto;max-height:46dvh;
+  /* Kein Scrollen: Ein Instrumentenbrett, in dem man blättern muss, ist keines.
+     Was nicht hineinpasst, steht in der Übersicht. */
+  flex-shrink:0;overflow:hidden;
   padding:10px;
   background:
     radial-gradient(circle at 9px 9px,#5a6474 0 2px,transparent 2.6px),
@@ -61,7 +63,42 @@ input,select{font:inherit;color:inherit;}
 }
 .brett{display:flex;flex-direction:column;gap:8px;}
 .br-zeile{display:flex;gap:8px;flex-wrap:wrap;}
-.br-zahlen .br-feld{flex:1 1 132px;}
+.br-zahlen .br-feld{flex:1 1 120px;}
+/* Untere Reihe: Vorschaumonitor und der Weg zur Übersicht */
+.br-unten{align-items:stretch;}
+.br-unten .br-tv{flex:1 1 auto;min-width:0;padding:6px 9px;}
+.br-mehr{
+  position:relative;flex:0 0 auto;
+  display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:7px;
+  font-size:12.5px;font-weight:700;color:var(--txt);
+  background:linear-gradient(180deg,#3a4553,#252d38);
+  border:1px solid #4a5464;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 2px 6px rgba(0,0,0,.4);
+}
+.br-mehr:hover{border-color:var(--acc);color:var(--acc);}
+.br-mehr .ic{width:1.2em;height:1.2em;}
+/* `display:flex` schlüge sonst das `hidden`-Merkmal, und das Abzeichen stünde
+   dauerhaft auf null. */
+.br-badge[hidden]{display:none;}
+.br-badge{
+  position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;
+  border-radius:9px;background:var(--bad);color:#fff;
+  font-size:10.5px;font-weight:800;
+  box-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+/* Die Übersicht: dieselbe Fensterschicht, nur mit Zahlenzeile obenauf. */
+.ue-zahlen{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.ue-wert{
+  flex:1 1 130px;display:flex;flex-direction:column;gap:2px;
+  padding:8px 10px;border-radius:8px;background:var(--panel2);
+  border:1px solid var(--line2);
+}
+.ue-wert span{
+  font-size:9.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--dim2);
+}
+.ue-wert b{font-size:15px;font-variant-numeric:tabular-nums;}
 /* Eine eingelassene Anzeige: dunkle Scheibe, Rahmen aus Blech, Nieten links
    und rechts. Dasselbe Bauteil trägt Zahlen wie Tafeln. */
 .br-feld,.br-tafeln>*{
@@ -169,11 +206,8 @@ input,select{font:inherit;color:inherit;}
   .br-zahlen .br-feld{flex:1 1 44%;}
   /* Untereinander, aber jede nur so hoch wie ihr Inhalt — mit `flex:1 1`
      zögen sie sich sonst über die ganze Spalte auseinander. */
-  .br-tafeln{flex-direction:column;flex:1 1 auto;min-height:0;}
-  .br-tafeln>*{flex:0 0 auto;}
-  /* Die letzte Tafel füllt, was die Spalte übrig lässt — sonst endet das Brett
-     auf halber Höhe und darunter steht leeres Blech. */
-  .br-tafeln>.br-meld{flex:1 1 auto;}
+  .br-unten{flex-direction:column;}
+  .br-mehr{justify-content:center;}
 }
 
 /* ─────────── Topbar ─────────── */
@@ -1893,8 +1927,19 @@ body.im-raum .raum-bild{
 }
 body.im-raum .raum-svg{width:100%;height:100%;max-width:none;max-height:none;}
 /* Der Raum nimmt nur, was die Form braucht; das Brett füllt den Rest. */
-body.im-raum #main{flex:0 0 auto;overflow:visible;}
-body.im-raum #brett{flex:1 1 auto;max-height:none;}
+/* Der Raum nimmt, was seine Form verlangt — aber erst, nachdem das Brett hat,
+   was es braucht. Andersherum drückte eine hochformatige Grafik auf einem
+   Tablet das Brett auf 111 Punkte und damit ins Scrollen. */
+/* Wer nimmt den Rest?
+   Nicht der Raum: Wächst seine Fläche über das Seitenverhältnis der Grafik
+   hinaus, klemmt die Breite und die Grafik wird wieder beschnitten. Also das
+   Brett — dort ist mehr Blech kein Schaden. Der Raum darf dafür schrumpfen,
+   sonst drückte eine hochformatige Grafik das Brett auf hundert Punkte. */
+body.im-raum #main{flex:0 1 auto;min-height:0;overflow:visible;}
+/* Wachsen ja, schrumpfen nie: `overflow:hidden` setzt die Mindesthöhe eines
+   Flex-Kindes auf null, und damit wurde das Brett auf einem Tablet auf 137
+   Punkte gedrückt — genau das Scrollen, das hier nicht sein soll. */
+body.im-raum #brett{flex:1 0 auto;}
 body.im-raum .raum-svg{max-height:100%;}
 
 /* Ohne Flur darüber hat der Raum die Höhe, die er braucht. Der Deckel liegt
@@ -2093,14 +2138,17 @@ body.im-raum .raum-svg{max-height:100%;}
 /* Das Fenster füllt die ganze Inhaltsfläche zwischen Kopfzeile und
    Etagenleiste. Bezugspunkt ist #main — damit braucht es keine gemessenen
    Balkenhöhen, und Uhr und Kennzahlen oben bleiben sichtbar. */
-.fenster-grund{position:absolute;inset:0;background:rgba(6,9,13,.62);}
+/* Fest im Fenster verankert, nicht in der Ansicht: Ein Popup darf über alles
+   gehen — auch über das Armaturenbrett und die Etagenleiste. Vorher endete es
+   an der Kante von #main, und der Sendeplan bekam nur den halben Bildschirm. */
+.fenster-grund{position:fixed;inset:0;z-index:60;background:rgba(6,9,13,.72);}
 .fenster{
   /* Höhe nach Inhalt, gedeckelt auf die Inhaltsfläche. Vorher stand hier
      `inset:8px`, also immer volle Höhe — für den Sendeplan richtig, für einen
      zweizeiligen Dialog ein leerer Kasten von einem Meter. Lange Inhalte
      stoßen weiterhin an den Deckel und scrollen dann in sich. */
-  position:absolute;top:8px;left:8px;right:8px;
-  max-height:calc(100% - 16px);
+  position:fixed;top:8px;left:8px;right:8px;z-index:61;
+  max-height:calc(100dvh - 16px);
   display:flex;flex-direction:column;min-height:0;
   background:var(--panel);border:1px solid var(--line2);border-radius:12px;
   box-shadow:0 22px 60px rgba(0,0,0,.62);
@@ -2139,7 +2187,7 @@ body.fenster-offen #main{overflow:hidden;}
   .raum-svg{max-height:100%;}
   /* Nur die Ränder enger, nicht die Unterkante festnageln — sonst stünde der
      Deckel wieder auf voller Höhe und ein Zweizeiler füllte das Telefon. */
-  .fenster{top:4px;left:4px;right:4px;max-height:calc(100% - 8px);}
+  .fenster{top:4px;left:4px;right:4px;max-height:calc(100dvh - 8px);}
   /* Die Beschriftung bleibt. Ein hochformatiges Bild kann die Breite eines
      Telefons nicht ausfüllen, ohne oben und unten anzustoßen — die Zeilen, die
      dadurch frei bleiben, sind hier besser in Wörtern angelegt als in Luft.

@@ -17,7 +17,7 @@ import { bindBoard } from './board';
 import { scrollMerken, scrollZurueck } from './rail';
 import { renderSzene } from './szene';
 import { SZENEN, fensterInhalt } from './szenen';
-import { renderBrett, updateBrett } from './konsole';
+import { renderBrett, renderUebersicht, updateBrett } from './konsole';
 import { setWorldVisible } from '../world/world';
 import { goFloor, leaveRoom, setSpeed, togglePause } from './loop';
 import { openMenu } from './screens';
@@ -32,6 +32,12 @@ let brettGebaut = false;
 function renderBrettGeruest(): void {
   if (brettGebaut) return;
   el('brett').innerHTML = renderBrett();
+  // Das Brett liegt außerhalb von #view, wo `bindView()` die Aktionen
+  // verdrahtet — seine Knöpfe müssen deshalb hier angeschlossen werden. Weil
+  // das Gerüst nur einmal entsteht, reicht das einmal.
+  el('brett').querySelectorAll<HTMLElement>('[data-act]').forEach((n) => {
+    activate(n, () => runAction(n.dataset.act!, { ...n.dataset }));
+  });
   brettGebaut = true;
 }
 
@@ -178,7 +184,7 @@ export function renderView(): void {
   const imRaum = !!s.room && !!SZENEN[s.room] && s.elevBusy === 0;
   setWorldVisible(S().g.opt.world && !imRaum);
   document.body.classList.toggle('im-raum', imRaum);
-  document.body.classList.toggle('fenster-offen', imRaum && !!s.fenster);
+  document.body.classList.toggle('fenster-offen', (imRaum && !!s.fenster) || s.uebersicht);
   // Freie Plätze zeigen an, dass sie nehmen würden, was in der Hand liegt.
   document.body.classList.toggle('hat-hand', !!s.hand);
 
@@ -186,6 +192,18 @@ export function renderView(): void {
   else if (!s.room) view.innerHTML = viewTower();
   else if (SZENEN[s.room]) view.innerHTML = viewRaumszene(s.room);
   else view.innerHTML = ROOMS[s.room]();
+
+  // Die Übersicht liegt über allem, auch über dem Brett — sie benutzt
+  // dieselbe Fensterschicht wie die Räume und sieht deshalb gleich aus.
+  if (s.uebersicht) {
+    view.insertAdjacentHTML('beforeend',
+      '<div class="fenster-grund" data-act="uebersicht"></div>' +
+      '<div class="fenster" role="dialog" aria-modal="false" aria-label="Übersicht">' +
+      `<div class="fenster-kopf">${icon('ui-menu')}<h2>Übersicht</h2>` +
+      '<button class="fenster-zu" data-act="uebersicht" aria-label="Übersicht schließen">' +
+      `${icon('ui-schliessen')}</button></div>` +
+      `<div class="fenster-inhalt">${renderUebersicht()}</div></div>`);
+  }
 
   scrollZurueck(view, gescrollt);
 

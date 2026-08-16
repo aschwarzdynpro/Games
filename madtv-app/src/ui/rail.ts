@@ -38,8 +38,18 @@ export const RAILBOX = 'data-railbox';
  * innerhalb einer Ansicht eindeutig sein; wechselt der Raum, passt er ohnehin
  * auf nichts mehr.
  */
+/**
+ * Alles, was in sich scrollt und dessen Stelle das Neuschreiben überleben muss.
+ *
+ * Anfangs standen hier nur die waagerechten Regalreihen — und genau das war die
+ * Lücke: Das Fenster über der Szene scrollt senkrecht, und wer im Sendeplan
+ * nach unten sah, stand nach spätestens zwölf Spielminuten wieder ganz oben.
+ * Gemerkt werden deshalb beide Richtungen.
+ */
 function scroller(root: ParentNode): HTMLElement[] {
-  return [...root.querySelectorAll<HTMLElement>('.shelf-rail, [data-scroll]')];
+  return [...root.querySelectorAll<HTMLElement>(
+    '.shelf-rail, [data-scroll], .fenster-inhalt, .board-grid',
+  )];
 }
 
 function schluessel(el: HTMLElement, alle: HTMLElement[]): string {
@@ -48,23 +58,27 @@ function schluessel(el: HTMLElement, alle: HTMLElement[]): string {
 }
 
 /** Vor dem Neuschreiben aufrufen und das Ergebnis an `scrollZurueck` geben. */
-export function scrollMerken(root: ParentNode): Map<string, number> {
+export function scrollMerken(root: ParentNode): Map<string, [number, number]> {
   const alle = scroller(root);
-  const stand = new Map<string, number>();
+  const stand = new Map<string, [number, number]>();
   alle.forEach((el) => {
-    if (el.scrollLeft > 0) stand.set(schluessel(el, alle), el.scrollLeft);
+    if (el.scrollLeft > 0 || el.scrollTop > 0) {
+      stand.set(schluessel(el, alle), [el.scrollLeft, el.scrollTop]);
+    }
   });
   return stand;
 }
 
 /** Nach dem Neuschreiben aufrufen. Was nicht mehr passt, fällt weg. */
-export function scrollZurueck(root: ParentNode, stand: Map<string, number>): void {
+export function scrollZurueck(root: ParentNode, stand: Map<string, [number, number]>): void {
   if (!stand.size) return;
   const alle = scroller(root);
   alle.forEach((el) => {
     const wert = stand.get(schluessel(el, alle));
-    // Nie über das Ende hinaus: Die Reihe kann inzwischen kürzer sein.
-    if (wert) el.scrollLeft = Math.min(wert, el.scrollWidth - el.clientWidth);
+    if (!wert) return;
+    // Nie über das Ende hinaus: Der Inhalt kann inzwischen kürzer sein.
+    if (wert[0]) el.scrollLeft = Math.min(wert[0], el.scrollWidth - el.clientWidth);
+    if (wert[1]) el.scrollTop = Math.min(wert[1], el.scrollHeight - el.clientHeight);
   });
 }
 

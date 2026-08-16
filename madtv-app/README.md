@@ -111,7 +111,7 @@ aufgefallen.
 | Partien | nicht reproduzierbar | gleicher Startwert → gleicher Verlauf |
 | Meldungen | Kern rief `toast()`/`modal()` direkt auf | Kern liefert Ereignisdaten |
 | Typen | keine | durchgehend, `strict` |
-| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 223 im echten Browser |
+| Tests | Handarbeit im Browser | 105 Prüfungen ohne DOM, 260 im echten Browser |
 | Material | 107 Filme, 15 Serien, 50 Marken, 50 Schlagzeilen | 883 Filme, 125 Serien, 200 Marken, 250 Schlagzeilen, 14 Eigenproduktionen, 7 Moderatoren, 12 Geschenke |
 | Spielstände | ein Slot | 3 Slots + Autospeichern, versioniert |
 | Zeitschleife | `setInterval`, ein Tick = eine Minute | `requestAnimationFrame` mit festem Zeitschritt |
@@ -316,6 +316,34 @@ keiner war: Quelle und Ziel passten nicht gleichzeitig ins Fenster, das
 Einscrollen der Quelle schob das Ziel hinaus, und der Zeiger landete auf der
 Kopfzeile. Die Prüfung misst deshalb ausdrücklich mit, ob beide sichtbar sind,
 bevor sie das Ergebnis glaubt.
+
+**Das Brett scrollt nicht.** Ein Instrumentenbrett, in dem man erst blättern
+muss, ist keines. Sichtbar bleibt nur, was man *im Spielen* dauernd braucht:
+Sendezeit (die Ressource), Konto (die zweite, und die, die einen umbringt),
+Marktanteil (die Siegbedingung), Zuschauer (die Rückmeldung darauf, was läuft)
+und der Vorschaumonitor. Alles Übrige — Sendetag, Betty, Tageskosten, der ganze
+Abend, die Meldungen — steht in der Übersicht, die auf Klick groß aufgeht. Es
+sind Dinge, die man nachsieht, nicht solche, die man im Auge behält. Ein
+Abzeichen am Knopf sagt, wenn eine Meldung dazugekommen ist; sonst übersähe man
+sie dauerhaft statt nur für vier Sekunden.
+
+Wer den Rest der Höhe bekommt, war dabei die eigentliche Frage. Nicht der Raum:
+Wächst seine Fläche über das Seitenverhältnis der Grafik hinaus, klemmt die
+Breite und die Grafik wird wieder beschnitten. Also das Brett — dort ist mehr
+Blech kein Schaden. Und es darf wachsen, aber nie schrumpfen: `overflow:hidden`
+setzt die Mindesthöhe eines Flex-Kindes auf null, und damit wurde es auf einem
+Tablet auf 137 Punkte gedrückt, also genau in das Scrollen, das hier nicht sein
+soll.
+
+**Popups liegen fest im Fenster.** Sie decken alles ab, auch das Brett und die
+Etagenleiste. Vorher endeten sie an der Kante von `#main`, und der Sendeplan
+bekam den halben Bildschirm.
+
+**Der Sendeplan blieb nicht stehen, wo man ihn gelassen hat.** Die Ansicht
+schreibt sich bei jeder Änderung neu, spätestens alle zwölf Spielminuten — und
+`scrollMerken()` rettete nur die *waagerechte* Stelle der Regalreihen. Wer im
+Fenster nach unten sah, stand Sekunden später wieder oben. Gemerkt werden jetzt
+beide Richtungen, und `.fenster-inhalt` gehört dazu.
 
 **Vollbild und Point & Click.** Ein Raum ist eine Grafik mit Klickbereichen,
 wie im Original und in klassischen Point-&-Click-Spielen — ohne Rahmen, ohne

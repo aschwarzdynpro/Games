@@ -46,6 +46,8 @@ export interface Session {
    * über dem Fenster. Jetzt stehen sie im Fenster, unter dem Regal.
    */
   filmWahl: number | null;
+  /** Ob die Übersicht offen ist — das Brett zeigt nur noch das Nötigste. */
+  uebersicht: boolean;
   dirty: boolean;
   tickCount: number;
 }
@@ -64,6 +66,7 @@ export function startSession(g: Game): Session {
     fenster: null,
     hand: null,
     filmWahl: null,
+    uebersicht: false,
     dirty: true,
     tickCount: 0,
   };
